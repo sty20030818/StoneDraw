@@ -43,7 +43,7 @@ pub fn resolve_config_dir_string(app: &AppHandle) -> Result<String, CommandError
     Ok(resolve_config_dir(app)?.display().to_string())
 }
 
-fn resolve_root_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
+pub(crate) fn resolve_root_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
     app.path()
         .home_dir()
         .map(|path| path.join(STONEDRAW_HOME_DIRECTORY_NAME))
@@ -86,7 +86,7 @@ fn read_local_directories_from_root(
     })
 }
 
-fn data_dir_path(root_dir_path: &Path) -> PathBuf {
+pub(crate) fn data_dir_path(root_dir_path: &Path) -> PathBuf {
     root_dir_path.join(DATA_DIRECTORY_NAME)
 }
 

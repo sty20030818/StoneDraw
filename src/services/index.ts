@@ -1,3 +1,4 @@
+export { databaseService } from './database.service'
 export { directoryService } from './directory.service'
 export { documentService } from './document.service'
 export { editorService } from './editor.service'

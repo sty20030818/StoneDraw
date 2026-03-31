@@ -5,7 +5,7 @@ import AppToaster from '@/components/feedback/AppToaster'
 import { DialogHostProvider } from '@/components/feedback/DialogHost'
 import LoadingState from '@/components/states/LoadingState'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { directoryService, systemService } from '@/services'
+import { databaseService, directoryService, systemService } from '@/services'
 import { useAppStore } from '@/stores'
 
 function App() {
@@ -15,6 +15,8 @@ function App() {
 	const setBootStage = useAppStore((state) => state.setBootStage)
 	const setLocalDirectories = useAppStore((state) => state.setLocalDirectories)
 	const setLocalDirectoryStatus = useAppStore((state) => state.setLocalDirectoryStatus)
+	const setDatabaseHealth = useAppStore((state) => state.setDatabaseHealth)
+	const setDatabaseStatus = useAppStore((state) => state.setDatabaseStatus)
 
 	useEffect(() => {
 		let isMounted = true
@@ -28,9 +30,22 @@ function App() {
 
 			if (localDirectoriesResult.ok) {
 				setLocalDirectories(localDirectoriesResult.data)
-				await systemService.runDemo()
+
+				const databaseResult = await databaseService.initializeDatabase()
+
+				if (!isMounted) {
+					return
+				}
+
+				if (databaseResult.ok) {
+					setDatabaseHealth(databaseResult.data)
+					await systemService.runDemo()
+				} else {
+					setDatabaseStatus('error')
+				}
 			} else {
 				setLocalDirectoryStatus('error')
+				setDatabaseStatus('error')
 			}
 
 			if (!isMounted) {
@@ -46,14 +61,14 @@ function App() {
 		return () => {
 			isMounted = false
 		}
-	}, [setAppReady, setBootStage, setLocalDirectories, setLocalDirectoryStatus])
+	}, [setAppReady, setBootStage, setDatabaseHealth, setDatabaseStatus, setLocalDirectories, setLocalDirectoryStatus])
 
 	if (!isAppReady || bootStage !== APP_BOOT_STAGES.READY) {
 		return (
 			<div className='min-h-screen px-3 py-3 md:px-4 md:py-4'>
 				<div className='mx-auto max-w-400'>
 					<LoadingState
-						description='先准备本地数据目录与配置目录，再进入工作区路由。'
+						description='先准备本地目录，再初始化 SQLite 与 migration。'
 						title='正在启动应用外壳'
 					/>
 				</div>

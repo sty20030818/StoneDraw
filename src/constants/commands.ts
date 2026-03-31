@@ -1,4 +1,7 @@
 export const TAURI_COMMANDS = {
+	DATABASE_INITIALIZE: 'database_initialize',
+	DATABASE_CHECK_HEALTH: 'database_check_health',
+	DATABASE_READ_SCHEMA_VERSION: 'database_read_schema_version',
 	DOCUMENTS_LIST: 'documents_list',
 	DOCUMENTS_OPEN: 'documents_open',
 	FILES_PREPARE_LOCAL_DIRECTORIES: 'files_prepare_local_directories',

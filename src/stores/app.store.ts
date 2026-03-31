@@ -5,6 +5,8 @@ import type {
 	AppBootStage,
 	AppError,
 	CommandBridgeStatus,
+	DatabaseHealthPayload,
+	DatabaseStatus,
 	LocalDirectoriesPayload,
 	LocalDirectoryStatus,
 } from '@/types'
@@ -17,6 +19,9 @@ type AppStoreState = {
 	localDirectoryStatus: LocalDirectoryStatus
 	localDirectories: LocalDirectoriesPayload | null
 	localDirectoriesReadyAt: string | null
+	databaseStatus: DatabaseStatus
+	databaseHealth: DatabaseHealthPayload | null
+	databaseReadyAt: string | null
 	lastCommandName: string | null
 	lastCommandAt: string | null
 	setBootStage: (bootStage: AppBootStage) => void
@@ -25,6 +30,9 @@ type AppStoreState = {
 	setLocalDirectoryStatus: (status: LocalDirectoryStatus) => void
 	setLocalDirectories: (directories: LocalDirectoriesPayload) => void
 	clearLocalDirectories: () => void
+	setDatabaseStatus: (status: DatabaseStatus) => void
+	setDatabaseHealth: (databaseHealth: DatabaseHealthPayload) => void
+	clearDatabaseHealth: () => void
 	clearLastError: () => void
 	reportCommandSuccess: (commandName: string) => void
 	reportCommandError: (commandName: string, error: AppError) => void
@@ -39,6 +47,9 @@ const initialAppState = {
 	localDirectoryStatus: 'idle' as LocalDirectoryStatus,
 	localDirectories: null,
 	localDirectoriesReadyAt: null,
+	databaseStatus: 'idle' as DatabaseStatus,
+	databaseHealth: null,
+	databaseReadyAt: null,
 	lastCommandName: null,
 	lastCommandAt: null,
 } satisfies Pick<
@@ -50,6 +61,9 @@ const initialAppState = {
 	| 'localDirectoryStatus'
 	| 'localDirectories'
 	| 'localDirectoriesReadyAt'
+	| 'databaseStatus'
+	| 'databaseHealth'
+	| 'databaseReadyAt'
 	| 'lastCommandName'
 	| 'lastCommandAt'
 >
@@ -72,6 +86,19 @@ export const useAppStore = create<AppStoreState>((set) => ({
 			localDirectories: null,
 			localDirectoryStatus: 'idle',
 			localDirectoriesReadyAt: null,
+		}),
+	setDatabaseStatus: (databaseStatus) => set({ databaseStatus }),
+	setDatabaseHealth: (databaseHealth) =>
+		set({
+			databaseHealth,
+			databaseStatus: 'ready',
+			databaseReadyAt: toIsoString(),
+		}),
+	clearDatabaseHealth: () =>
+		set({
+			databaseHealth: null,
+			databaseStatus: 'idle',
+			databaseReadyAt: null,
 		}),
 	clearLastError: () => set({ lastError: null }),
 	reportCommandSuccess: (commandName) =>

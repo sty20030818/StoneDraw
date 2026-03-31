@@ -1,6 +1,13 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRightIcon, FileStackIcon, FolderOpenIcon, LayoutGridIcon, PanelTopOpenIcon } from 'lucide-react'
+import {
+	ArrowRightIcon,
+	DatabaseZapIcon,
+	FileStackIcon,
+	FolderOpenIcon,
+	LayoutGridIcon,
+	PanelTopOpenIcon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import EmptyState from '@/components/states/EmptyState'
@@ -17,6 +24,9 @@ function WorkspacePage() {
 	const localDirectoryStatus = useAppStore((state) => state.localDirectoryStatus)
 	const localDirectories = useAppStore((state) => state.localDirectories)
 	const localDirectoriesReadyAt = useAppStore((state) => state.localDirectoriesReadyAt)
+	const databaseStatus = useAppStore((state) => state.databaseStatus)
+	const databaseHealth = useAppStore((state) => state.databaseHealth)
+	const databaseReadyAt = useAppStore((state) => state.databaseReadyAt)
 
 	return (
 		<div className='flex flex-col gap-5'>
@@ -27,10 +37,10 @@ function WorkspacePage() {
 							{APP_STATUS_BADGE}
 						</span>
 						<div className='flex flex-col gap-2'>
-							<h2 className='text-2xl font-semibold tracking-tight'>本地目录已经接入启动默认链路</h2>
+							<h2 className='text-2xl font-semibold tracking-tight'>SQLite 与 migration 已接入启动默认链路</h2>
 							<p className='max-w-2xl text-sm leading-6 text-muted-foreground'>
-								当前补丁把产品级本地目录根固定到 `~/.stonedraw`。后续
-								SQLite、文档文件和资源文件都会在这个根目录之上继续扩展。
+								当前版本会在 `~/.stonedraw/data/db/stonedraw.sqlite` 下初始化本地元数据数据库，
+								并在启动时顺序执行未应用的 migration。
 							</p>
 						</div>
 					</div>
@@ -68,9 +78,9 @@ function WorkspacePage() {
 							<FolderOpenIcon />
 						</div>
 						<div className='flex flex-col gap-1'>
-							<h3 className='font-semibold'>本地目录状态</h3>
+							<h3 className='font-semibold'>本地目录与数据库状态</h3>
 							<p className='text-sm text-muted-foreground'>
-								工作区页面通过 app store 展示目录桥接结果，不直接调用底层 command。
+								工作区页面通过 app store 展示目录与 SQLite bridge 结果，不直接调用底层 command。
 							</p>
 						</div>
 					</div>
@@ -106,6 +116,44 @@ function WorkspacePage() {
 								</p>
 							</div>
 						</div>
+						<Separator />
+						<div className='flex items-center gap-3'>
+							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+								<DatabaseZapIcon />
+							</div>
+							<div className='flex flex-col gap-1'>
+								<h4 className='font-semibold'>SQLite 元数据状态</h4>
+								<p className='text-sm text-muted-foreground'>当前阶段只负责元数据和 migration，不承载 scene 大对象。</p>
+							</div>
+						</div>
+						<div className='grid gap-3 sm:grid-cols-2'>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>数据库状态</p>
+								<p className='mt-1 text-sm font-medium'>{databaseStatus}</p>
+							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>最近就绪时间</p>
+								<p className='mt-1 text-sm font-medium'>{databaseReadyAt ?? '尚未完成数据库初始化'}</p>
+							</div>
+						</div>
+						<div className='grid gap-3'>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>数据库文件</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{databaseHealth?.databasePath ?? '等待数据库初始化'}
+								</p>
+							</div>
+							<div className='grid gap-3 sm:grid-cols-2'>
+								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+									<p className='text-xs text-muted-foreground'>当前 schema 版本</p>
+									<p className='mt-1 text-sm font-medium'>{databaseHealth?.schemaVersion ?? '未初始化'}</p>
+								</div>
+								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+									<p className='text-xs text-muted-foreground'>目标 schema 版本</p>
+									<p className='mt-1 text-sm font-medium'>{databaseHealth?.targetSchemaVersion ?? '未初始化'}</p>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -119,7 +167,7 @@ function WorkspacePage() {
 						<div className='flex flex-col gap-1'>
 							<h3 className='font-semibold'>当前版本覆盖范围</h3>
 							<p className='text-sm text-muted-foreground'>
-								这些能力已经纳入启动链路，可继续承接后面的 SQLite、文档文件和资源持久化能力。
+								这些能力已经纳入启动链路，可继续承接后面的文档元数据、设置持久化和索引表设计。
 							</p>
 						</div>
 					</div>
@@ -162,7 +210,7 @@ function WorkspacePage() {
 
 					<EmptyState
 						actionLabel='去设置页'
-						description='真实文档列表和最近打开记录会在后续版本挂到这里；现在先让工作区承接目录状态和路由跳转。'
+						description='真实文档列表和最近打开记录会在后续版本挂到这里；现在先让工作区承接目录、数据库状态和路由跳转。'
 						icon={FileStackIcon}
 						onAction={() => {
 							navigate(APP_ROUTES.SETTINGS)

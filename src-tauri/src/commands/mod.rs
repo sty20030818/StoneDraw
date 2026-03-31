@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+pub mod database;
 pub mod documents;
 pub mod files;
 pub mod settings;
@@ -39,9 +40,25 @@ pub fn success<T: Serialize>(data: T) -> CommandResult<T> {
 }
 
 impl CommandError {
+    pub fn db(message: impl Into<String>, details: impl Into<String>) -> Self {
+        Self {
+            code: CommandErrorCode::DbError,
+            message: message.into(),
+            details: Some(details.into()),
+        }
+    }
+
     pub fn io(message: impl Into<String>, details: impl Into<String>) -> Self {
         Self {
             code: CommandErrorCode::IoError,
+            message: message.into(),
+            details: Some(details.into()),
+        }
+    }
+
+    pub fn not_initialized(message: impl Into<String>, details: impl Into<String>) -> Self {
+        Self {
+            code: CommandErrorCode::NotInitialized,
             message: message.into(),
             details: Some(details.into()),
         }
@@ -67,6 +84,9 @@ impl CommandError {
 pub fn register(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
     builder.invoke_handler(tauri::generate_handler![
         system::system_demo,
+        database::database_initialize,
+        database::database_check_health,
+        database::database_read_schema_version,
         documents::documents_list,
         documents::documents_open,
         files::files_prepare_local_directories,
