@@ -72,6 +72,14 @@ impl CommandError {
         }
     }
 
+    pub fn not_found(message: impl Into<String>, details: impl Into<String>) -> Self {
+        Self {
+            code: CommandErrorCode::NotFound,
+            message: message.into(),
+            details: Some(details.into()),
+        }
+    }
+
     pub fn unimplemented(command: &str) -> Self {
         Self {
             code: CommandErrorCode::UnimplementedCommand,
@@ -87,8 +95,11 @@ pub fn register(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wr
         database::database_initialize,
         database::database_check_health,
         database::database_read_schema_version,
+        documents::documents_create,
+        documents::documents_get_by_id,
         documents::documents_list,
         documents::documents_open,
+        documents::documents_open_scene,
         files::files_prepare_local_directories,
         files::files_read_local_directories,
         files::files_resolve_data_dir,

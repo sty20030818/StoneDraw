@@ -65,6 +65,20 @@ pub fn read_database_schema_version(
     read_database_schema_version_from_root(&root_dir, DEFAULT_MIGRATIONS)
 }
 
+pub(crate) fn open_ready_connection(root_dir_path: &Path) -> Result<Connection, CommandError> {
+    ensure_database_ready(root_dir_path)?;
+
+    let database_path = database_path(root_dir_path);
+    let connection = open_connection(&database_path)?;
+    ensure_migration_table(&connection)?;
+
+    Ok(connection)
+}
+
+pub(crate) fn ensure_database_ready(root_dir_path: &Path) -> Result<(), CommandError> {
+    initialize_database_from_root(root_dir_path, DEFAULT_MIGRATIONS).map(|_| ())
+}
+
 fn initialize_database_from_root(
     root_dir_path: &Path,
     migrations: &[Migration],

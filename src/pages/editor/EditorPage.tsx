@@ -1,40 +1,47 @@
 import type { ComponentProps } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { DatabaseZapIcon, FileSearchIcon, PenToolIcon } from 'lucide-react'
 import { createInitialSceneData } from '@/adapters/excalidraw'
-import { APP_STATUS_BADGE } from '@/constants'
+import EmptyState from '@/components/states/EmptyState'
+import LoadingState from '@/components/states/LoadingState'
 import { Button } from '@/components/ui/button'
+import { APP_STATUS_BADGE } from '@/constants'
+import { APP_ROUTES } from '@/constants/routes'
 import { clearEditorApi, observeSceneChange, readActiveScene, setEditorApi } from '@/modules/editor'
 import { documentService, editorService } from '@/services'
 import { useAppStore, useEditorStore } from '@/stores'
+import type { DocumentMeta, SceneFilePayload } from '@/types'
 import { formatDateTime } from '@/utils'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
 type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>
 
-function createEditorBootstrapPayload() {
-	const draftResult = documentService.createDraft('画板草稿')
-	if (!draftResult.ok) {
-		throw new Error(draftResult.error.message)
-	}
-
-	const draftDocument = draftResult.data
-	const initialSceneResult = editorService.createEmptyScene(draftDocument.id, draftDocument.title)
-	if (!initialSceneResult.ok) {
-		throw new Error(initialSceneResult.error.message)
-	}
-
-	return {
-		document: draftDocument,
-		scene: initialSceneResult.data,
-	}
-}
+type EditorLoadState =
+	| {
+			status: 'loading'
+	  }
+	| {
+			status: 'error'
+			title: string
+			description: string
+	  }
+	| {
+			status: 'ready'
+			document: DocumentMeta
+			scene: SceneFilePayload
+	  }
 
 function EditorPage() {
-	const [{ document, scene }] = useState(createEditorBootstrapPayload)
+	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
+	const documentId = searchParams.get('documentId')
+	const [editorLoadState, setEditorLoadState] = useState<EditorLoadState>({
+		status: 'loading',
+	})
 	const commandBridgeStatus = useAppStore((state) => state.commandBridgeStatus)
 	const isEditorReady = useEditorStore((state) => state.isEditorReady)
 	const saveStatus = useEditorStore((state) => state.saveStatus)
@@ -43,15 +50,105 @@ function EditorPage() {
 	const setActiveDocumentId = useEditorStore((state) => state.setActiveDocumentId)
 	const setEditorReady = useEditorStore((state) => state.setEditorReady)
 	const setSaveStatus = useEditorStore((state) => state.setSaveStatus)
-	const initialData = useMemo(() => createInitialSceneData(scene), [scene])
 	const latestApiIdRef = useRef<string | null>(null)
+
+	useEffect(() => {
+		let isMounted = true
+
+		async function bootstrapEditor() {
+			if (!documentId) {
+				setEditorLoadState({
+					status: 'error',
+					title: '缺少文档 ID',
+					description: '请先从工作区创建或打开文档，再进入编辑器。',
+				})
+				return
+			}
+
+			setEditorLoadState({
+				status: 'loading',
+			})
+
+			const documentResult = await documentService.getById(documentId)
+
+			if (!isMounted) {
+				return
+			}
+
+			if (!documentResult.ok) {
+				setEditorLoadState({
+					status: 'error',
+					title: '文档不存在',
+					description: documentResult.error.message,
+				})
+				return
+			}
+
+			const sceneResult = await editorService.loadScene(documentId)
+
+			if (!isMounted) {
+				return
+			}
+
+			if (!sceneResult.ok) {
+				setEditorLoadState({
+					status: 'error',
+					title: 'scene 读取失败',
+					description: sceneResult.error.message,
+				})
+				return
+			}
+
+			setEditorLoadState({
+				status: 'ready',
+				document: documentResult.data,
+				scene: sceneResult.data,
+			})
+		}
+
+		void bootstrapEditor()
+
+		return () => {
+			isMounted = false
+			clearEditorApi()
+			setActiveDocumentId(null)
+			setSaveStatus('idle')
+		}
+	}, [documentId, setActiveDocumentId, setSaveStatus])
+
+	useEffect(() => {
+		if (editorLoadState.status !== 'ready') {
+			return
+		}
+
+		setActiveDocumentId(editorLoadState.document.id)
+		setSaveStatus('saved')
+	}, [editorLoadState, setActiveDocumentId, setSaveStatus])
+
+	const initialData = useMemo(() => {
+		if (editorLoadState.status !== 'ready') {
+			return null
+		}
+
+		return createInitialSceneData(editorLoadState.scene)
+	}, [editorLoadState])
 
 	const handleSceneChange = useCallback(
 		(...args: ExcalidrawChangeArgs) => {
+			if (editorLoadState.status !== 'ready') {
+				return
+			}
+
 			const [elements, appState, files] = args
-			observeSceneChange(document.id, elements, appState, files, document.title)
+			observeSceneChange(
+				editorLoadState.document.id,
+				elements,
+				appState,
+				files,
+				editorLoadState.document.title,
+			)
 		},
-		[document.id, document.title],
+		[editorLoadState],
 	)
 
 	const handleApiReady = useCallback(
@@ -72,16 +169,6 @@ function EditorPage() {
 		[setEditorReady],
 	)
 
-	useEffect(() => {
-		setActiveDocumentId(document.id)
-		setSaveStatus('saved')
-
-		return () => {
-			clearEditorApi()
-			setActiveDocumentId(null)
-		}
-	}, [document.id, setActiveDocumentId, setSaveStatus])
-
 	function handleInspectScene() {
 		const currentScene = readActiveScene()
 
@@ -89,8 +176,33 @@ function EditorPage() {
 			return
 		}
 
-		console.info('[StoneDraw][editor.page] 当前 scene 占位读取成功。', currentScene)
+		console.info('[StoneDraw][editor.page] 当前 scene 读取成功。', currentScene)
 	}
+
+	if (editorLoadState.status === 'loading') {
+		return (
+			<LoadingState
+				title='正在加载文档'
+				description='先读取文档元数据，再加载当前 scene 文件。'
+			/>
+		)
+	}
+
+	if (editorLoadState.status === 'error') {
+		return (
+			<EmptyState
+				actionLabel='返回工作区'
+				description={editorLoadState.description}
+				icon={FileSearchIcon}
+				onAction={() => {
+					navigate(APP_ROUTES.WORKSPACE)
+				}}
+				title={editorLoadState.title}
+			/>
+		)
+	}
+
+	const activeDocument = editorLoadState.document
 
 	return (
 		<section className='grid gap-4 xl:grid-cols-[19rem_minmax(0,1fr)]'>
@@ -100,9 +212,9 @@ function EditorPage() {
 						{APP_STATUS_BADGE}
 					</span>
 					<div className='flex flex-col gap-1'>
-						<h2 className='text-lg font-semibold tracking-tight'>{document.title}</h2>
+						<h2 className='text-lg font-semibold tracking-tight'>{activeDocument.title}</h2>
 						<p className='text-sm leading-6 text-muted-foreground'>
-							Excalidraw 已接进应用路由壳，保存、导出和文档持久化会继续叠加在这个页面。
+							当前画布数据已经来自真实文档目录与 `current.scene.json`，不再使用前端草稿占位。
 						</p>
 					</div>
 				</div>
@@ -113,7 +225,7 @@ function EditorPage() {
 							<FileSearchIcon />
 							文档 ID
 						</div>
-						<p className='mt-2 break-all text-sm font-medium'>{document.id}</p>
+						<p className='mt-2 break-all text-sm font-medium'>{activeDocument.id}</p>
 					</div>
 					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3'>
 						<div className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
@@ -131,6 +243,11 @@ function EditorPage() {
 							<p className='font-medium'>命令桥接：{commandBridgeStatus}</p>
 							<p className='text-muted-foreground'>保存状态：{saveStatus}</p>
 						</div>
+					</div>
+					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
+						<p className='text-xs font-medium text-muted-foreground'>scene 文件</p>
+						<p className='mt-2 break-all font-medium'>{activeDocument.currentScenePath}</p>
+						<p className='mt-1 text-muted-foreground'>最近更新时间：{formatDateTime(activeDocument.updatedAt)}</p>
 					</div>
 					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
 						<p className='text-xs font-medium text-muted-foreground'>Scene 监听</p>
@@ -154,7 +271,7 @@ function EditorPage() {
 				<div className='h-[72vh] min-h-152 [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
 					<Excalidraw
 						excalidrawAPI={handleApiReady}
-						initialData={initialData}
+						initialData={initialData ?? undefined}
 						langCode='zh-CN'
 						onChange={handleSceneChange}
 						theme='light'

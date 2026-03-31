@@ -7,6 +7,18 @@ export const APP_ROUTES = {
 	SETTINGS: '/settings',
 } as const
 
+export function buildEditorRoute(documentId?: string): string {
+	if (!documentId) {
+		return APP_ROUTES.EDITOR
+	}
+
+	const searchParams = new URLSearchParams({
+		documentId,
+	})
+
+	return `${APP_ROUTES.EDITOR}?${searchParams.toString()}`
+}
+
 export type AppRoutePath = (typeof APP_ROUTES)[keyof typeof APP_ROUTES]
 
 export type AppSceneKey = 'workspace' | 'editor' | 'settings' | 'not-found'
