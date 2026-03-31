@@ -19,12 +19,14 @@
 html,
 body,
 #root {
+	height: 100%;
 	min-height: 100vh;
 	margin: 0;
 }
 
 body {
 	min-width: 320px;
+	overflow: hidden;
 }
 
 .app-shell {
@@ -100,6 +102,114 @@ body {
 	word-break: break-word;
 }
 
+.editor-page {
+	min-height: 100vh;
+	display: grid;
+	grid-template-rows: auto auto minmax(0, 1fr);
+	gap: 12px;
+	padding: 14px;
+}
+
+.editor-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 20px 22px;
+	border-radius: 24px;
+	background: rgba(255, 255, 255, 0.82);
+	border: 1px solid rgba(24, 33, 47, 0.08);
+	backdrop-filter: blur(18px);
+	box-shadow: 0 20px 40px rgba(31, 47, 84, 0.08);
+}
+
+.editor-header h1 {
+	margin: 12px 0 8px;
+	font-size: clamp(28px, 4vw, 42px);
+	line-height: 1.1;
+	letter-spacing: -0.03em;
+}
+
+.editor-header p {
+	margin: 0;
+	max-width: 760px;
+	color: #4e5a6a;
+}
+
+.editor-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: rgba(30, 99, 255, 0.1);
+	color: #1f4ed8;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.editor-actions {
+	display: flex;
+	align-items: center;
+}
+
+.editor-action-button {
+	border: none;
+	border-radius: 16px;
+	padding: 12px 18px;
+	font: inherit;
+	font-weight: 600;
+	color: #fff;
+	background: linear-gradient(135deg, #2447ce 0%, #3b82f6 100%);
+	box-shadow: 0 14px 28px rgba(36, 71, 206, 0.28);
+	cursor: pointer;
+}
+
+.editor-action-button:hover {
+	filter: brightness(1.04);
+}
+
+.editor-meta-grid {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.editor-meta-card {
+	padding: 16px 18px;
+	border-radius: 20px;
+	background: rgba(255, 255, 255, 0.8);
+	border: 1px solid rgba(24, 33, 47, 0.08);
+	box-shadow: 0 16px 30px rgba(31, 47, 84, 0.06);
+	backdrop-filter: blur(14px);
+}
+
+.editor-meta-card span {
+	display: block;
+	margin-bottom: 8px;
+	color: #607086;
+	font-size: 13px;
+}
+
+.editor-meta-card strong {
+	display: block;
+	color: #18212f;
+	font-size: 14px;
+	word-break: break-word;
+}
+
+.editor-stage {
+	min-height: 0;
+	border-radius: 28px;
+	overflow: hidden;
+	border: 1px solid rgba(24, 33, 47, 0.08);
+	box-shadow: 0 24px 54px rgba(31, 47, 84, 0.12);
+	background: rgba(255, 255, 255, 0.92);
+}
+
+.editor-stage .excalidraw {
+	height: 100%;
+}
+
 @media (max-width: 640px) {
 	.status-card {
 		padding: 28px 20px;
@@ -112,5 +222,19 @@ body {
 
 	.status-card p {
 		font-size: 16px;
+	}
+
+	.editor-page {
+		grid-template-rows: auto auto minmax(0, 1fr);
+		padding: 10px;
+	}
+
+	.editor-header {
+		flex-direction: column;
+		padding: 18px;
+	}
+
+	.editor-meta-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }

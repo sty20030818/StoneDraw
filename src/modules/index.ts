@@ -1,2 +1,1 @@
-// 预留业务模块聚合入口，后续版本在这里组织更高层的业务模块导出。
-export {}
+export { applyScene, clearEditorApi, getEditorApi, observeSceneChange, readActiveScene, setEditorApi } from './editor'

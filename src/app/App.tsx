@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { APP_BOOT_STAGES } from '@/constants'
-import { HomePage } from '@/pages'
-import { settingsService, systemService } from '@/services'
+import { EditorPage } from '@/pages'
+import { systemService } from '@/services'
 import { useAppStore } from '@/stores'
 
 function App() {
@@ -13,10 +13,6 @@ function App() {
 
 		async function bootstrapApp() {
 			await systemService.runDemo()
-
-			if (import.meta.env.DEV) {
-				await settingsService.read()
-			}
 
 			if (!isMounted) {
 				return
@@ -33,7 +29,7 @@ function App() {
 		}
 	}, [setAppReady, setBootStage])
 
-	return <HomePage />
+	return <EditorPage />
 }
 
 export default App

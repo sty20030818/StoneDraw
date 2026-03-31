@@ -12,8 +12,16 @@ export const SAVE_STATUSES: Record<'IDLE' | 'DIRTY' | 'SAVING' | 'SAVED', SaveSt
 	SAVED: 'saved',
 }
 
-export const APP_STATUS_BADGE = '0.1.2 工程骨架阶段'
+export const APP_STATUS_BADGE = '0.1.4 Excalidraw 接入阶段'
 
-export const APP_FEATURE_SCOPE = ['目录结构', '共享类型', '状态管理', 'Service 骨架'] as const
+export const APP_FEATURE_SCOPE = ['Excalidraw 接入', '编辑器页面', 'API 引用', 'Scene 监听'] as const
 
-export const TECH_STACK_LABELS = ['React 19', 'TypeScript 6', 'Vite 8', 'Tauri 2', 'Bun', 'Zustand 5'] as const
+export const TECH_STACK_LABELS = [
+	'React 19',
+	'TypeScript 6',
+	'Vite 8',
+	'Tauri 2',
+	'Bun',
+	'Zustand 5',
+	'Excalidraw',
+] as const

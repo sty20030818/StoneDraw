@@ -7,10 +7,12 @@ type EditorStoreState = {
 	isEditorReady: boolean
 	saveStatus: SaveStatus
 	lastSceneUpdatedAt: string | null
+	lastSceneElementCount: number
 	setActiveDocumentId: (documentId: string | null) => void
 	setEditorReady: (isReady: boolean) => void
 	setSaveStatus: (saveStatus: SaveStatus) => void
 	setLastSceneUpdatedAt: (timestamp: string | null) => void
+	setLastSceneElementCount: (count: number) => void
 	reset: () => void
 }
 
@@ -19,7 +21,11 @@ const initialEditorState = {
 	isEditorReady: false,
 	saveStatus: SAVE_STATUSES.IDLE,
 	lastSceneUpdatedAt: null,
-} satisfies Pick<EditorStoreState, 'activeDocumentId' | 'isEditorReady' | 'saveStatus' | 'lastSceneUpdatedAt'>
+	lastSceneElementCount: 0,
+} satisfies Pick<
+	EditorStoreState,
+	'activeDocumentId' | 'isEditorReady' | 'saveStatus' | 'lastSceneUpdatedAt' | 'lastSceneElementCount'
+>
 
 // 编辑器 store 仅保存运行态，真实编辑器调用统一放到 service 或 adapter 层。
 export const useEditorStore = create<EditorStoreState>((set) => ({
@@ -28,5 +34,6 @@ export const useEditorStore = create<EditorStoreState>((set) => ({
 	setEditorReady: (isEditorReady) => set({ isEditorReady }),
 	setSaveStatus: (saveStatus) => set({ saveStatus }),
 	setLastSceneUpdatedAt: (lastSceneUpdatedAt) => set({ lastSceneUpdatedAt }),
+	setLastSceneElementCount: (lastSceneElementCount) => set({ lastSceneElementCount }),
 	reset: () => set(initialEditorState),
 }))

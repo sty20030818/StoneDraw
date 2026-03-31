@@ -1,2 +1,2 @@
-// 预留底层适配器聚合入口，后续版本在这里接入编辑器和场景读写适配器。
-export {}
+export { applySceneToApi, createInitialSceneData, createScenePayload, readSceneFromApi } from './excalidraw'
+export { exportScenePlaceholder } from './excalidraw'
