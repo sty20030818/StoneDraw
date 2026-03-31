@@ -4,11 +4,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { DatabaseZapIcon, FileSearchIcon, PenToolIcon } from 'lucide-react'
+import { DatabaseZapIcon, FileSearchIcon, PenToolIcon, PencilLineIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import { createInitialSceneData } from '@/adapters/excalidraw'
 import EmptyState from '@/components/states/EmptyState'
 import LoadingState from '@/components/states/LoadingState'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { APP_STATUS_BADGE } from '@/constants'
 import { APP_ROUTES } from '@/constants/routes'
 import { clearEditorApi, observeSceneChange, readActiveScene, setEditorApi } from '@/modules/editor'
@@ -51,6 +53,8 @@ function EditorPage() {
 	const setEditorReady = useEditorStore((state) => state.setEditorReady)
 	const setSaveStatus = useEditorStore((state) => state.setSaveStatus)
 	const latestApiIdRef = useRef<string | null>(null)
+	const [renameDraft, setRenameDraft] = useState('')
+	const [isRenaming, setIsRenaming] = useState(false)
 
 	useEffect(() => {
 		let isMounted = true
@@ -125,6 +129,14 @@ function EditorPage() {
 		setSaveStatus('saved')
 	}, [editorLoadState, setActiveDocumentId, setSaveStatus])
 
+	useEffect(() => {
+		if (editorLoadState.status !== 'ready') {
+			return
+		}
+
+		setRenameDraft(editorLoadState.document.title)
+	}, [editorLoadState])
+
 	const initialData = useMemo(() => {
 		if (editorLoadState.status !== 'ready') {
 			return null
@@ -179,6 +191,43 @@ function EditorPage() {
 		console.info('[StoneDraw][editor.page] 当前 scene 读取成功。', currentScene)
 	}
 
+	async function handleRenameDocument() {
+		if (editorLoadState.status !== 'ready') {
+			return
+		}
+
+		const normalizedTitle = renameDraft.trim()
+
+		if (!normalizedTitle) {
+			toast.error('标题不能为空。')
+			return
+		}
+
+		setIsRenaming(true)
+
+		const result = await documentService.rename(editorLoadState.document.id, normalizedTitle)
+
+		setIsRenaming(false)
+
+		if (!result.ok) {
+			toast.error(result.error.message)
+			return
+		}
+
+		setEditorLoadState((currentState) => {
+			if (currentState.status !== 'ready') {
+				return currentState
+			}
+
+			return {
+				...currentState,
+				document: result.data,
+			}
+		})
+		setRenameDraft(result.data.title)
+		toast.success('文档标题已更新。')
+	}
+
 	if (editorLoadState.status === 'loading') {
 		return (
 			<LoadingState
@@ -216,6 +265,43 @@ function EditorPage() {
 						<p className='text-sm leading-6 text-muted-foreground'>
 							当前画布数据已经来自真实文档目录与 `current.scene.json`，不再使用前端草稿占位。
 						</p>
+					</div>
+				</div>
+
+				<div className='rounded-2xl border border-border/70 bg-card px-4 py-3'>
+					<p className='text-xs font-medium text-muted-foreground'>文档标题</p>
+					<div className='mt-3 flex flex-col gap-3'>
+						<Input
+							value={renameDraft}
+							maxLength={120}
+							disabled={isRenaming}
+							onChange={(event) => {
+								setRenameDraft(event.target.value)
+							}}
+							placeholder='输入新的文档标题'
+						/>
+						<div className='flex flex-wrap gap-2'>
+							<Button
+								type='button'
+								size='sm'
+								disabled={isRenaming}
+								onClick={() => {
+									void handleRenameDocument()
+								}}>
+								<PencilLineIcon data-icon='inline-start' />
+								{isRenaming ? '正在保存标题' : '更新标题'}
+							</Button>
+							<Button
+								type='button'
+								size='sm'
+								variant='outline'
+								disabled={isRenaming}
+								onClick={() => {
+									setRenameDraft(activeDocument.title)
+								}}>
+								恢复当前标题
+							</Button>
+						</div>
 					</div>
 				</div>
 

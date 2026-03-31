@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { CircleHelpIcon } from 'lucide-react'
-import { toast } from 'sonner'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -78,7 +77,6 @@ export function DialogHostProvider({ children }: { children: ReactNode }) {
 	const handleConfirm = useCallback(() => {
 		confirmDialogPayload?.onConfirm?.()
 		closeConfirmDialog()
-		toast.success('确认弹窗占位已触发。')
 	}, [closeConfirmDialog, confirmDialogPayload])
 
 	const contextValue = useMemo<DialogHostContextValue>(

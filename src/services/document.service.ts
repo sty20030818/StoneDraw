@@ -19,8 +19,35 @@ export const documentService = {
 		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST)
 	},
 
+	async listRecent(): Promise<TauriCommandResult<DocumentMeta[]>> {
+		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST_RECENT)
+	},
+
+	async listTrashed(): Promise<TauriCommandResult<DocumentMeta[]>> {
+		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST_TRASHED)
+	},
+
 	async open(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
 		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_OPEN, {
+			documentId,
+		})
+	},
+
+	async rename(documentId: string, title: string): Promise<TauriCommandResult<DocumentMeta>> {
+		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_RENAME, {
+			documentId,
+			title,
+		})
+	},
+
+	async moveToTrash(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
+		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_MOVE_TO_TRASH, {
+			documentId,
+		})
+	},
+
+	async restore(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
+		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_RESTORE, {
 			documentId,
 		})
 	},

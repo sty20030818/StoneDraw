@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use rusqlite::{params, OptionalExtension, Row};
+use rusqlite::{params, Connection, OptionalExtension, Row};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tauri::AppHandle;
@@ -59,6 +59,13 @@ pub struct SceneFilePayload {
     pub meta: SceneMetaPayload,
 }
 
+#[derive(Debug, Clone, Copy)]
+enum DocumentFilter {
+    Active,
+    Deleted,
+    Any,
+}
+
 pub fn create_document(
     app: &AppHandle,
     title: Option<String>,
@@ -80,6 +87,41 @@ pub fn list_documents(app: &AppHandle) -> Result<Vec<DocumentMetaPayload>, Comma
     list_documents_from_root(&root_dir)
 }
 
+pub fn list_recent_documents(app: &AppHandle) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    list_recent_documents_from_root(&root_dir)
+}
+
+pub fn list_trashed_documents(app: &AppHandle) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    list_trashed_documents_from_root(&root_dir)
+}
+
+pub fn rename_document(
+    app: &AppHandle,
+    document_id: &str,
+    title: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    rename_document_from_root(&root_dir, document_id, title)
+}
+
+pub fn move_document_to_trash(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    move_document_to_trash_from_root(&root_dir, document_id)
+}
+
+pub fn restore_document(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    restore_document_from_root(&root_dir, document_id)
+}
+
 pub fn open_document_scene(
     app: &AppHandle,
     document_id: &str,
@@ -94,7 +136,7 @@ pub(crate) fn create_document_from_root(
 ) -> Result<DocumentMetaPayload, CommandError> {
     let now = current_timestamp_ms()?;
     let document_id = generate_document_id(now);
-    let normalized_title = normalize_document_title(title);
+    let normalized_title = normalize_optional_document_title(title);
     let layout = document_path_layout(root_dir_path, &document_id);
 
     ensure_document_layout_ready(&layout)?;
@@ -129,73 +171,205 @@ pub(crate) fn get_document_by_id_from_root(
 ) -> Result<DocumentMetaPayload, CommandError> {
     let connection = open_ready_connection(root_dir_path)?;
 
-    connection
-        .query_row(
-            "
-            SELECT
-                id,
-                title,
-                current_scene_path,
-                created_at,
-                updated_at,
-                last_opened_at,
-                is_deleted,
-                deleted_at,
-                source_type,
-                save_status
-            FROM documents
-            WHERE id = ?1 AND is_deleted = 0
-            LIMIT 1;
-            ",
-            params![document_id],
-            map_document_meta_row,
+    fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Active)?.ok_or_else(|| {
+        CommandError::not_found(
+            "文档不存在",
+            format!("documentId={document_id} 未命中可用文档记录"),
         )
-        .optional()
-        .map_err(|error| {
-            CommandError::db(
-                "读取文档元数据失败",
-                format!("documentId={document_id}, error={error}"),
-            )
-        })?
-        .ok_or_else(|| {
-            CommandError::not_found(
-                "文档不存在",
-                format!("documentId={document_id} 未命中可用文档记录"),
-            )
-        })
+    })
 }
 
 pub(crate) fn list_documents_from_root(
     root_dir_path: &Path,
 ) -> Result<Vec<DocumentMetaPayload>, CommandError> {
     let connection = open_ready_connection(root_dir_path)?;
-    let mut statement = connection
-        .prepare(
+    list_document_metas(
+        &connection,
+        "
+        SELECT
+            id,
+            title,
+            current_scene_path,
+            created_at,
+            updated_at,
+            last_opened_at,
+            is_deleted,
+            deleted_at,
+            source_type,
+            save_status
+        FROM documents
+        WHERE is_deleted = 0
+        ORDER BY updated_at DESC;
+        ",
+        "读取文档列表",
+    )
+}
+
+pub(crate) fn list_recent_documents_from_root(
+    root_dir_path: &Path,
+) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+    list_document_metas(
+        &connection,
+        "
+        SELECT
+            d.id,
+            d.title,
+            d.current_scene_path,
+            d.created_at,
+            d.updated_at,
+            d.last_opened_at,
+            d.is_deleted,
+            d.deleted_at,
+            d.source_type,
+            d.save_status
+        FROM recent_opens AS ro
+        INNER JOIN documents AS d ON d.id = ro.document_id
+        WHERE d.is_deleted = 0
+        ORDER BY ro.opened_at DESC;
+        ",
+        "读取最近打开列表",
+    )
+}
+
+pub(crate) fn list_trashed_documents_from_root(
+    root_dir_path: &Path,
+) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+    list_document_metas(
+        &connection,
+        "
+        SELECT
+            id,
+            title,
+            current_scene_path,
+            created_at,
+            updated_at,
+            last_opened_at,
+            is_deleted,
+            deleted_at,
+            source_type,
+            save_status
+        FROM documents
+        WHERE is_deleted = 1
+        ORDER BY deleted_at DESC, updated_at DESC;
+        ",
+        "读取回收站文档列表",
+    )
+}
+
+pub(crate) fn rename_document_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+    title: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let normalized_title = normalize_required_document_title(title)?;
+    let now = current_timestamp_ms()?;
+    let connection = open_ready_connection(root_dir_path)?;
+
+    let affected_rows = connection
+        .execute(
             "
-            SELECT
-                id,
-                title,
-                current_scene_path,
-                created_at,
-                updated_at,
-                last_opened_at,
-                is_deleted,
-                deleted_at,
-                source_type,
-                save_status
-            FROM documents
-            WHERE is_deleted = 0
-            ORDER BY updated_at DESC;
+            UPDATE documents
+            SET title = ?1, updated_at = ?2
+            WHERE id = ?3 AND is_deleted = 0;
             ",
+            params![normalized_title, now, document_id],
         )
-        .map_err(|error| CommandError::db("准备文档列表查询失败", error.to_string()))?;
+        .map_err(|error| {
+            CommandError::db(
+                "更新文档标题失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
 
-    let rows = statement
-        .query_map([], map_document_meta_row)
-        .map_err(|error| CommandError::db("执行文档列表查询失败", error.to_string()))?;
+    if affected_rows == 0 {
+        return Err(CommandError::not_found(
+            "文档不存在或已删除",
+            format!("documentId={document_id} 无法重命名"),
+        ));
+    }
 
-    rows.collect::<Result<Vec<_>, _>>()
-        .map_err(|error| CommandError::db("解析文档列表结果失败", error.to_string()))
+    get_document_by_id_from_root(root_dir_path, document_id)
+}
+
+pub(crate) fn move_document_to_trash_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+    let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?
+        .ok_or_else(|| {
+            CommandError::not_found(
+                "文档不存在",
+                format!("documentId={document_id} 无法删除"),
+            )
+        })?;
+
+    if existing_document.is_deleted {
+        return Ok(existing_document);
+    }
+
+    let now = current_timestamp_ms()?;
+    connection
+        .execute(
+            "
+            UPDATE documents
+            SET is_deleted = 1, deleted_at = ?1, updated_at = ?1
+            WHERE id = ?2 AND is_deleted = 0;
+            ",
+            params![now, document_id],
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "移动文档到回收站失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+
+    fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Deleted)?.ok_or_else(|| {
+        CommandError::not_found(
+            "文档不存在",
+            format!("documentId={document_id} 删除后未命中记录"),
+        )
+    })
+}
+
+pub(crate) fn restore_document_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+    let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?
+        .ok_or_else(|| {
+            CommandError::not_found(
+                "文档不存在",
+                format!("documentId={document_id} 无法恢复"),
+            )
+        })?;
+
+    if !existing_document.is_deleted {
+        return Ok(existing_document);
+    }
+
+    let now = current_timestamp_ms()?;
+    connection
+        .execute(
+            "
+            UPDATE documents
+            SET is_deleted = 0, deleted_at = NULL, updated_at = ?1
+            WHERE id = ?2 AND is_deleted = 1;
+            ",
+            params![now, document_id],
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "恢复文档失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+
+    get_document_by_id_from_root(root_dir_path, document_id)
 }
 
 pub(crate) fn open_document_scene_from_root(
@@ -204,7 +378,6 @@ pub(crate) fn open_document_scene_from_root(
 ) -> Result<SceneFilePayload, CommandError> {
     let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
     let scene_path = PathBuf::from(&document_meta.current_scene_path);
-
     let scene_payload = read_scene_file(&scene_path)?;
 
     if scene_payload.document_id != document_id {
@@ -218,6 +391,8 @@ pub(crate) fn open_document_scene_from_root(
             ),
         ));
     }
+
+    record_document_opened(root_dir_path, document_id)?;
 
     Ok(scene_payload)
 }
@@ -236,6 +411,106 @@ fn map_document_meta_row(row: &Row<'_>) -> rusqlite::Result<DocumentMetaPayload>
         deleted_at: row.get(7)?,
         source_type: row.get(8)?,
         save_status: row.get(9)?,
+    })
+}
+
+fn fetch_document_meta_by_id(
+    connection: &Connection,
+    document_id: &str,
+    filter: DocumentFilter,
+) -> Result<Option<DocumentMetaPayload>, CommandError> {
+    let sql = match filter {
+        DocumentFilter::Active => {
+            "
+            SELECT
+                id,
+                title,
+                current_scene_path,
+                created_at,
+                updated_at,
+                last_opened_at,
+                is_deleted,
+                deleted_at,
+                source_type,
+                save_status
+            FROM documents
+            WHERE id = ?1 AND is_deleted = 0
+            LIMIT 1;
+            "
+        }
+        DocumentFilter::Deleted => {
+            "
+            SELECT
+                id,
+                title,
+                current_scene_path,
+                created_at,
+                updated_at,
+                last_opened_at,
+                is_deleted,
+                deleted_at,
+                source_type,
+                save_status
+            FROM documents
+            WHERE id = ?1 AND is_deleted = 1
+            LIMIT 1;
+            "
+        }
+        DocumentFilter::Any => {
+            "
+            SELECT
+                id,
+                title,
+                current_scene_path,
+                created_at,
+                updated_at,
+                last_opened_at,
+                is_deleted,
+                deleted_at,
+                source_type,
+                save_status
+            FROM documents
+            WHERE id = ?1
+            LIMIT 1;
+            "
+        }
+    };
+
+    connection
+        .query_row(sql, params![document_id], map_document_meta_row)
+        .optional()
+        .map_err(|error| {
+            CommandError::db(
+                "读取文档元数据失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })
+}
+
+fn list_document_metas(
+    connection: &Connection,
+    sql: &str,
+    operation_label: &str,
+) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+    let mut statement = connection.prepare(sql).map_err(|error| {
+        CommandError::db(
+            format!("准备{operation_label}查询失败"),
+            error.to_string(),
+        )
+    })?;
+
+    let rows = statement.query_map([], map_document_meta_row).map_err(|error| {
+        CommandError::db(
+            format!("执行{operation_label}查询失败"),
+            error.to_string(),
+        )
+    })?;
+
+    rows.collect::<Result<Vec<_>, _>>().map_err(|error| {
+        CommandError::db(
+            format!("解析{operation_label}结果失败"),
+            error.to_string(),
+        )
     })
 }
 
@@ -283,6 +558,66 @@ fn insert_document_meta(
         })?;
 
     Ok(())
+}
+
+fn record_document_opened(root_dir_path: &Path, document_id: &str) -> Result<(), CommandError> {
+    let mut connection = open_ready_connection(root_dir_path)?;
+    let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Active)?
+        .ok_or_else(|| {
+            CommandError::not_found(
+                "文档不存在",
+                format!("documentId={document_id} 无法记录最近打开"),
+            )
+        })?;
+
+    let now = current_timestamp_ms()?;
+    let transaction = connection.transaction().map_err(|error| {
+        CommandError::db(
+            "开启最近打开写入事务失败",
+            format!("documentId={document_id}, error={error}"),
+        )
+    })?;
+
+    transaction
+        .execute(
+            "
+            UPDATE documents
+            SET last_opened_at = ?1
+            WHERE id = ?2 AND is_deleted = 0;
+            ",
+            params![now, existing_document.id],
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "更新文档最近打开时间失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+
+    transaction
+        .execute(
+            "
+            INSERT INTO recent_opens (id, document_id, opened_at)
+            VALUES (?1, ?2, ?3)
+            ON CONFLICT(id) DO UPDATE SET
+                document_id = excluded.document_id,
+                opened_at = excluded.opened_at;
+            ",
+            params![document_id, document_id, now],
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "写入最近打开记录失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+
+    transaction.commit().map_err(|error| {
+        CommandError::db(
+            "提交最近打开事务失败",
+            format!("documentId={document_id}, error={error}"),
+        )
+    })
 }
 
 fn ensure_document_layout_ready(
@@ -376,12 +711,22 @@ fn generate_document_id(timestamp: i64) -> String {
     format!("{DOCUMENT_ID_PREFIX}-{timestamp}-{}", std::process::id())
 }
 
-fn normalize_document_title(title: Option<&str>) -> String {
+fn normalize_optional_document_title(title: Option<&str>) -> String {
     title
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .unwrap_or(DEFAULT_DOCUMENT_TITLE)
         .to_string()
+}
+
+fn normalize_required_document_title(title: &str) -> Result<String, CommandError> {
+    let normalized = title.trim();
+
+    if normalized.is_empty() {
+        return Err(CommandError::invalid_argument("title 不能为空"));
+    }
+
+    Ok(normalized.to_string())
 }
 
 fn current_timestamp_ms() -> Result<i64, CommandError> {
@@ -402,7 +747,9 @@ mod tests {
 
     use super::{
         create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
-        open_document_scene_from_root,
+        list_recent_documents_from_root, list_trashed_documents_from_root,
+        move_document_to_trash_from_root, open_document_scene_from_root, rename_document_from_root,
+        restore_document_from_root,
     };
 
     fn unique_temp_path(name: &str) -> std::path::PathBuf {
@@ -420,12 +767,16 @@ mod tests {
 
         let created_document = create_document_from_root(&root_directory_path, Some("白板 A"))
             .expect("创建文档应成功");
-        let fetched_document = get_document_by_id_from_root(&root_directory_path, &created_document.id)
-            .expect("按 ID 查询文档应成功");
+        let fetched_document =
+            get_document_by_id_from_root(&root_directory_path, &created_document.id)
+                .expect("按 ID 查询文档应成功");
         let listed_documents =
             list_documents_from_root(&root_directory_path).expect("读取文档列表应成功");
-        let scene_payload = open_document_scene_from_root(&root_directory_path, &created_document.id)
-            .expect("读取文档 scene 应成功");
+        let scene_payload =
+            open_document_scene_from_root(&root_directory_path, &created_document.id)
+                .expect("读取文档 scene 应成功");
+        let recent_documents =
+            list_recent_documents_from_root(&root_directory_path).expect("最近打开列表应成功");
 
         assert_eq!(created_document.id, fetched_document.id);
         assert_eq!(created_document.title, "白板 A");
@@ -435,6 +786,47 @@ mod tests {
         assert_eq!(scene_payload.meta.title, "白板 A");
         assert!(scene_payload.scene.elements.is_empty());
         assert!(PathBuf::from(&created_document.current_scene_path).exists());
+        assert_eq!(recent_documents.len(), 1);
+        assert_eq!(recent_documents[0].id, created_document.id);
+        assert!(recent_documents[0].last_opened_at.is_some());
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn rename_trash_restore_and_recent_open_flow_work_together() {
+        let root_directory_path = unique_temp_path("lifecycle");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 B"))
+            .expect("创建文档应成功");
+
+        let renamed_document =
+            rename_document_from_root(&root_directory_path, &created_document.id, "白板 B-重命名")
+                .expect("重命名文档应成功");
+        let _scene =
+            open_document_scene_from_root(&root_directory_path, &created_document.id)
+                .expect("打开文档应成功写入最近打开");
+        let trashed_document =
+            move_document_to_trash_from_root(&root_directory_path, &created_document.id)
+                .expect("删除到回收站应成功");
+
+        let active_documents =
+            list_documents_from_root(&root_directory_path).expect("主列表应可读取");
+        let recent_documents =
+            list_recent_documents_from_root(&root_directory_path).expect("最近打开列表应可读取");
+        let trashed_documents =
+            list_trashed_documents_from_root(&root_directory_path).expect("回收站列表应可读取");
+        let restored_document =
+            restore_document_from_root(&root_directory_path, &created_document.id)
+                .expect("恢复文档应成功");
+
+        assert_eq!(renamed_document.title, "白板 B-重命名");
+        assert!(trashed_document.is_deleted);
+        assert!(active_documents.is_empty());
+        assert!(recent_documents.is_empty());
+        assert_eq!(trashed_documents.len(), 1);
+        assert_eq!(trashed_documents[0].id, created_document.id);
+        assert_eq!(restored_document.title, "白板 B-重命名");
+        assert!(!restored_document.is_deleted);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
