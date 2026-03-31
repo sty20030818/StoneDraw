@@ -1,0 +1,69 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"printWidth": 120,
+	"tabWidth": 2,
+	"useTabs": true,
+	"semi": false,
+	"singleQuote": true,
+	"quoteProps": "as-needed",
+	"trailingComma": "all",
+	"bracketSpacing": true,
+	"bracketSameLine": true,
+	"singleAttributePerLine": true,
+	"arrowParens": "always",
+	"proseWrap": "preserve",
+	"embeddedLanguageFormatting": "auto",
+	"htmlWhitespaceSensitivity": "css",
+	"vueIndentScriptAndStyle": true,
+	"endOfLine": "lf",
+	"jsxSingleQuote": true,
+	"ignorePatterns": [
+		".codex/**",
+		".git/**",
+		"dist/**",
+		"bun.lock*",
+		"tsconfig*.tsbuildinfo",
+		"node_modules/**",
+		"src-tauri/**",
+		"Documents/**",
+		"openspec/**",
+		".DS_Store"
+	],
+	"overrides": [
+		{
+			"files": ["*.json"],
+			"options": {
+				"printWidth": 80
+			}
+		},
+		{
+			"files": ["*.md"],
+			"options": {
+				"printWidth": 80,
+				"proseWrap": "preserve"
+			}
+		},
+		{
+			"files": ["*.vue"],
+			"options": {
+				"bracketSameLine": true,
+				"singleAttributePerLine": true,
+				"htmlWhitespaceSensitivity": "ignore"
+			}
+		},
+		{
+			"files": ["*.css"],
+			"options": {
+				"singleQuote": false,
+				"useTabs": true
+			}
+		},
+		{
+			"files": ["*.yml", "*.yaml"],
+			"options": {
+				"singleQuote": false,
+				"tabWidth": 2
+			}
+		}
+	]
+}

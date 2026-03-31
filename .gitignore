@@ -2,6 +2,9 @@ node_modules
 dist
 dist-ssr
 *.local
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
 
 # Logs
 /logs
@@ -24,6 +27,7 @@ src-tauri/.cargo
 tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
 vite.config.d.ts
+.oxc_cache
 
 
 # Editor directories and files
@@ -37,4 +41,4 @@ vite.config.d.ts
 *.sln
 *.sw?
 
-Document
+Documents
