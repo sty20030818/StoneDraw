@@ -1,0 +1,115 @@
+:root {
+  font-family:
+    "SF Pro Display",
+    "PingFang SC",
+    "Helvetica Neue",
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #18212f;
+  background:
+    radial-gradient(circle at top, rgba(92, 128, 255, 0.18), transparent 40%),
+    linear-gradient(180deg, #f5f7fb 0%, #edf2f7 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.status-card {
+  width: min(720px, 100%);
+  padding: 40px;
+  border: 1px solid rgba(24, 33, 47, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 60px rgba(43, 62, 99, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(49, 116, 255, 0.1);
+  color: #2850c8;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-card h1 {
+  margin: 18px 0 12px;
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.status-card p {
+  margin: 0;
+  color: #4e5a6a;
+  font-size: 18px;
+}
+
+.status-grid {
+  margin: 32px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.status-grid div {
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: #f8fbff;
+  border: 1px solid rgba(40, 80, 200, 0.08);
+}
+
+.status-grid dt {
+  margin: 0 0 8px;
+  color: #5d6b7b;
+  font-size: 14px;
+}
+
+.status-grid dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #18212f;
+}
+
+@media (max-width: 640px) {
+  .status-card {
+    padding: 28px 20px;
+    border-radius: 24px;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-card p {
+    font-size: 16px;
+  }
+}
