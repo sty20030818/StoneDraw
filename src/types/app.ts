@@ -18,4 +18,6 @@ export type AppBootStage = 'bootstrapping' | 'ready'
 
 export type CommandBridgeStatus = 'idle' | 'ready' | 'error'
 
+export type LocalDirectoryStatus = 'idle' | 'ready' | 'error'
+
 export type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved'

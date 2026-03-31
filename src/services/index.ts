@@ -1,3 +1,4 @@
+export { directoryService } from './directory.service'
 export { documentService } from './document.service'
 export { editorService } from './editor.service'
 export type { AppSettings } from './settings.service'

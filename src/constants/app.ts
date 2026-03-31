@@ -12,9 +12,9 @@ export const SAVE_STATUSES: Record<'IDLE' | 'DIRTY' | 'SAVING' | 'SAVED', SaveSt
 	SAVED: 'saved',
 }
 
-export const APP_STATUS_BADGE = '0.1.5 应用壳阶段'
+export const APP_STATUS_BADGE = '0.2.0 本地目录阶段'
 
-export const APP_FEATURE_SCOPE = ['Tailwind CSS 4', 'shadcn/ui', '应用布局', '路由外壳'] as const
+export const APP_FEATURE_SCOPE = ['~/.stonedraw 根目录', '本地数据目录', '本地配置目录', '目录健康检查'] as const
 
 export const TECH_STACK_LABELS = [
 	'React 19',

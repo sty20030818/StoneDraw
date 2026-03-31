@@ -4,13 +4,13 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"check": "oxlint src vite.config.ts --deny-warnings",
 		"dev": "vite",
 		"build": "tsc -b && vite build",
-		"format": "oxfmt package.json vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json .oxlintrc.json .oxfmtrc.json index.html src",
-		"lint": "bun run check",
 		"preview": "vite preview",
-		"tauri": "tauri",
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
+		"format": "oxfmt",
+		"format:check": "oxfmt --check",
 		"typecheck": "tsc -b --pretty false"
 	},
 	"dependencies": {

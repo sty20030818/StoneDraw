@@ -8,7 +8,7 @@ type LoadingStateProps = {
 
 function LoadingState({ title, description }: LoadingStateProps) {
 	return (
-		<section className='flex min-h-80 flex-col gap-6 rounded-[2rem] border border-border/70 bg-card/85 p-6 shadow-sm backdrop-blur'>
+		<section className='flex min-h-80 flex-col gap-6 rounded-xl border border-border/70 bg-card/85 p-6 shadow-sm backdrop-blur'>
 			<div className='flex items-center gap-3'>
 				<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
 					<LoaderCircleIcon className='animate-spin' />

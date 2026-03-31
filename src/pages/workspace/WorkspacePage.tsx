@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRightIcon, FileStackIcon, LayoutGridIcon, PanelTopOpenIcon } from 'lucide-react'
+import { ArrowRightIcon, FileStackIcon, FolderOpenIcon, LayoutGridIcon, PanelTopOpenIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import EmptyState from '@/components/states/EmptyState'
@@ -8,11 +8,15 @@ import { APP_FEATURE_SCOPE, APP_STATUS_BADGE } from '@/constants'
 import { APP_ROUTES } from '@/constants/routes'
 import { documentService } from '@/services'
 import { useDialogHost } from '@/components/feedback/DialogHost'
+import { useAppStore } from '@/stores'
 
 function WorkspacePage() {
 	const navigate = useNavigate()
 	const { openConfirmDialog } = useDialogHost()
 	const draftDocument = useMemo(() => documentService.createDraft('欢迎画板'), [])
+	const localDirectoryStatus = useAppStore((state) => state.localDirectoryStatus)
+	const localDirectories = useAppStore((state) => state.localDirectories)
+	const localDirectoriesReadyAt = useAppStore((state) => state.localDirectoriesReadyAt)
 
 	return (
 		<div className='flex flex-col gap-5'>
@@ -23,9 +27,10 @@ function WorkspacePage() {
 							{APP_STATUS_BADGE}
 						</span>
 						<div className='flex flex-col gap-2'>
-							<h2 className='text-2xl font-semibold tracking-tight'>工作区已经成为默认入口</h2>
+							<h2 className='text-2xl font-semibold tracking-tight'>本地目录已经接入启动默认链路</h2>
 							<p className='max-w-2xl text-sm leading-6 text-muted-foreground'>
-								`0.1.5` 把应用从单页演示推进到了真正的桌面外壳。现在默认进入工作区，再从这里跳转到编辑器和设置页。
+								当前补丁把产品级本地目录根固定到 `~/.stonedraw`。后续
+								SQLite、文档文件和资源文件都会在这个根目录之上继续扩展。
 							</p>
 						</div>
 					</div>
@@ -60,16 +65,78 @@ function WorkspacePage() {
 				<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
 					<div className='flex items-center gap-3'>
 						<div className='flex size-11 items-center justify-center rounded-2xl bg-accent text-accent-foreground'>
-							<FileStackIcon />
+							<FolderOpenIcon />
 						</div>
 						<div className='flex flex-col gap-1'>
-							<h3 className='font-semibold'>最近草稿占位</h3>
-							<p className='text-sm text-muted-foreground'>这里先用 service 骨架生成一份欢迎草稿。</p>
+							<h3 className='font-semibold'>本地目录状态</h3>
+							<p className='text-sm text-muted-foreground'>
+								工作区页面通过 app store 展示目录桥接结果，不直接调用底层 command。
+							</p>
 						</div>
 					</div>
 
+					<div className='mt-4 flex flex-col gap-3 rounded-lg border border-border/70 bg-card p-4'>
+						<div className='grid gap-3 sm:grid-cols-2'>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>目录状态</p>
+								<p className='mt-1 text-sm font-medium'>{localDirectoryStatus}</p>
+							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>最近就绪时间</p>
+								<p className='mt-1 text-sm font-medium'>{localDirectoriesReadyAt ?? '尚未完成目录初始化'}</p>
+							</div>
+						</div>
+						<div className='grid gap-3'>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>StoneDraw 根目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.rootDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>本地数据目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.dataDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>本地配置目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.configDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]'>
+				<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
+					<div className='flex items-center gap-3'>
+						<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+							<LayoutGridIcon />
+						</div>
+						<div className='flex flex-col gap-1'>
+							<h3 className='font-semibold'>当前版本覆盖范围</h3>
+							<p className='text-sm text-muted-foreground'>
+								这些能力已经纳入启动链路，可继续承接后面的 SQLite、文档文件和资源持久化能力。
+							</p>
+						</div>
+					</div>
+					<div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+						{APP_FEATURE_SCOPE.map((item) => (
+							<div
+								key={item}
+								className='rounded-lg border border-border/70 bg-card px-4 py-3 text-sm font-medium shadow-xs'>
+								{item}
+							</div>
+						))}
+					</div>
+				</div>
+
+				<div className='flex flex-col gap-4'>
 					{draftDocument.ok ? (
-						<div className='mt-4 flex flex-col gap-3 rounded-lg border border-border/70 bg-card p-4'>
+						<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
 							<div className='flex items-center justify-between gap-3'>
 								<div>
 									<p className='text-sm font-medium'>{draftDocument.data.title}</p>
@@ -86,48 +153,23 @@ function WorkspacePage() {
 									继续
 								</Button>
 							</div>
-							<div className='grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
+							<div className='mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
 								<span>文档 ID：{draftDocument.data.id}</span>
 								<span>更新时间：{draftDocument.data.updatedAt}</span>
 							</div>
 						</div>
 					) : null}
-				</div>
-			</section>
 
-			<section className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]'>
-				<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
-					<div className='flex items-center gap-3'>
-						<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-							<LayoutGridIcon />
-						</div>
-						<div className='flex flex-col gap-1'>
-							<h3 className='font-semibold'>当前版本覆盖范围</h3>
-							<p className='text-sm text-muted-foreground'>
-								这些能力已经纳入应用壳，可继续承接后面的 Excalidraw 与文档能力。
-							</p>
-						</div>
-					</div>
-					<div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-						{APP_FEATURE_SCOPE.map((item) => (
-							<div
-								key={item}
-								className='rounded-lg border border-border/70 bg-card px-4 py-3 text-sm font-medium shadow-xs'>
-								{item}
-							</div>
-						))}
-					</div>
+					<EmptyState
+						actionLabel='去设置页'
+						description='真实文档列表和最近打开记录会在后续版本挂到这里；现在先让工作区承接目录状态和路由跳转。'
+						icon={FileStackIcon}
+						onAction={() => {
+							navigate(APP_ROUTES.SETTINGS)
+						}}
+						title='文档列表占位'
+					/>
 				</div>
-
-				<EmptyState
-					actionLabel='去设置页'
-					description='真实文档列表和最近打开记录会在后续版本挂到这里；现在先验证统一空态组件和路由结构。'
-					icon={FileStackIcon}
-					onAction={() => {
-						navigate(APP_ROUTES.SETTINGS)
-					}}
-					title='文档列表占位'
-				/>
 			</section>
 		</div>
 	)

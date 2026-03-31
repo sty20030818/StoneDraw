@@ -5,7 +5,7 @@ import AppToaster from '@/components/feedback/AppToaster'
 import { DialogHostProvider } from '@/components/feedback/DialogHost'
 import LoadingState from '@/components/states/LoadingState'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { systemService } from '@/services'
+import { directoryService, systemService } from '@/services'
 import { useAppStore } from '@/stores'
 
 function App() {
@@ -13,12 +13,25 @@ function App() {
 	const isAppReady = useAppStore((state) => state.isAppReady)
 	const setAppReady = useAppStore((state) => state.setAppReady)
 	const setBootStage = useAppStore((state) => state.setBootStage)
+	const setLocalDirectories = useAppStore((state) => state.setLocalDirectories)
+	const setLocalDirectoryStatus = useAppStore((state) => state.setLocalDirectoryStatus)
 
 	useEffect(() => {
 		let isMounted = true
 
 		async function bootstrapApp() {
-			await systemService.runDemo()
+			const localDirectoriesResult = await directoryService.prepareLocalDirectories()
+
+			if (!isMounted) {
+				return
+			}
+
+			if (localDirectoriesResult.ok) {
+				setLocalDirectories(localDirectoriesResult.data)
+				await systemService.runDemo()
+			} else {
+				setLocalDirectoryStatus('error')
+			}
 
 			if (!isMounted) {
 				return
@@ -33,14 +46,14 @@ function App() {
 		return () => {
 			isMounted = false
 		}
-	}, [setAppReady, setBootStage])
+	}, [setAppReady, setBootStage, setLocalDirectories, setLocalDirectoryStatus])
 
 	if (!isAppReady || bootStage !== APP_BOOT_STAGES.READY) {
 		return (
 			<div className='min-h-screen px-3 py-3 md:px-4 md:py-4'>
-				<div className='mx-auto max-w-[1600px]'>
+				<div className='mx-auto max-w-400'>
 					<LoadingState
-						description='先完成命令桥接自检，再进入工作区路由。'
+						description='先准备本地数据目录与配置目录，再进入工作区路由。'
 						title='正在启动应用外壳'
 					/>
 				</div>

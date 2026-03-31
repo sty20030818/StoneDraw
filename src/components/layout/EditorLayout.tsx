@@ -6,7 +6,7 @@ import { APP_ROUTES } from '@/constants/routes'
 
 function EditorLayout() {
 	return (
-		<section className='flex h-full min-h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-[2rem] border border-border/70 bg-card/75 shadow-sm backdrop-blur'>
+		<section className='flex h-full min-h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-xl border border-border/70 bg-card/75 shadow-sm backdrop-blur'>
 			<header className='flex flex-col gap-3 border-b border-border/70 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-5'>
 				<div className='flex items-center gap-3'>
 					<Button
