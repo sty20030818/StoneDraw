@@ -82,6 +82,10 @@ body {
 	border: 1px solid rgba(40, 80, 200, 0.08);
 }
 
+.status-grid-item {
+	min-height: 112px;
+}
+
 .status-grid dt {
 	margin: 0 0 8px;
 	color: #5d6b7b;
@@ -93,6 +97,7 @@ body {
 	font-size: 16px;
 	font-weight: 600;
 	color: #18212f;
+	word-break: break-word;
 }
 
 @media (max-width: 640px) {

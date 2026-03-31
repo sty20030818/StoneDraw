@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-  stone_draw_lib::run();
+  stonedraw_lib::run();
 }

@@ -1,8 +1,8 @@
 [package]
-name = "stone_draw"
+name = "stonedraw"
 version = "0.1.0"
 description = "StoneDraw desktop shell"
-authors = ["StoneDraw"]
+authors = ["StoneFish"]
 license = ""
 repository = ""
 edition = "2021"
@@ -11,7 +11,7 @@ rust-version = "1.77.2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "stone_draw_lib"
+name = "stonedraw_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
