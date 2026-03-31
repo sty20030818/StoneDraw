@@ -5,6 +5,9 @@ import { useAppStore, useEditorStore, useWorkspaceStore } from '@/stores'
 function HomePage() {
 	const bootStage = useAppStore((state) => state.bootStage)
 	const isAppReady = useAppStore((state) => state.isAppReady)
+	const commandBridgeStatus = useAppStore((state) => state.commandBridgeStatus)
+	const lastCommandName = useAppStore((state) => state.lastCommandName)
+	const lastError = useAppStore((state) => state.lastError)
 	const currentView = useWorkspaceStore((state) => state.currentView)
 	const saveStatus = useEditorStore((state) => state.saveStatus)
 
@@ -26,6 +29,14 @@ function HomePage() {
 					{
 						label: '保存状态',
 						value: saveStatus,
+					},
+					{
+						label: '命令桥接',
+						value: lastCommandName ? `${commandBridgeStatus} · ${lastCommandName}` : commandBridgeStatus,
+					},
+					{
+						label: '最近错误',
+						value: lastError ? `${lastError.code} · ${lastError.message}` : '无',
 					},
 					{
 						label: '技术基线',

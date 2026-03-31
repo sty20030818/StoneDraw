@@ -1,11 +1,14 @@
-import type { AppError, TauriCommandResult } from '@/types'
+import { invoke } from '@tauri-apps/api/core'
+import { useAppStore } from '@/stores'
+import type { AppError, AppErrorCode, CommandSuccessPayload, TauriCommandResult } from '@/types'
 import { logger } from '@/utils'
 
-function createCommandError(command: string): AppError {
+function createCommandError(command: string, code: AppErrorCode, message: string, details?: string): AppError {
 	return {
-		code: 'TAURI_COMMAND_NOT_READY',
-		message: `命令 ${command} 尚未接入`,
-		details: 'Tauri command 桥接会在 0.1.3 版本补齐。',
+		code,
+		message,
+		details,
+		command,
 	}
 }
 
@@ -23,15 +26,66 @@ export function createFailureResult(error: AppError): TauriCommandResult<never> 
 	}
 }
 
-// 当前版本先固定调用入口，后续再把 invoke 真正接到桌面层。
+function isAppErrorPayload(value: unknown): value is AppError {
+	if (!value || typeof value !== 'object') {
+		return false
+	}
+
+	const candidate = value as Record<string, unknown>
+	return typeof candidate.code === 'string' && typeof candidate.message === 'string'
+}
+
+function normalizeInvokeError(command: string, error: unknown): AppError {
+	if (isAppErrorPayload(error)) {
+		return {
+			code: error.code,
+			message: error.message,
+			details: error.details,
+			command,
+		}
+	}
+
+	if (typeof error === 'string') {
+		try {
+			const parsed = JSON.parse(error) as unknown
+
+			if (isAppErrorPayload(parsed)) {
+				return {
+					code: parsed.code,
+					message: parsed.message,
+					details: parsed.details,
+					command,
+				}
+			}
+		} catch {
+			return createCommandError(command, 'UNKNOWN_ERROR', error)
+		}
+	}
+
+	return createCommandError(command, 'UNKNOWN_ERROR', `命令 ${command} 调用失败`, '未能解析 Tauri 返回的错误对象。')
+}
+
 export async function invokeTauriCommand<TData>(
 	command: string,
 	payload?: Record<string, unknown>,
 ): Promise<TauriCommandResult<TData>> {
-	logger.warn('tauri.service', '命令桥接尚未接入，返回占位错误。', {
-		command,
-		payload,
-	})
+	try {
+		const response = await invoke<CommandSuccessPayload<TData>>(command, payload)
+		const result = createSuccessResult(response.data)
 
-	return createFailureResult(createCommandError(command))
+		useAppStore.getState().reportCommandSuccess(command)
+		logger.info('tauri.service', '命令调用成功。', { command })
+
+		return result
+	} catch (error) {
+		const normalizedError = normalizeInvokeError(command, error)
+
+		useAppStore.getState().reportCommandError(command, normalizedError)
+		logger.error('tauri.service', '命令调用失败。', {
+			command,
+			error: normalizedError,
+		})
+
+		return createFailureResult(normalizedError)
+	}
 }

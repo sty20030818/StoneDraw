@@ -1,3 +1,4 @@
+import { TAURI_COMMANDS } from '@/constants'
 import type { TauriCommandResult } from '@/types'
 import { invokeTauriCommand } from './tauri.service'
 
@@ -16,9 +17,12 @@ export const settingsService = {
 		return defaultSettings
 	},
 	async read(): Promise<TauriCommandResult<AppSettings>> {
-		return invokeTauriCommand<AppSettings>('settings_read')
+		return invokeTauriCommand<AppSettings>(TAURI_COMMANDS.SETTINGS_READ)
 	},
 	async save(settings: AppSettings): Promise<TauriCommandResult<AppSettings>> {
-		return invokeTauriCommand<AppSettings>('settings_save', { settings })
+		return invokeTauriCommand<AppSettings>(TAURI_COMMANDS.SETTINGS_SAVE, {
+			language: settings.language,
+			theme: settings.theme,
+		})
 	},
 }

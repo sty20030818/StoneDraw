@@ -1,3 +1,4 @@
+import { TAURI_COMMANDS } from '@/constants'
 import type { DocumentMeta, TauriCommandResult } from '@/types'
 import { createId, sanitizeFileName, toIsoString } from '@/utils'
 import { createSuccessResult, invokeTauriCommand } from './tauri.service'
@@ -21,9 +22,11 @@ export const documentService = {
 		return createSuccessResult(createDocumentMeta(title))
 	},
 	async list(): Promise<TauriCommandResult<DocumentMeta[]>> {
-		return invokeTauriCommand<DocumentMeta[]>('documents_list')
+		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST)
 	},
 	async open(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>('documents_open', { documentId })
+		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_OPEN, {
+			documentId,
+		})
 	},
 }

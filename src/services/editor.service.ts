@@ -1,3 +1,4 @@
+import { TAURI_COMMANDS } from '@/constants'
 import type { SceneFilePayload, TauriCommandResult } from '@/types'
 import { toIsoString } from '@/utils'
 import { createSuccessResult, invokeTauriCommand } from './tauri.service'
@@ -18,9 +19,13 @@ export const editorService = {
 		return createSuccessResult(createEmptyScene(documentId))
 	},
 	async loadScene(documentId: string): Promise<TauriCommandResult<SceneFilePayload>> {
-		return invokeTauriCommand<SceneFilePayload>('editor_load_scene', { documentId })
+		return invokeTauriCommand<SceneFilePayload>(TAURI_COMMANDS.EDITOR_LOAD_SCENE, {
+			documentId,
+		})
 	},
 	async saveScene(payload: SceneFilePayload): Promise<TauriCommandResult<SceneFilePayload>> {
-		return invokeTauriCommand<SceneFilePayload>('editor_save_scene', { payload })
+		return invokeTauriCommand<SceneFilePayload>(TAURI_COMMANDS.EDITOR_SAVE_SCENE, {
+			payload,
+		})
 	},
 }
