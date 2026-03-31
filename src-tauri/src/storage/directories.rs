@@ -9,6 +9,13 @@ use crate::commands::CommandError;
 const STONEDRAW_HOME_DIRECTORY_NAME: &str = ".stonedraw";
 const DATA_DIRECTORY_NAME: &str = "data";
 const CONFIG_DIRECTORY_NAME: &str = "config";
+const DOCUMENTS_DIRECTORY_NAME: &str = "documents";
+const LOGS_DIRECTORY_NAME: &str = "logs";
+const EXPORTS_DIRECTORY_NAME: &str = "exports";
+const CURRENT_SCENE_FILE_NAME: &str = "current.scene.json";
+const ASSETS_DIRECTORY_NAME: &str = "assets";
+const VERSIONS_DIRECTORY_NAME: &str = "versions";
+const RECOVERY_DIRECTORY_NAME: &str = "recovery";
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -23,6 +30,19 @@ pub struct LocalDirectoriesPayload {
     pub root_dir: DirectoryHealth,
     pub data_dir: DirectoryHealth,
     pub config_dir: DirectoryHealth,
+    pub documents_dir: DirectoryHealth,
+    pub logs_dir: DirectoryHealth,
+    pub exports_dir: DirectoryHealth,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentPathLayout {
+    pub document_dir: String,
+    pub current_scene_path: String,
+    pub assets_dir: String,
+    pub versions_dir: String,
+    pub recovery_dir: String,
 }
 
 pub fn prepare_local_directories(app: &AppHandle) -> Result<LocalDirectoriesPayload, CommandError> {
@@ -41,6 +61,14 @@ pub fn resolve_data_dir_string(app: &AppHandle) -> Result<String, CommandError> 
 
 pub fn resolve_config_dir_string(app: &AppHandle) -> Result<String, CommandError> {
     Ok(resolve_config_dir(app)?.display().to_string())
+}
+
+pub fn resolve_document_path_layout(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<DocumentPathLayout, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    Ok(document_path_layout(&root_dir, document_id))
 }
 
 pub(crate) fn resolve_root_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
@@ -64,11 +92,17 @@ fn prepare_local_directories_from_root(
     let root_dir = ensure_directory_ready(root_dir_path, "StoneDraw 根目录")?;
     let data_dir = ensure_directory_ready(&data_dir_path(root_dir_path), "本地数据目录")?;
     let config_dir = ensure_directory_ready(&config_dir_path(root_dir_path), "本地配置目录")?;
+    let documents_dir = ensure_directory_ready(&documents_dir_path(root_dir_path), "文档目录")?;
+    let logs_dir = ensure_directory_ready(&logs_dir_path(root_dir_path), "日志目录")?;
+    let exports_dir = ensure_directory_ready(&exports_dir_path(root_dir_path), "导出目录")?;
 
     Ok(LocalDirectoriesPayload {
         root_dir,
         data_dir,
         config_dir,
+        documents_dir,
+        logs_dir,
+        exports_dir,
     })
 }
 
@@ -78,11 +112,17 @@ fn read_local_directories_from_root(
     let root_dir = inspect_directory_health(root_dir_path, "StoneDraw 根目录")?;
     let data_dir = inspect_directory_health(&data_dir_path(root_dir_path), "本地数据目录")?;
     let config_dir = inspect_directory_health(&config_dir_path(root_dir_path), "本地配置目录")?;
+    let documents_dir = inspect_directory_health(&documents_dir_path(root_dir_path), "文档目录")?;
+    let logs_dir = inspect_directory_health(&logs_dir_path(root_dir_path), "日志目录")?;
+    let exports_dir = inspect_directory_health(&exports_dir_path(root_dir_path), "导出目录")?;
 
     Ok(LocalDirectoriesPayload {
         root_dir,
         data_dir,
         config_dir,
+        documents_dir,
+        logs_dir,
+        exports_dir,
     })
 }
 
@@ -92,6 +132,38 @@ pub(crate) fn data_dir_path(root_dir_path: &Path) -> PathBuf {
 
 fn config_dir_path(root_dir_path: &Path) -> PathBuf {
     root_dir_path.join(CONFIG_DIRECTORY_NAME)
+}
+
+pub(crate) fn documents_dir_path(root_dir_path: &Path) -> PathBuf {
+    data_dir_path(root_dir_path).join(DOCUMENTS_DIRECTORY_NAME)
+}
+
+fn logs_dir_path(root_dir_path: &Path) -> PathBuf {
+    data_dir_path(root_dir_path).join(LOGS_DIRECTORY_NAME)
+}
+
+fn exports_dir_path(root_dir_path: &Path) -> PathBuf {
+    data_dir_path(root_dir_path).join(EXPORTS_DIRECTORY_NAME)
+}
+
+pub(crate) fn document_dir_path(root_dir_path: &Path, document_id: &str) -> PathBuf {
+    documents_dir_path(root_dir_path).join(document_id)
+}
+
+pub(crate) fn document_path_layout(root_dir_path: &Path, document_id: &str) -> DocumentPathLayout {
+    let document_dir = document_dir_path(root_dir_path, document_id);
+    let current_scene_path = document_dir.join(CURRENT_SCENE_FILE_NAME);
+    let assets_dir = document_dir.join(ASSETS_DIRECTORY_NAME);
+    let versions_dir = document_dir.join(VERSIONS_DIRECTORY_NAME);
+    let recovery_dir = document_dir.join(RECOVERY_DIRECTORY_NAME);
+
+    DocumentPathLayout {
+        document_dir: document_dir.display().to_string(),
+        current_scene_path: current_scene_path.display().to_string(),
+        assets_dir: assets_dir.display().to_string(),
+        versions_dir: versions_dir.display().to_string(),
+        recovery_dir: recovery_dir.display().to_string(),
+    }
 }
 
 fn ensure_directory_ready(path: &Path, label: &str) -> Result<DirectoryHealth, CommandError> {
@@ -143,8 +215,8 @@ mod tests {
     use crate::commands::CommandErrorCode;
 
     use super::{
-        ensure_directory_ready, inspect_directory_health, prepare_local_directories_from_root,
-        read_local_directories_from_root,
+        document_path_layout, ensure_directory_ready, inspect_directory_health,
+        prepare_local_directories_from_root, read_local_directories_from_root,
     };
 
     fn unique_temp_path(name: &str) -> std::path::PathBuf {
@@ -224,6 +296,18 @@ mod tests {
             payload.config_dir.path,
             root_directory_path.join("config").display().to_string()
         );
+        assert_eq!(
+            payload.documents_dir.path,
+            root_directory_path.join("data/documents").display().to_string()
+        );
+        assert_eq!(
+            payload.logs_dir.path,
+            root_directory_path.join("data/logs").display().to_string()
+        );
+        assert_eq!(
+            payload.exports_dir.path,
+            root_directory_path.join("data/exports").display().to_string()
+        );
 
         fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
@@ -248,7 +332,65 @@ mod tests {
             payload.config_dir.path,
             root_directory_path.join("config").display().to_string()
         );
+        assert_eq!(
+            payload.documents_dir.path,
+            root_directory_path.join("data/documents").display().to_string()
+        );
+        assert_eq!(
+            payload.logs_dir.path,
+            root_directory_path.join("data/logs").display().to_string()
+        );
+        assert_eq!(
+            payload.exports_dir.path,
+            root_directory_path.join("data/exports").display().to_string()
+        );
 
         fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn document_path_layout_returns_stable_document_paths() {
+        let root_directory_path = unique_temp_path("document-layout");
+        let layout = document_path_layout(&root_directory_path, "doc-123");
+
+        assert_eq!(
+            layout.document_dir,
+            root_directory_path
+                .join("data/documents/doc-123")
+                .display()
+                .to_string()
+        );
+        assert_eq!(
+            layout.current_scene_path,
+            root_directory_path
+                .join("data/documents/doc-123/current.scene.json")
+                .display()
+                .to_string()
+        );
+        assert_eq!(
+            layout.assets_dir,
+            root_directory_path
+                .join("data/documents/doc-123/assets")
+                .display()
+                .to_string()
+        );
+        assert_eq!(
+            layout.versions_dir,
+            root_directory_path
+                .join("data/documents/doc-123/versions")
+                .display()
+                .to_string()
+        );
+        assert_eq!(
+            layout.recovery_dir,
+            root_directory_path
+                .join("data/documents/doc-123/recovery")
+                .display()
+                .to_string()
+        );
+
+        if root_directory_path.exists() {
+            fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+        }
     }
 }

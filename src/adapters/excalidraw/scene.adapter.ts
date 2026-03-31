@@ -1,12 +1,15 @@
-import { CaptureUpdateAction } from '@excalidraw/excalidraw'
 import type {
 	AppState,
 	BinaryFiles,
 	ExcalidrawImperativeAPI,
 	ExcalidrawInitialDataState,
 } from '@excalidraw/excalidraw/types'
-import { toIsoString } from '@/utils'
+import { toTimestamp } from '@/utils'
 import type { SceneFilePayload } from '@/types'
+
+const CAPTURE_UPDATE_NEVER = 0 as unknown as Parameters<
+	ExcalidrawImperativeAPI['updateScene']
+>[0]['captureUpdate']
 
 export type ExcalidrawSceneSnapshot = {
 	elements: NonNullable<ExcalidrawInitialDataState['elements']>
@@ -14,39 +17,50 @@ export type ExcalidrawSceneSnapshot = {
 	files: BinaryFiles
 }
 
-// 当前版本只做最小桥接，scene 内容先按 Excalidraw 原始结构透传保存到应用层占位对象。
 export function createScenePayload(
 	documentId: string,
 	elements: NonNullable<ExcalidrawInitialDataState['elements']>,
 	appState: AppState,
 	files: BinaryFiles,
+	title = '未命名文档',
 ): SceneFilePayload {
 	return {
 		documentId,
-		version: 1,
-		elements,
-		appState: appState as unknown as Record<string, unknown>,
-		files: files as unknown as Record<string, unknown>,
-		updatedAt: toIsoString(),
+		schemaVersion: 1,
+		updatedAt: toTimestamp(),
+		scene: {
+			elements,
+			appState: appState as unknown as Record<string, unknown>,
+			files: files as unknown as Record<string, unknown>,
+		},
+		meta: {
+			title,
+			tags: [],
+			textIndex: '',
+		},
 	}
 }
 
 export function createInitialSceneData(scene: SceneFilePayload): ExcalidrawInitialDataState {
 	return {
-		elements: scene.elements as ExcalidrawInitialDataState['elements'],
-		appState: scene.appState as ExcalidrawInitialDataState['appState'],
-		files: scene.files as BinaryFiles,
+		elements: scene.scene.elements as ExcalidrawInitialDataState['elements'],
+		appState: scene.scene.appState as ExcalidrawInitialDataState['appState'],
+		files: scene.scene.files as BinaryFiles,
 	}
 }
 
-export function readSceneFromApi(api: ExcalidrawImperativeAPI, documentId: string): SceneFilePayload {
-	return createScenePayload(documentId, api.getSceneElements(), api.getAppState(), api.getFiles())
+export function readSceneFromApi(
+	api: ExcalidrawImperativeAPI,
+	documentId: string,
+	title?: string,
+): SceneFilePayload {
+	return createScenePayload(documentId, api.getSceneElements(), api.getAppState(), api.getFiles(), title)
 }
 
 export function applySceneToApi(api: ExcalidrawImperativeAPI, scene: SceneFilePayload) {
 	api.updateScene({
-		elements: scene.elements as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['elements'],
-		appState: scene.appState as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['appState'],
-		captureUpdate: CaptureUpdateAction.NEVER,
+		elements: scene.scene.elements as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['elements'],
+		appState: scene.scene.appState as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['appState'],
+		captureUpdate: CAPTURE_UPDATE_NEVER,
 	})
 }

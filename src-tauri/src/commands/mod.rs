@@ -93,6 +93,7 @@ pub fn register(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wr
         files::files_read_local_directories,
         files::files_resolve_data_dir,
         files::files_resolve_config_dir,
+        files::files_resolve_document_layout,
         settings::settings_read,
         settings::settings_save,
     ])

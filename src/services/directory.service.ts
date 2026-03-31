@@ -1,5 +1,5 @@
 import { TAURI_COMMANDS } from '@/constants'
-import type { LocalDirectoriesPayload, TauriCommandResult } from '@/types'
+import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/types'
 import { invokeTauriCommand } from './tauri.service'
 
 export const directoryService = {
@@ -17,5 +17,11 @@ export const directoryService = {
 
 	async resolveConfigDirectory(): Promise<TauriCommandResult<string>> {
 		return invokeTauriCommand<string>(TAURI_COMMANDS.FILES_RESOLVE_CONFIG_DIR)
+	},
+
+	async resolveDocumentLayout(documentId: string): Promise<TauriCommandResult<DocumentPathLayout>> {
+		return invokeTauriCommand<DocumentPathLayout>(TAURI_COMMANDS.FILES_RESOLVE_DOCUMENT_LAYOUT, {
+			documentId,
+		})
 	},
 }

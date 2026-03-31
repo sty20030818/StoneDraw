@@ -42,6 +42,10 @@ const DEFAULT_MIGRATIONS: &[Migration] = &[Migration {
     version: 1,
     name: "0001_init",
     sql: include_str!("../../migrations/0001_init.sql"),
+}, Migration {
+    version: 2,
+    name: "0002_document_index",
+    sql: include_str!("../../migrations/0002_document_index.sql"),
 }];
 
 pub fn initialize_database(app: &AppHandle) -> Result<DatabaseHealthPayload, CommandError> {
@@ -336,8 +340,8 @@ mod tests {
             .join("data/db/stonedraw.sqlite")
             .exists());
         assert!(payload.is_ready);
-        assert_eq!(payload.schema_version, 1);
-        assert_eq!(payload.target_schema_version, 1);
+        assert_eq!(payload.schema_version, 2);
+        assert_eq!(payload.target_schema_version, 2);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }

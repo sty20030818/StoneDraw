@@ -8,6 +8,7 @@ export const TAURI_COMMANDS = {
 	FILES_READ_LOCAL_DIRECTORIES: 'files_read_local_directories',
 	FILES_RESOLVE_DATA_DIR: 'files_resolve_data_dir',
 	FILES_RESOLVE_CONFIG_DIR: 'files_resolve_config_dir',
+	FILES_RESOLVE_DOCUMENT_LAYOUT: 'files_resolve_document_layout',
 	SETTINGS_READ: 'settings_read',
 	SETTINGS_SAVE: 'settings_save',
 	EDITOR_LOAD_SCENE: 'editor_load_scene',

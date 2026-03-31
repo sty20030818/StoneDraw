@@ -7,6 +7,14 @@ use super::{CommandError, CommandResult};
 pub struct DocumentMetaPayload {
     pub id: String,
     pub title: String,
+    pub current_scene_path: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+    pub last_opened_at: Option<i64>,
+    pub is_deleted: bool,
+    pub deleted_at: Option<i64>,
+    pub source_type: String,
+    pub save_status: String,
 }
 
 #[tauri::command]

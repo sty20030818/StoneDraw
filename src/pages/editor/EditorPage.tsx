@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { clearEditorApi, observeSceneChange, readActiveScene, setEditorApi } from '@/modules/editor'
 import { documentService, editorService } from '@/services'
 import { useAppStore, useEditorStore } from '@/stores'
+import { formatDateTime } from '@/utils'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
 type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>
@@ -21,7 +22,7 @@ function createEditorBootstrapPayload() {
 	}
 
 	const draftDocument = draftResult.data
-	const initialSceneResult = editorService.createEmptyScene(draftDocument.id)
+	const initialSceneResult = editorService.createEmptyScene(draftDocument.id, draftDocument.title)
 	if (!initialSceneResult.ok) {
 		throw new Error(initialSceneResult.error.message)
 	}
@@ -48,9 +49,9 @@ function EditorPage() {
 	const handleSceneChange = useCallback(
 		(...args: ExcalidrawChangeArgs) => {
 			const [elements, appState, files] = args
-			observeSceneChange(document.id, elements, appState, files)
+			observeSceneChange(document.id, elements, appState, files, document.title)
 		},
-		[document.id],
+		[document.id, document.title],
 	)
 
 	const handleApiReady = useCallback(
@@ -134,7 +135,9 @@ function EditorPage() {
 					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
 						<p className='text-xs font-medium text-muted-foreground'>Scene 监听</p>
 						<p className='mt-2 font-medium'>元素数：{lastSceneElementCount}</p>
-						<p className='mt-1 text-muted-foreground'>最近变更：{lastSceneUpdatedAt ?? '尚未变更'}</p>
+						<p className='mt-1 text-muted-foreground'>
+							最近变更：{lastSceneUpdatedAt ? formatDateTime(lastSceneUpdatedAt) : '尚未变更'}
+						</p>
 					</div>
 				</div>
 

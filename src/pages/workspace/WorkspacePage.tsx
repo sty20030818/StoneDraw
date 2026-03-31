@@ -16,6 +16,7 @@ import { APP_ROUTES } from '@/constants/routes'
 import { documentService } from '@/services'
 import { useDialogHost } from '@/components/feedback/DialogHost'
 import { useAppStore } from '@/stores'
+import { formatDateTime } from '@/utils'
 
 function WorkspacePage() {
 	const navigate = useNavigate()
@@ -115,6 +116,24 @@ function WorkspacePage() {
 									{localDirectories?.configDir.path ?? '等待目录初始化'}
 								</p>
 							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>文档目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.documentsDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>日志目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.logsDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
+							<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>导出目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.exportsDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
 						</div>
 						<Separator />
 						<div className='flex items-center gap-3'>
@@ -188,7 +207,7 @@ function WorkspacePage() {
 							<div className='flex items-center justify-between gap-3'>
 								<div>
 									<p className='text-sm font-medium'>{draftDocument.data.title}</p>
-									<p className='text-xs text-muted-foreground'>{draftDocument.data.fileName}</p>
+									<p className='text-xs text-muted-foreground'>{draftDocument.data.currentScenePath}</p>
 								</div>
 								<Button
 									size='sm'
@@ -203,7 +222,7 @@ function WorkspacePage() {
 							</div>
 							<div className='mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2'>
 								<span>文档 ID：{draftDocument.data.id}</span>
-								<span>更新时间：{draftDocument.data.updatedAt}</span>
+								<span>更新时间：{formatDateTime(draftDocument.data.updatedAt)}</span>
 							</div>
 						</div>
 					) : null}

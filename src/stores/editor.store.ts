@@ -6,12 +6,12 @@ type EditorStoreState = {
 	activeDocumentId: string | null
 	isEditorReady: boolean
 	saveStatus: SaveStatus
-	lastSceneUpdatedAt: string | null
+	lastSceneUpdatedAt: number | null
 	lastSceneElementCount: number
 	setActiveDocumentId: (documentId: string | null) => void
 	setEditorReady: (isReady: boolean) => void
 	setSaveStatus: (saveStatus: SaveStatus) => void
-	setLastSceneUpdatedAt: (timestamp: string | null) => void
+	setLastSceneUpdatedAt: (timestamp: number | null) => void
 	setLastSceneElementCount: (count: number) => void
 	reset: () => void
 }

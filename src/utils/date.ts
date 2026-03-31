@@ -20,3 +20,8 @@ export function toIsoString(value: Date | string | number = new Date()): string 
 	const date = value instanceof Date ? value : new Date(value)
 	return date.toISOString()
 }
+
+export function toTimestamp(value: Date | string | number = new Date()): number {
+	const date = value instanceof Date ? value : new Date(value)
+	return date.getTime()
+}

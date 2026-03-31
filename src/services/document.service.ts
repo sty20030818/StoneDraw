@@ -1,19 +1,27 @@
 import { TAURI_COMMANDS } from '@/constants'
 import type { DocumentMeta, TauriCommandResult } from '@/types'
-import { createId, sanitizeFileName, toIsoString } from '@/utils'
+import { createId, toTimestamp } from '@/utils'
 import { createSuccessResult, invokeTauriCommand } from './tauri.service'
 
+function createDraftScenePath(documentId: string): string {
+	return `documents/${documentId}/current.scene.json`
+}
+
 function createDocumentMeta(title = '未命名文档'): DocumentMeta {
-	const timestamp = toIsoString()
+	const timestamp = toTimestamp()
 	const id = createId('doc')
 
 	return {
 		id,
 		title,
-		fileName: `${sanitizeFileName(title)}.excalidraw`,
+		currentScenePath: createDraftScenePath(id),
 		createdAt: timestamp,
 		updatedAt: timestamp,
 		lastOpenedAt: null,
+		isDeleted: false,
+		deletedAt: null,
+		sourceType: 'local',
+		saveStatus: 'saved',
 	}
 }
 

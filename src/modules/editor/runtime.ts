@@ -59,8 +59,9 @@ export function observeSceneChange(
 	elements: NonNullable<ExcalidrawInitialDataState['elements']>,
 	appState: AppState,
 	files: BinaryFiles,
+	title?: string,
 ): SceneFilePayload {
-	const scene = createScenePayload(documentId, elements, appState, files)
+	const scene = createScenePayload(documentId, elements, appState, files, title)
 	const editorStore = useEditorStore.getState()
 
 	editorStore.setLastSceneUpdatedAt(scene.updatedAt)
