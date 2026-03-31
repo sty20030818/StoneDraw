@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { ArrowRightIcon, FolderKanbanIcon, PanelTopOpenIcon, Settings2Icon } from 'lucide-react'
+import { FolderKanbanIcon, LayoutTemplateIcon, Settings2Icon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -77,11 +77,17 @@ function WorkspaceLayout() {
 						<SidebarGroupContent>
 							<SidebarMenu>
 								<SidebarMenuItem>
-									<SidebarMenuButton asChild>
-										<Link to={APP_ROUTES.EDITOR}>
-											<PanelTopOpenIcon />
-											<span>直接进入编辑器</span>
-										</Link>
+									<SidebarMenuButton
+										type='button'
+										onClick={() => {
+											openDialog({
+												title: '工作区入口说明',
+												description: '从 0.2.4 开始，编辑器统一通过工作区内的新建或文档列表入口进入。',
+												content: '这样可以保证工作区始终是文档入口主场景，并为后续最近打开、重命名、删除和恢复能力保留稳定位置。',
+											})
+										}}>
+										<LayoutTemplateIcon />
+										<span>查看工作区说明</span>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
 								<SidebarMenuItem>
@@ -129,10 +135,7 @@ function WorkspaceLayout() {
 						asChild
 						size='sm'
 						variant='outline'>
-						<Link to={APP_ROUTES.EDITOR}>
-							<ArrowRightIcon data-icon='inline-start' />
-							进入编辑器
-						</Link>
+						<Link to={APP_ROUTES.SETTINGS}>查看设置</Link>
 					</Button>
 				</header>
 
