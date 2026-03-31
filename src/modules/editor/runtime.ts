@@ -10,6 +10,17 @@ import { logger } from '@/utils'
 import type { SceneFilePayload } from '@/types'
 
 let currentEditorApi: ExcalidrawImperativeAPI | null = null
+let currentSceneFingerprint: string | null = null
+
+function createSceneFingerprint(
+	elements: NonNullable<ExcalidrawInitialDataState['elements']>,
+	files: BinaryFiles,
+) {
+	return JSON.stringify({
+		elements,
+		fileIds: Object.keys(files).sort(),
+	})
+}
 
 export function setEditorApi(api: ExcalidrawImperativeAPI) {
 	if (currentEditorApi?.id === api.id) {
@@ -26,6 +37,7 @@ export function setEditorApi(api: ExcalidrawImperativeAPI) {
 
 export function clearEditorApi() {
 	currentEditorApi = null
+	currentSceneFingerprint = null
 	useEditorStore.getState().setEditorReady(false)
 }
 
@@ -49,9 +61,22 @@ export function applyScene(scene: SceneFilePayload): boolean {
 	}
 
 	applySceneToApi(currentEditorApi, scene)
+	currentSceneFingerprint = createSceneFingerprint(
+		scene.scene.elements as NonNullable<ExcalidrawInitialDataState['elements']>,
+		scene.scene.files as BinaryFiles,
+	)
 	useEditorStore.getState().setLastSceneUpdatedAt(scene.updatedAt)
+	useEditorStore.getState().setLastSceneElementCount(scene.scene.elements.length)
 
 	return true
+}
+
+export function setSceneObservationBaseline(scene: SceneFilePayload) {
+	currentSceneFingerprint = createSceneFingerprint(
+		scene.scene.elements as NonNullable<ExcalidrawInitialDataState['elements']>,
+		scene.scene.files as BinaryFiles,
+	)
+	useEditorStore.getState().setLastSceneElementCount(scene.scene.elements.length)
 }
 
 export function observeSceneChange(
@@ -63,6 +88,13 @@ export function observeSceneChange(
 ): SceneFilePayload {
 	const scene = createScenePayload(documentId, elements, appState, files, title)
 	const editorStore = useEditorStore.getState()
+	const nextFingerprint = createSceneFingerprint(elements, files)
+
+	if (currentSceneFingerprint === nextFingerprint) {
+		return scene
+	}
+
+	currentSceneFingerprint = nextFingerprint
 
 	editorStore.setLastSceneUpdatedAt(scene.updatedAt)
 	editorStore.setLastSceneElementCount(elements.length)

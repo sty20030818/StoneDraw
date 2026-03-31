@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { APP_STATUS_BADGE } from '@/constants'
 import { APP_ROUTES } from '@/constants/routes'
-import { clearEditorApi, observeSceneChange, readActiveScene, setEditorApi } from '@/modules/editor'
+import { clearEditorApi, observeSceneChange, readActiveScene, setEditorApi, setSceneObservationBaseline } from '@/modules/editor'
 import { documentService, editorService } from '@/services'
 import { useAppStore, useEditorStore } from '@/stores'
 import type { DocumentMeta, SceneFilePayload } from '@/types'
@@ -135,6 +135,7 @@ function EditorPage() {
 		}
 
 		setRenameDraft(editorLoadState.document.title)
+		setSceneObservationBaseline(editorLoadState.scene)
 	}, [editorLoadState])
 
 	const initialData = useMemo(() => {
@@ -254,10 +255,10 @@ function EditorPage() {
 	const activeDocument = editorLoadState.document
 
 	return (
-		<section className='grid gap-4 xl:grid-cols-[19rem_minmax(0,1fr)]'>
-			<aside className='flex flex-col gap-4 rounded-[1.75rem] border border-border/70 bg-background/85 p-4 shadow-sm'>
+		<section className='flex h-full min-h-0 min-w-[1080px] gap-4'>
+			<aside className='flex h-full min-h-0 w-[320px] min-w-[280px] max-w-[320px] flex-col gap-4 overflow-y-auto rounded-[1.75rem] border border-border/70 bg-background/85 p-4 shadow-sm'>
 				<div className='flex flex-col gap-2'>
-					<span className='w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
+					<span className='inline-flex h-8 min-w-[11.5rem] items-center justify-center rounded-full bg-primary/10 px-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
 						{APP_STATUS_BADGE}
 					</span>
 					<div className='flex flex-col gap-1'>
@@ -353,8 +354,8 @@ function EditorPage() {
 				</Button>
 			</aside>
 
-			<div className='overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/85 shadow-sm'>
-				<div className='h-[72vh] min-h-152 [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
+			<div className='flex min-w-[720px] flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/85 shadow-sm'>
+				<div className='h-full min-h-[640px] flex-1 [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
 					<Excalidraw
 						excalidrawAPI={handleApiReady}
 						initialData={initialData ?? undefined}

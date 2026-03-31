@@ -55,6 +55,7 @@ function WorkspacePage() {
 	const hasDocuments = documents.length > 0
 	const hasTrashedDocuments = trashedDocuments.length > 0
 	const documentCountLabel = useMemo(() => `${documents.length} 个文档`, [documents.length])
+	const recentCountLabel = useMemo(() => `${recentDocuments.length} 条记录`, [recentDocuments.length])
 	const trashedCountLabel = useMemo(() => `${trashedDocuments.length} 个已删除`, [trashedDocuments.length])
 
 	const resetInlineActionState = useCallback(() => {
@@ -157,9 +158,7 @@ function WorkspacePage() {
 		}
 
 		setPendingDocumentId(documentId)
-
 		const result = await documentService.rename(documentId, normalizedTitle)
-
 		setPendingDocumentId(null)
 
 		if (!result.ok) {
@@ -174,9 +173,7 @@ function WorkspacePage() {
 
 	async function executeMoveToTrash(document: DocumentMeta) {
 		setPendingDocumentId(document.id)
-
 		const result = await documentService.moveToTrash(document.id)
-
 		setPendingDocumentId(null)
 
 		if (!result.ok) {
@@ -203,9 +200,7 @@ function WorkspacePage() {
 
 	async function handleRestoreDocument(document: DocumentMeta) {
 		setPendingDocumentId(document.id)
-
 		const result = await documentService.restore(document.id)
-
 		setPendingDocumentId(null)
 
 		if (!result.ok) {
@@ -218,70 +213,75 @@ function WorkspacePage() {
 	}
 
 	return (
-		<div className='flex flex-col gap-5'>
-			<section className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
-				<div className='flex flex-col gap-3'>
-					<span className='w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
-						{APP_STATUS_BADGE}
-					</span>
-					<div className='flex flex-col gap-2'>
-						<h2 className='text-2xl font-semibold tracking-tight'>工作区页面 V1</h2>
-						<p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
-							现在的工作区开始承担真实文档入口，而不是继续充当启动阶段的调试面板。文档列表、最近打开区块和顶部工具栏会成为后续
-							`0.2.5` 到 `0.3.x` 的稳定承载面。
-						</p>
-					</div>
-				</div>
-
-				<Separator className='my-5' />
-
-				<div className='flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between'>
-					<div className='flex flex-1 flex-col gap-3 sm:flex-row sm:items-center'>
-						<Button
-							type='button'
-							disabled={isCreating}
-							onClick={() => {
-								void handleCreateDocument()
-							}}>
-							<FilePlus2Icon data-icon='inline-start' />
-							{isCreating ? '正在创建文档' : '新建文档'}
-						</Button>
-						<Button
-							type='button'
-							variant='outline'
-							onClick={() => {
-								void loadWorkspaceData()
-							}}>
-							<RefreshCwIcon data-icon='inline-start' />
-							刷新列表
-						</Button>
-					</div>
-
-					<div className='flex w-full flex-col gap-3 sm:flex-row xl:w-auto xl:min-w-120'>
-						<div className='relative flex-1'>
-							<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-							<Input
-								disabled
-								className='h-10 rounded-xl pl-9'
-								placeholder='搜索文档（0.2.5 之后接入真实搜索）'
-								type='search'
-							/>
+		<div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]'>
+			<div className='flex min-w-0 flex-col gap-4'>
+				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
+					<div className='flex flex-col gap-3'>
+						<div className='flex flex-wrap items-center gap-2'>
+							<span className='inline-flex h-8 min-w-[11.5rem] items-center justify-center rounded-full bg-primary/10 px-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
+								{APP_STATUS_BADGE}
+							</span>
+							<span className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+								{documentCountLabel}
+							</span>
 						</div>
-						<Button
-							type='button'
-							variant='ghost'
-							onClick={() => {
-								navigate(APP_ROUTES.SETTINGS)
-							}}>
-							<ArrowRightIcon data-icon='inline-start' />
-							查看设置
-						</Button>
+						<div className='flex flex-col gap-2'>
+							<h2 className='text-2xl font-semibold tracking-tight'>文档工作区</h2>
+							<p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
+								这里是当前版本的主入口。你可以创建、打开、重命名、删除到回收站并恢复本地文档，最近打开与诊断信息也会在右侧持续可见。
+							</p>
+						</div>
 					</div>
-				</div>
-			</section>
 
-			<section className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]'>
-				<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
+					<Separator className='my-5' />
+
+					<div className='flex flex-col gap-3'>
+						<div className='flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center'>
+							<Button
+								type='button'
+								disabled={isCreating}
+								onClick={() => {
+									void handleCreateDocument()
+								}}>
+								<FilePlus2Icon data-icon='inline-start' />
+								{isCreating ? '正在创建文档' : '新建文档'}
+							</Button>
+							<Button
+								type='button'
+								variant='outline'
+								onClick={() => {
+									void loadWorkspaceData()
+								}}>
+								<RefreshCwIcon data-icon='inline-start' />
+								刷新列表
+							</Button>
+						</div>
+
+						<div className='grid min-w-0 w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto]'>
+							<div className='relative min-w-0 flex-1'>
+								<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+								<Input
+									disabled
+									className='h-10 rounded-xl pl-9'
+									placeholder='搜索功能暂未实现'
+									type='search'
+								/>
+							</div>
+							<Button
+								type='button'
+								variant='ghost'
+								className='shrink-0'
+								onClick={() => {
+									navigate(APP_ROUTES.SETTINGS)
+								}}>
+								<ArrowRightIcon data-icon='inline-start' />
+								查看设置
+							</Button>
+						</div>
+					</div>
+				</section>
+
+				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
 					<div className='flex flex-wrap items-start justify-between gap-3'>
 						<div className='flex items-center gap-3'>
 							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
@@ -292,12 +292,12 @@ function WorkspacePage() {
 								<p className='text-sm text-muted-foreground'>按 `updatedAt DESC` 展示当前所有未删除文档。</p>
 							</div>
 						</div>
-						<div className='rounded-full border border-border/70 bg-card px-3 py-1 text-xs font-medium text-muted-foreground'>
+						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
 							{documentCountLabel}
 						</div>
 					</div>
 
-					<div className='mt-4'>
+					<div className='mt-5'>
 						{documentsStatus === 'loading' ? (
 							<div className='flex min-h-72 items-center justify-center rounded-3xl border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
 								正在读取文档列表...
@@ -338,11 +338,11 @@ function WorkspacePage() {
 									return (
 										<div
 											key={document.id}
-											className='rounded-2xl border border-border/70 bg-card/80 p-4 shadow-xs'>
+											className='rounded-3xl border border-border/70 bg-card/82 p-4 shadow-xs'>
 											<div className='flex flex-wrap items-start justify-between gap-3'>
-												<div className='flex flex-col gap-1'>
-													<p className='text-sm font-semibold'>{document.title}</p>
-													<p className='break-all text-xs text-muted-foreground'>{document.currentScenePath}</p>
+												<div className='min-w-0 flex-1'>
+													<p className='truncate text-sm font-semibold'>{document.title}</p>
+													<p className='mt-1 break-all text-xs text-muted-foreground'>{document.currentScenePath}</p>
 												</div>
 												<div className='flex items-center gap-2'>
 													<Button
@@ -368,6 +368,7 @@ function WorkspacePage() {
 													</Button>
 												</div>
 											</div>
+
 											<div className='mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-4'>
 												<span>文档 ID：{document.id}</span>
 												<span>创建时间：{formatDateTime(document.createdAt)}</span>
@@ -446,10 +447,12 @@ function WorkspacePage() {
 							</div>
 						) : null}
 					</div>
-				</div>
+				</section>
+			</div>
 
-				<div className='flex flex-col gap-4'>
-					<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
+			<div className='flex min-w-0 flex-col gap-4'>
+				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
+					<div className='flex flex-wrap items-start justify-between gap-3'>
 						<div className='flex items-center gap-3'>
 							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
 								<Clock3Icon />
@@ -459,168 +462,172 @@ function WorkspacePage() {
 								<p className='text-sm text-muted-foreground'>读取真实 `recent_opens` 记录，并按最近打开时间倒序展示。</p>
 							</div>
 						</div>
+						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+							{recentCountLabel}
+						</div>
+					</div>
 
-						<div className='mt-4'>
-							{recentDocuments.length > 0 ? (
-								<div className='grid gap-3'>
-									{recentDocuments.map((document) => (
-										<button
+					<div className='mt-4'>
+						{recentDocuments.length > 0 ? (
+							<div className='grid gap-3'>
+								{recentDocuments.map((document) => (
+									<button
+										key={document.id}
+										type='button'
+										className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-left text-sm transition-colors hover:bg-accent/35'
+										onClick={() => {
+											void handleOpenDocument(document.id)
+										}}>
+										<p className='font-medium'>{document.title}</p>
+										<p className='mt-1 text-xs text-muted-foreground'>
+											最近打开：{document.lastOpenedAt ? formatDateTime(document.lastOpenedAt) : '尚未记录'}
+										</p>
+									</button>
+								))}
+							</div>
+						) : (
+							<EmptyState
+								description='当前还没有最近打开记录。成功进入编辑器后，这里会自动出现真实文档。'
+								icon={Clock3Icon}
+								title='最近打开为空'
+							/>
+						)}
+					</div>
+				</section>
+
+				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
+					<div className='flex flex-wrap items-start justify-between gap-3'>
+						<div className='flex items-center gap-3'>
+							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+								<RotateCcwIcon />
+							</div>
+							<div className='flex flex-col gap-1'>
+								<h3 className='font-semibold'>回收站</h3>
+								<p className='text-sm text-muted-foreground'>保留最小恢复入口，不新增独立页面。</p>
+							</div>
+						</div>
+						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+							{trashedCountLabel}
+						</div>
+					</div>
+
+					<div className='mt-4'>
+						{hasTrashedDocuments ? (
+							<div className='grid gap-3'>
+								{trashedDocuments.map((document) => {
+									const isPending = pendingDocumentId === document.id
+
+									return (
+										<div
 											key={document.id}
-											type='button'
-											className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-left text-sm'
-											onClick={() => {
-												void handleOpenDocument(document.id)
-											}}>
+											className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
 											<p className='font-medium'>{document.title}</p>
 											<p className='mt-1 text-xs text-muted-foreground'>
-												最近打开：{document.lastOpenedAt ? formatDateTime(document.lastOpenedAt) : '尚未记录'}
+												删除时间：{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}
 											</p>
-										</button>
-									))}
-								</div>
-							) : (
-								<EmptyState
-									description='当前还没有最近打开记录。成功进入编辑器后，这里会自动出现真实文档。'
-									icon={Clock3Icon}
-									title='最近打开为空'
-								/>
-							)}
-						</div>
-					</div>
-
-					<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
-						<div className='flex items-center justify-between gap-3'>
-							<div className='flex items-center gap-3'>
-								<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-									<RotateCcwIcon />
-								</div>
-								<div className='flex flex-col gap-1'>
-									<h3 className='font-semibold'>回收站</h3>
-									<p className='text-sm text-muted-foreground'>保留最小恢复入口，不新增独立页面。</p>
-								</div>
-							</div>
-							<div className='rounded-full border border-border/70 bg-card px-3 py-1 text-xs font-medium text-muted-foreground'>
-								{trashedCountLabel}
-							</div>
-						</div>
-
-						<div className='mt-4'>
-							{hasTrashedDocuments ? (
-								<div className='grid gap-3'>
-									{trashedDocuments.map((document) => {
-										const isPending = pendingDocumentId === document.id
-
-										return (
-											<div
-												key={document.id}
-												className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
-												<p className='font-medium'>{document.title}</p>
-												<p className='mt-1 text-xs text-muted-foreground'>
-													删除时间：{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}
-												</p>
-												<div className='mt-3'>
-													<Button
-														type='button'
-														size='sm'
-														variant='outline'
-														disabled={isPending}
-														onClick={() => {
-															void handleRestoreDocument(document)
-														}}>
-														<RotateCcwIcon data-icon='inline-start' />
-														恢复文档
-													</Button>
-												</div>
+											<div className='mt-3'>
+												<Button
+													type='button'
+													size='sm'
+													variant='outline'
+													disabled={isPending}
+													onClick={() => {
+														void handleRestoreDocument(document)
+													}}>
+													<RotateCcwIcon data-icon='inline-start' />
+													恢复文档
+												</Button>
 											</div>
-										)
-									})}
-								</div>
-							) : (
-								<EmptyState
-									description='当前没有已删除文档。删除到回收站后的文档会在这里出现。'
-									icon={RotateCcwIcon}
-									title='回收站为空'
-								/>
-							)}
-						</div>
+										</div>
+									)
+								})}
+							</div>
+						) : (
+							<EmptyState
+								description='当前没有已删除文档。删除到回收站后的文档会在这里出现。'
+								icon={RotateCcwIcon}
+								title='回收站为空'
+							/>
+						)}
 					</div>
+				</section>
 
-					<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
+				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
+					<div className='flex flex-wrap items-start justify-between gap-3'>
 						<div className='flex items-center gap-3'>
 							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
 								<DatabaseZapIcon />
 							</div>
 							<div className='flex flex-col gap-1'>
 								<h3 className='font-semibold'>本地诊断信息</h3>
-								<p className='text-sm text-muted-foreground'>保留阶段性可观测性，但不再占据工作区主视觉。</p>
+								<p className='text-sm text-muted-foreground'>保留阶段性可观测性，但仅作为辅助信息展示。</p>
 							</div>
 						</div>
-
-						<div className='mt-4 flex flex-col gap-3 rounded-lg border border-border/70 bg-card p-4'>
-							<div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1'>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>目录状态</p>
-									<p className='mt-1 text-sm font-medium'>{localDirectoryStatus}</p>
-								</div>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>数据库状态</p>
-									<p className='mt-1 text-sm font-medium'>{databaseStatus}</p>
-								</div>
-							</div>
-							<div className='grid gap-3'>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>目录最近就绪时间</p>
-									<p className='mt-1 text-sm font-medium'>{localDirectoriesReadyAt ?? '尚未完成目录初始化'}</p>
-								</div>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>数据库最近就绪时间</p>
-									<p className='mt-1 text-sm font-medium'>{databaseReadyAt ?? '尚未完成数据库初始化'}</p>
-								</div>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>文档目录</p>
-									<p className='mt-1 break-all text-sm font-medium'>
-										{localDirectories?.documentsDir.path ?? '等待目录初始化'}
-									</p>
-								</div>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>数据库文件</p>
-									<p className='mt-1 break-all text-sm font-medium'>
-										{databaseHealth?.databasePath ?? '等待数据库初始化'}
-									</p>
-								</div>
-								<div className='rounded-lg border border-border/70 bg-background px-4 py-3'>
-									<p className='text-xs text-muted-foreground'>schema 版本</p>
-									<p className='mt-1 text-sm font-medium'>
-										{databaseHealth?.schemaVersion ?? '未初始化'} / {databaseHealth?.targetSchemaVersion ?? '未初始化'}
-									</p>
-								</div>
-							</div>
+						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+							运行状态
 						</div>
 					</div>
 
-					<div className='rounded-xl border border-border/70 bg-background/80 p-5 shadow-sm'>
-						<div className='flex items-center gap-3'>
-							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-								<FileStackIcon />
+					<div className='mt-4 grid gap-3'>
+						<div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1'>
+							<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>目录状态</p>
+								<p className='mt-1 text-sm font-medium'>{localDirectoryStatus}</p>
 							</div>
-							<div className='flex flex-col gap-1'>
-								<h3 className='font-semibold'>当前版本覆盖范围</h3>
-								<p className='text-sm text-muted-foreground'>继续作为阶段说明保留，但权重已经低于文档主入口。</p>
+							<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>数据库状态</p>
+								<p className='mt-1 text-sm font-medium'>{databaseStatus}</p>
 							</div>
 						</div>
-
-						<div className='mt-4 grid gap-3'>
-							{APP_FEATURE_SCOPE.map((item) => (
-								<div
-									key={item}
-									className='rounded-lg border border-border/70 bg-card px-4 py-3 text-sm font-medium shadow-xs'>
-									{item}
-								</div>
-							))}
+						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+							<p className='text-xs text-muted-foreground'>目录最近就绪时间</p>
+							<p className='mt-1 text-sm font-medium'>{localDirectoriesReadyAt ?? '尚未完成目录初始化'}</p>
+						</div>
+						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+							<p className='text-xs text-muted-foreground'>数据库最近就绪时间</p>
+							<p className='mt-1 text-sm font-medium'>{databaseReadyAt ?? '尚未完成数据库初始化'}</p>
+						</div>
+						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+							<p className='text-xs text-muted-foreground'>文档目录</p>
+							<p className='mt-1 break-all text-sm font-medium'>
+								{localDirectories?.documentsDir.path ?? '等待目录初始化'}
+							</p>
+						</div>
+						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+							<p className='text-xs text-muted-foreground'>数据库文件</p>
+							<p className='mt-1 break-all text-sm font-medium'>{databaseHealth?.databasePath ?? '等待数据库初始化'}</p>
+						</div>
+						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
+							<p className='text-xs text-muted-foreground'>schema 版本</p>
+							<p className='mt-1 text-sm font-medium'>
+								{databaseHealth?.schemaVersion ?? '未初始化'} / {databaseHealth?.targetSchemaVersion ?? '未初始化'}
+							</p>
 						</div>
 					</div>
-				</div>
-			</section>
+				</section>
+
+				<section className='rounded-[1.75rem] border border-border/70 bg-background/82 p-5 shadow-sm'>
+					<div className='flex items-center gap-3'>
+						<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+							<FileStackIcon />
+						</div>
+						<div className='flex flex-col gap-1'>
+							<h3 className='font-semibold'>当前版本覆盖范围</h3>
+							<p className='text-sm text-muted-foreground'>以下能力已稳定纳入当前工作区体验。</p>
+						</div>
+					</div>
+
+					<div className='mt-4 grid gap-2'>
+						{APP_FEATURE_SCOPE.map((item) => (
+							<div
+								key={item}
+								className='rounded-lg border border-border/70 bg-card px-4 py-3 text-sm font-medium'>
+								{item}
+							</div>
+						))}
+					</div>
+				</section>
+			</div>
 		</div>
 	)
 }

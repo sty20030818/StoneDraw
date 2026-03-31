@@ -28,16 +28,14 @@ function SettingsPage() {
 						<Settings2Icon />
 					</div>
 					<div className='flex flex-col gap-1'>
-						<h2 className='text-xl font-semibold tracking-tight'>设置占位页</h2>
-						<p className='text-sm text-muted-foreground'>
-							这里用于验证设置路由、Dialog 容器、Confirm Dialog 和全局错误 Toast 链路。
-						</p>
+						<h2 className='text-xl font-semibold tracking-tight'>设置中心</h2>
+						<p className='text-sm text-muted-foreground'>当前先承载基础设置读取、确认弹窗入口和全局反馈链路。</p>
 					</div>
 				</div>
 
 				<div className='mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.72fr)]'>
 					<div className='rounded-[1.75rem] border border-border/70 bg-card p-4'>
-						<h3 className='text-sm font-semibold'>默认设置骨架</h3>
+						<h3 className='text-sm font-semibold'>默认设置</h3>
 						<div className='mt-4 grid gap-3 sm:grid-cols-2'>
 							<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
 								<p className='text-xs text-muted-foreground'>语言</p>
@@ -55,9 +53,9 @@ function SettingsPage() {
 							type='button'
 							onClick={() => {
 								openDialog({
-									title: '全局 Dialog 已接通',
+									title: '说明弹窗已接通',
 									description: '当前说明弹窗由统一容器承载。',
-									content: '后面接设置表单、关于页、导入向导时，都可以复用这一个 Dialog 容器，而不是每页重复实现。',
+									content: '后续接设置表单、关于页或导入向导时，都可以复用这一个 Dialog 容器，而不是每个页面重复实现。',
 								})
 							}}>
 							<CheckCheckIcon data-icon='inline-start' />
@@ -68,9 +66,9 @@ function SettingsPage() {
 							variant='outline'
 							onClick={() => {
 								openConfirmDialog({
-									title: '确认弹窗占位',
-									description: '这是后续危险操作的统一挂载位置，例如清空缓存、删除文档、重置配置。',
-									confirmLabel: '确认占位',
+									title: '打开确认弹窗',
+									description: '这里是危险操作的统一挂载位置，例如清空缓存、删除文档或重置配置。',
+									confirmLabel: '确认',
 								})
 							}}>
 							<Settings2Icon data-icon='inline-start' />
@@ -95,7 +93,7 @@ function SettingsPage() {
 								className={showLoadingPreview ? 'animate-spin' : undefined}
 								data-icon='inline-start'
 							/>
-							切换 Loading 占位
+							切换 Loading 状态
 						</Button>
 					</div>
 				</div>
@@ -108,9 +106,9 @@ function SettingsPage() {
 				/>
 			) : (
 				<EmptyState
-					description='当前还没有真实设置表单，先用统一空态组件承接占位说明和后续扩展入口。'
+					description='更多设置项会在后续版本逐步接入，这里先保留统一入口与空态表现。'
 					icon={Settings2Icon}
-					title='设置表单将在后续版本接入'
+					title='更多设置项稍后接入'
 				/>
 			)}
 		</div>

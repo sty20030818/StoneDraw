@@ -1,1 +1,9 @@
-export { applyScene, clearEditorApi, getEditorApi, observeSceneChange, readActiveScene, setEditorApi } from './runtime'
+export {
+	applyScene,
+	clearEditorApi,
+	getEditorApi,
+	observeSceneChange,
+	readActiveScene,
+	setEditorApi,
+	setSceneObservationBaseline,
+} from './runtime'
