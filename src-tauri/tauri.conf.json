@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "StoneDraw",
-        "width": 1280,
-        "height": 800,
+        "title": "StoneDraw - 一个基于 Excalidraw 的本地绘图工具",
+        "width": 1360,
+        "height": 1000,
+        "minWidth": 900,
+        "minHeight": 680,
         "resizable": true,
         "fullscreen": false
       }

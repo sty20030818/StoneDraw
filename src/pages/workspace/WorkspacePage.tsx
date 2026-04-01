@@ -213,15 +213,15 @@ function WorkspacePage() {
 	}
 
 	return (
-		<div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]'>
-			<div className='flex min-w-0 flex-col gap-4'>
+		<div className='grid h-full min-h-0 gap-4 overflow-hidden xl:grid-cols-[minmax(0,1fr)_22rem]'>
+			<div className='flex min-w-0 min-h-0 flex-col gap-4 overflow-hidden'>
 				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
 					<div className='flex flex-col gap-3'>
 						<div className='flex flex-wrap items-center gap-2'>
-							<span className='inline-flex h-8 min-w-[11.5rem] items-center justify-center rounded-full bg-primary/10 px-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
+							<span className='inline-flex h-8 min-w-46 items-center justify-center rounded-full bg-primary/10 px-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
 								{APP_STATUS_BADGE}
 							</span>
-							<span className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+							<span className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
 								{documentCountLabel}
 							</span>
 						</div>
@@ -281,7 +281,7 @@ function WorkspacePage() {
 					</div>
 				</section>
 
-				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
+				<section className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
 					<div className='flex flex-wrap items-start justify-between gap-3'>
 						<div className='flex items-center gap-3'>
 							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
@@ -292,12 +292,12 @@ function WorkspacePage() {
 								<p className='text-sm text-muted-foreground'>按 `updatedAt DESC` 展示当前所有未删除文档。</p>
 							</div>
 						</div>
-						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
 							{documentCountLabel}
 						</div>
 					</div>
 
-					<div className='mt-5'>
+					<div className='mt-5 min-h-0 flex-1 overflow-y-auto scrollbar-hidden pr-1'>
 						{documentsStatus === 'loading' ? (
 							<div className='flex min-h-72 items-center justify-center rounded-3xl border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
 								正在读取文档列表...
@@ -450,7 +450,7 @@ function WorkspacePage() {
 				</section>
 			</div>
 
-			<div className='flex min-w-0 flex-col gap-4'>
+			<div className='flex min-w-0 min-h-0 flex-col gap-4 overflow-y-auto scrollbar-hidden pr-1'>
 				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
 					<div className='flex flex-wrap items-start justify-between gap-3'>
 						<div className='flex items-center gap-3'>
@@ -459,10 +459,12 @@ function WorkspacePage() {
 							</div>
 							<div className='flex flex-col gap-1'>
 								<h3 className='font-semibold'>最近打开</h3>
-								<p className='text-sm text-muted-foreground'>读取真实 `recent_opens` 记录，并按最近打开时间倒序展示。</p>
+								<p className='text-sm text-muted-foreground'>
+									读取真实 `recent_opens` 记录，并按最近打开时间倒序展示。
+								</p>
 							</div>
 						</div>
-						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
 							{recentCountLabel}
 						</div>
 					</div>
@@ -506,7 +508,7 @@ function WorkspacePage() {
 								<p className='text-sm text-muted-foreground'>保留最小恢复入口，不新增独立页面。</p>
 							</div>
 						</div>
-						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
 							{trashedCountLabel}
 						</div>
 					</div>
@@ -563,7 +565,7 @@ function WorkspacePage() {
 								<p className='text-sm text-muted-foreground'>保留阶段性可观测性，但仅作为辅助信息展示。</p>
 							</div>
 						</div>
-						<div className='inline-flex h-8 min-w-[6.5rem] items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
+						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
 							运行状态
 						</div>
 					</div>

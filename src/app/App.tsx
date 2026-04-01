@@ -65,8 +65,8 @@ function App() {
 
 	if (!isAppReady || bootStage !== APP_BOOT_STAGES.READY) {
 		return (
-			<div className='min-h-screen px-3 py-3 md:px-4 md:py-4'>
-				<div className='mx-auto max-w-400'>
+			<div className='h-screen overflow-hidden px-3 py-3 md:px-4 md:py-4'>
+				<div className='mx-auto h-full max-w-400'>
 					<LoadingState
 						description='先准备本地目录，再初始化 SQLite 与 migration。'
 						title='正在启动应用外壳'

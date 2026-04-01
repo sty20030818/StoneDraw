@@ -12,10 +12,7 @@ import type { SceneFilePayload } from '@/types'
 let currentEditorApi: ExcalidrawImperativeAPI | null = null
 let currentSceneFingerprint: string | null = null
 
-function createSceneFingerprint(
-	elements: NonNullable<ExcalidrawInitialDataState['elements']>,
-	files: BinaryFiles,
-) {
+function createSceneFingerprint(elements: NonNullable<ExcalidrawInitialDataState['elements']>, files: BinaryFiles) {
 	return JSON.stringify({
 		elements,
 		fileIds: Object.keys(files).sort(),

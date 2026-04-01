@@ -7,9 +7,7 @@ import type {
 import { toTimestamp } from '@/utils'
 import type { SceneFilePayload } from '@/types'
 
-const CAPTURE_UPDATE_NEVER = 0 as unknown as Parameters<
-	ExcalidrawImperativeAPI['updateScene']
->[0]['captureUpdate']
+const CAPTURE_UPDATE_NEVER = 0 as unknown as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['captureUpdate']
 
 export type ExcalidrawSceneSnapshot = {
 	elements: NonNullable<ExcalidrawInitialDataState['elements']>
@@ -49,11 +47,7 @@ export function createInitialSceneData(scene: SceneFilePayload): ExcalidrawIniti
 	}
 }
 
-export function readSceneFromApi(
-	api: ExcalidrawImperativeAPI,
-	documentId: string,
-	title?: string,
-): SceneFilePayload {
+export function readSceneFromApi(api: ExcalidrawImperativeAPI, documentId: string, title?: string): SceneFilePayload {
 	return createScenePayload(documentId, api.getSceneElements(), api.getAppState(), api.getFiles(), title)
 }
 

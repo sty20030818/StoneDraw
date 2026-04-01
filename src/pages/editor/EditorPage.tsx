@@ -4,20 +4,18 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { DatabaseZapIcon, FileSearchIcon, PenToolIcon, PencilLineIcon } from 'lucide-react'
+import { ArrowLeftIcon, DownloadIcon, FileSearchIcon, MoreHorizontalIcon, SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createInitialSceneData } from '@/adapters/excalidraw'
 import EmptyState from '@/components/states/EmptyState'
-import LoadingState from '@/components/states/LoadingState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { APP_STATUS_BADGE } from '@/constants'
+import { Skeleton } from '@/components/ui/skeleton'
 import { APP_ROUTES } from '@/constants/routes'
-import { clearEditorApi, observeSceneChange, readActiveScene, setEditorApi, setSceneObservationBaseline } from '@/modules/editor'
+import { clearEditorApi, observeSceneChange, setEditorApi, setSceneObservationBaseline } from '@/modules/editor'
 import { documentService, editorService } from '@/services'
 import { useAppStore, useEditorStore } from '@/stores'
 import type { DocumentMeta, SceneFilePayload } from '@/types'
-import { formatDateTime } from '@/utils'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
 type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>
@@ -37,6 +35,103 @@ type EditorLoadState =
 			scene: SceneFilePayload
 	  }
 
+const EXCALIDRAW_UI_OPTIONS = {
+	canvasActions: {
+		changeViewBackgroundColor: false,
+		clearCanvas: false,
+		export: false,
+		loadScene: false,
+		saveAsImage: false,
+		saveToActiveFile: false,
+		toggleTheme: false,
+	},
+} satisfies NonNullable<ComponentProps<typeof Excalidraw>['UIOptions']>
+
+const TOPBAR_CARD_CLASS =
+	'grid grid-cols-[max-content_minmax(0,1fr)_max-content] items-center gap-4 rounded-[1.75rem] border border-border/70 bg-background/90 px-3 py-1.5 shadow-sm backdrop-blur'
+
+const CANVAS_CARD_CLASS =
+	'stonedraw-editor-shell min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/82 shadow-sm backdrop-blur'
+
+const TOPBAR_GROUP_CLASS = 'flex min-w-0 items-center gap-4'
+const TOPBAR_LEFT_GROUP_CLASS = 'flex min-w-0 items-center gap-6'
+const TOPBAR_ACTIONS_CLASS = 'flex min-w-0 items-center justify-end gap-2.5 justify-self-end'
+const SEARCH_INPUT_CLASS =
+	'h-11 rounded-2xl border-primary/15 bg-white/95 pl-9 shadow-none focus-visible:border-primary/25 focus-visible:ring-primary/10'
+
+function EditorLoadingTopbar({ onBack }: { onBack: () => void }) {
+	return (
+		<div className={TOPBAR_CARD_CLASS}>
+			<div className={TOPBAR_LEFT_GROUP_CLASS}>
+				<Button
+					type='button'
+					size='lg'
+					variant='outline'
+					className='rounded-2xl bg-white/80 px-4'
+					onClick={onBack}>
+					<ArrowLeftIcon data-icon='inline-start' />
+					返回
+				</Button>
+
+				<div className={TOPBAR_GROUP_CLASS}>
+					<Skeleton className='h-6 w-24 rounded-full md:w-32' />
+					<Skeleton className='h-8 w-18 rounded-full md:w-20' />
+				</div>
+			</div>
+
+			<div className='relative min-w-0 w-full max-w-152 justify-self-center'>
+				<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+				<Input
+					type='search'
+					disabled
+					className={SEARCH_INPUT_CLASS}
+					placeholder='搜索画布内容（即将支持）'
+				/>
+			</div>
+
+			<div className={TOPBAR_ACTIONS_CLASS}>
+				<Button
+					type='button'
+					size='icon-lg'
+					variant='outline'
+					className='rounded-2xl bg-white/80'
+					title='导出'
+					disabled>
+					<DownloadIcon />
+				</Button>
+				<Button
+					type='button'
+					size='icon-lg'
+					variant='outline'
+					className='rounded-2xl bg-white/80'
+					title='更多'
+					disabled>
+					<MoreHorizontalIcon />
+				</Button>
+				<Button
+					type='button'
+					size='icon-lg'
+					variant='outline'
+					className='rounded-2xl bg-white/80 text-xs font-medium text-muted-foreground'
+					title='预留'
+					disabled>
+					预
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+function EditorLoadingCanvas() {
+	return (
+		<div className={CANVAS_CARD_CLASS}>
+			<div className='flex h-full min-h-0 p-4 md:p-5'>
+				<div className='h-full w-full rounded-lg border border-border/50 bg-white/95' />
+			</div>
+		</div>
+	)
+}
+
 function EditorPage() {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
@@ -44,17 +139,13 @@ function EditorPage() {
 	const [editorLoadState, setEditorLoadState] = useState<EditorLoadState>({
 		status: 'loading',
 	})
+	const [searchDraft, setSearchDraft] = useState('')
 	const commandBridgeStatus = useAppStore((state) => state.commandBridgeStatus)
-	const isEditorReady = useEditorStore((state) => state.isEditorReady)
 	const saveStatus = useEditorStore((state) => state.saveStatus)
-	const lastSceneUpdatedAt = useEditorStore((state) => state.lastSceneUpdatedAt)
-	const lastSceneElementCount = useEditorStore((state) => state.lastSceneElementCount)
 	const setActiveDocumentId = useEditorStore((state) => state.setActiveDocumentId)
 	const setEditorReady = useEditorStore((state) => state.setEditorReady)
 	const setSaveStatus = useEditorStore((state) => state.setSaveStatus)
 	const latestApiIdRef = useRef<string | null>(null)
-	const [renameDraft, setRenameDraft] = useState('')
-	const [isRenaming, setIsRenaming] = useState(false)
 
 	useEffect(() => {
 		let isMounted = true
@@ -69,6 +160,7 @@ function EditorPage() {
 				return
 			}
 
+			setEditorReady(false)
 			setEditorLoadState({
 				status: 'loading',
 			})
@@ -115,10 +207,11 @@ function EditorPage() {
 		return () => {
 			isMounted = false
 			clearEditorApi()
+			setEditorReady(false)
 			setActiveDocumentId(null)
 			setSaveStatus('idle')
 		}
-	}, [documentId, setActiveDocumentId, setSaveStatus])
+	}, [documentId, setActiveDocumentId, setEditorReady, setSaveStatus])
 
 	useEffect(() => {
 		if (editorLoadState.status !== 'ready') {
@@ -127,16 +220,8 @@ function EditorPage() {
 
 		setActiveDocumentId(editorLoadState.document.id)
 		setSaveStatus('saved')
-	}, [editorLoadState, setActiveDocumentId, setSaveStatus])
-
-	useEffect(() => {
-		if (editorLoadState.status !== 'ready') {
-			return
-		}
-
-		setRenameDraft(editorLoadState.document.title)
 		setSceneObservationBaseline(editorLoadState.scene)
-	}, [editorLoadState])
+	}, [editorLoadState, setActiveDocumentId, setSaveStatus])
 
 	const initialData = useMemo(() => {
 		if (editorLoadState.status !== 'ready') {
@@ -146,6 +231,27 @@ function EditorPage() {
 		return createInitialSceneData(editorLoadState.scene)
 	}, [editorLoadState])
 
+	const statusBadge = useMemo(() => {
+		if (commandBridgeStatus === 'error') {
+			return {
+				label: '保存失败',
+				className: 'bg-destructive/12 text-destructive ring-1 ring-destructive/15',
+			}
+		}
+
+		if (saveStatus === 'saving' || saveStatus === 'dirty') {
+			return {
+				label: '保存中',
+				className: 'bg-amber-500/12 text-amber-700 ring-1 ring-amber-500/15',
+			}
+		}
+
+		return {
+			label: '已保存',
+			className: 'bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-500/15',
+		}
+	}, [commandBridgeStatus, saveStatus])
+
 	const handleSceneChange = useCallback(
 		(...args: ExcalidrawChangeArgs) => {
 			if (editorLoadState.status !== 'ready') {
@@ -153,13 +259,7 @@ function EditorPage() {
 			}
 
 			const [elements, appState, files] = args
-			observeSceneChange(
-				editorLoadState.document.id,
-				elements,
-				appState,
-				files,
-				editorLoadState.document.title,
-			)
+			observeSceneChange(editorLoadState.document.id, elements, appState, files, editorLoadState.document.title)
 		},
 		[editorLoadState],
 	)
@@ -172,7 +272,7 @@ function EditorPage() {
 
 			latestApiIdRef.current = api.id
 
-			// Excalidraw 会在自身初始化阶段触发这个回调，这里延后同步到外部 store，避免在未挂载阶段触发 React 更新。
+			// Excalidraw 初始化阶段会同步触发回调，这里延后写入外部状态，避免挂载期更新。
 			queueMicrotask(() => {
 				if (latestApiIdRef.current === api.id) {
 					setEditorReady(true)
@@ -182,60 +282,12 @@ function EditorPage() {
 		[setEditorReady],
 	)
 
-	function handleInspectScene() {
-		const currentScene = readActiveScene()
-
-		if (!currentScene) {
-			return
-		}
-
-		console.info('[StoneDraw][editor.page] 当前 scene 读取成功。', currentScene)
+	function handleExportPlaceholder() {
+		toast('导出入口已预留，真实导出流程后续接入。')
 	}
 
-	async function handleRenameDocument() {
-		if (editorLoadState.status !== 'ready') {
-			return
-		}
-
-		const normalizedTitle = renameDraft.trim()
-
-		if (!normalizedTitle) {
-			toast.error('标题不能为空。')
-			return
-		}
-
-		setIsRenaming(true)
-
-		const result = await documentService.rename(editorLoadState.document.id, normalizedTitle)
-
-		setIsRenaming(false)
-
-		if (!result.ok) {
-			toast.error(result.error.message)
-			return
-		}
-
-		setEditorLoadState((currentState) => {
-			if (currentState.status !== 'ready') {
-				return currentState
-			}
-
-			return {
-				...currentState,
-				document: result.data,
-			}
-		})
-		setRenameDraft(result.data.title)
-		toast.success('文档标题已更新。')
-	}
-
-	if (editorLoadState.status === 'loading') {
-		return (
-			<LoadingState
-				title='正在加载文档'
-				description='先读取文档元数据，再加载当前 scene 文件。'
-			/>
-		)
+	function handleMorePlaceholder() {
+		toast('更多文档操作后续会统一收口到这里。')
 	}
 
 	if (editorLoadState.status === 'error') {
@@ -252,119 +304,106 @@ function EditorPage() {
 		)
 	}
 
-	const activeDocument = editorLoadState.document
+	const isEditorReady = editorLoadState.status === 'ready'
 
 	return (
-		<section className='flex h-full min-h-0 min-w-[1080px] gap-4'>
-			<aside className='flex h-full min-h-0 w-[320px] min-w-[280px] max-w-[320px] flex-col gap-4 overflow-y-auto rounded-[1.75rem] border border-border/70 bg-background/85 p-4 shadow-sm'>
-				<div className='flex flex-col gap-2'>
-					<span className='inline-flex h-8 min-w-[11.5rem] items-center justify-center rounded-full bg-primary/10 px-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
-						{APP_STATUS_BADGE}
-					</span>
-					<div className='flex flex-col gap-1'>
-						<h2 className='text-lg font-semibold tracking-tight'>{activeDocument.title}</h2>
-						<p className='text-sm leading-6 text-muted-foreground'>
-							当前画布数据已经来自真实文档目录与 `current.scene.json`，不再使用前端草稿占位。
-						</p>
-					</div>
-				</div>
-
-				<div className='rounded-2xl border border-border/70 bg-card px-4 py-3'>
-					<p className='text-xs font-medium text-muted-foreground'>文档标题</p>
-					<div className='mt-3 flex flex-col gap-3'>
-						<Input
-							value={renameDraft}
-							maxLength={120}
-							disabled={isRenaming}
-							onChange={(event) => {
-								setRenameDraft(event.target.value)
-							}}
-							placeholder='输入新的文档标题'
-						/>
-						<div className='flex flex-wrap gap-2'>
+		<section className='flex h-full min-h-0 flex-col gap-3 overflow-hidden md:gap-4'>
+			<div className='shrink-0'>
+				{isEditorReady ? (
+					<div className={TOPBAR_CARD_CLASS}>
+						<div className={TOPBAR_LEFT_GROUP_CLASS}>
 							<Button
 								type='button'
-								size='sm'
-								disabled={isRenaming}
-								onClick={() => {
-									void handleRenameDocument()
-								}}>
-								<PencilLineIcon data-icon='inline-start' />
-								{isRenaming ? '正在保存标题' : '更新标题'}
-							</Button>
-							<Button
-								type='button'
-								size='sm'
+								size='lg'
 								variant='outline'
-								disabled={isRenaming}
+								className='rounded-2xl bg-white/80 px-4'
 								onClick={() => {
-									setRenameDraft(activeDocument.title)
+									navigate(APP_ROUTES.WORKSPACE)
 								}}>
-								恢复当前标题
+								<ArrowLeftIcon data-icon='inline-start' />
+								返回
+							</Button>
+
+							<div className={TOPBAR_GROUP_CLASS}>
+								<h2 className='truncate text-base font-semibold tracking-tight md:text-lg'>
+									{editorLoadState.document.title}
+								</h2>
+								<span
+									className={`inline-flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-xs font-medium ${statusBadge.className}`}>
+									{statusBadge.label}
+								</span>
+							</div>
+						</div>
+
+						<div className='relative min-w-0 w-full max-w-152 justify-self-center'>
+							<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+							<Input
+								value={searchDraft}
+								type='search'
+								className={SEARCH_INPUT_CLASS}
+								onChange={(event) => {
+									setSearchDraft(event.target.value)
+								}}
+								placeholder='搜索画布内容（即将支持）'
+							/>
+						</div>
+
+						<div className={TOPBAR_ACTIONS_CLASS}>
+							<Button
+								type='button'
+								size='icon-lg'
+								variant='outline'
+								className='rounded-2xl bg-white/80'
+								title='导出'
+								onClick={handleExportPlaceholder}>
+								<DownloadIcon />
+							</Button>
+							<Button
+								type='button'
+								size='icon-lg'
+								variant='outline'
+								className='rounded-2xl bg-white/80'
+								title='更多'
+								onClick={handleMorePlaceholder}>
+								<MoreHorizontalIcon />
+							</Button>
+							<Button
+								type='button'
+								size='icon-lg'
+								variant='outline'
+								className='rounded-2xl bg-white/80 text-xs font-medium text-muted-foreground'
+								title='预留'
+								disabled>
+								预
 							</Button>
 						</div>
 					</div>
-				</div>
-
-				<div className='grid gap-3'>
-					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3'>
-						<div className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
-							<FileSearchIcon />
-							文档 ID
-						</div>
-						<p className='mt-2 break-all text-sm font-medium'>{activeDocument.id}</p>
-					</div>
-					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3'>
-						<div className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
-							<PenToolIcon />
-							编辑器状态
-						</div>
-						<p className='mt-2 text-sm font-medium'>{isEditorReady ? '已就绪' : '初始化中'}</p>
-					</div>
-					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3'>
-						<div className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
-							<DatabaseZapIcon />
-							桥接 / 保存
-						</div>
-						<div className='mt-2 grid gap-1 text-sm'>
-							<p className='font-medium'>命令桥接：{commandBridgeStatus}</p>
-							<p className='text-muted-foreground'>保存状态：{saveStatus}</p>
-						</div>
-					</div>
-					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
-						<p className='text-xs font-medium text-muted-foreground'>scene 文件</p>
-						<p className='mt-2 break-all font-medium'>{activeDocument.currentScenePath}</p>
-						<p className='mt-1 text-muted-foreground'>最近更新时间：{formatDateTime(activeDocument.updatedAt)}</p>
-					</div>
-					<div className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
-						<p className='text-xs font-medium text-muted-foreground'>Scene 监听</p>
-						<p className='mt-2 font-medium'>元素数：{lastSceneElementCount}</p>
-						<p className='mt-1 text-muted-foreground'>
-							最近变更：{lastSceneUpdatedAt ? formatDateTime(lastSceneUpdatedAt) : '尚未变更'}
-						</p>
-					</div>
-				</div>
-
-				<Button
-					type='button'
-					variant='outline'
-					onClick={handleInspectScene}>
-					<FileSearchIcon data-icon='inline-start' />
-					读取当前 Scene
-				</Button>
-			</aside>
-
-			<div className='flex min-w-[720px] flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/85 shadow-sm'>
-				<div className='h-full min-h-[640px] flex-1 [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
-					<Excalidraw
-						excalidrawAPI={handleApiReady}
-						initialData={initialData ?? undefined}
-						langCode='zh-CN'
-						onChange={handleSceneChange}
-						theme='light'
+				) : (
+					<EditorLoadingTopbar
+						onBack={() => {
+							navigate(APP_ROUTES.WORKSPACE)
+						}}
 					/>
-				</div>
+				)}
 			</div>
+
+			{isEditorReady ? (
+				<div className={CANVAS_CARD_CLASS}>
+					<div className='h-full min-h-0 [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
+						<Excalidraw
+							UIOptions={EXCALIDRAW_UI_OPTIONS}
+							excalidrawAPI={handleApiReady}
+							initialData={initialData ?? undefined}
+							langCode='zh-CN'
+							onChange={handleSceneChange}
+							renderTopRightUI={() => null}
+							theme='light'
+						/>
+					</div>
+				</div>
+			) : (
+				<EditorLoadingCanvas />
+			)}
 		</section>
 	)
 }

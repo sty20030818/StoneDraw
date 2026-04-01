@@ -8,7 +8,7 @@ function WorkspaceLayout() {
 	const currentScene = resolveSceneByPathname(location.pathname)
 
 	return (
-		<section className='flex min-h-[calc(100vh-1.5rem)] gap-4 overflow-hidden'>
+		<section className='flex h-full min-h-0 gap-4 overflow-hidden'>
 			<aside className='hidden w-60 shrink-0 rounded-[1.75rem] border border-border/70 bg-card/88 p-4 shadow-sm lg:flex lg:flex-col'>
 				<div className='rounded-[1.25rem] border border-border/70 bg-background/85 px-4 py-4'>
 					<div className='flex items-center gap-3'>
@@ -17,7 +17,9 @@ function WorkspaceLayout() {
 						</div>
 						<div className='flex flex-col gap-1'>
 							<p className='text-base font-semibold tracking-tight'>StoneDraw</p>
-							<p className='text-xs leading-5 text-muted-foreground'>本地白板工作台，围绕文档、画布与恢复链路组织体验。</p>
+							<p className='text-xs leading-5 text-muted-foreground'>
+								本地白板工作台，围绕文档、画布与恢复链路组织体验。
+							</p>
 						</div>
 					</div>
 				</div>
@@ -57,7 +59,7 @@ function WorkspaceLayout() {
 				</div>
 			</aside>
 
-			<div className='flex min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/82 shadow-sm backdrop-blur'>
+			<div className='flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/82 shadow-sm backdrop-blur'>
 				<header className='flex flex-col gap-4 border-b border-border/70 bg-background/72 px-4 py-4 md:px-5'>
 					<div className='flex flex-wrap items-start justify-between gap-3'>
 						<div className='flex flex-col gap-1'>
@@ -83,8 +85,8 @@ function WorkspaceLayout() {
 					</div>
 				</header>
 
-				<div className='min-h-0 flex-1 overflow-auto p-4 md:p-5'>
-					<div className='mx-auto flex min-h-full max-w-[1600px] flex-col'>
+				<div className='min-h-0 flex-1 overflow-hidden p-4 md:p-5'>
+					<div className='mx-auto flex h-full min-h-0 max-w-400 flex-col overflow-hidden'>
 						<Outlet />
 					</div>
 				</div>

@@ -57,11 +57,11 @@
 	html,
 	body,
 	#root {
-		@apply h-full min-h-screen;
+		@apply h-full overflow-hidden;
 	}
 
 	body {
-		@apply min-w-80 antialiased bg-background text-foreground;
+		@apply min-w-80 antialiased bg-background text-foreground overflow-hidden;
 		background-image:
 			radial-gradient(circle at top, rgb(92 128 255 / 0.18), transparent 40%),
 			linear-gradient(180deg, #f5f7fb 0%, #edf2f7 100%);
@@ -79,6 +79,23 @@
 	html {
 		@apply font-sans;
 	}
+}
+
+@layer utilities {
+	/* 桌面端默认隐藏滚动条，只保留容器滚动能力。 */
+	.scrollbar-hidden {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	.scrollbar-hidden::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.stonedraw-editor-shell .excalidraw .main-menu-trigger,
+.stonedraw-editor-shell .excalidraw .layer-ui__wrapper__top-right {
+	display: none !important;
 }
 
 :root {
