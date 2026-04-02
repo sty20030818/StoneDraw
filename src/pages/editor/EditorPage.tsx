@@ -7,6 +7,7 @@ import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { ArrowLeftIcon, DownloadIcon, FileSearchIcon, MoreHorizontalIcon, SearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createInitialSceneData } from '@/adapters/excalidraw'
+import SceneTopbar, { SCENE_TOPBAR_SEARCH_INPUT_CLASS } from '@/components/layout/SceneTopbar'
 import EmptyState from '@/components/states/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,78 +48,77 @@ const EXCALIDRAW_UI_OPTIONS = {
 	},
 } satisfies NonNullable<ComponentProps<typeof Excalidraw>['UIOptions']>
 
-const TOPBAR_CARD_CLASS =
-	'grid grid-cols-[max-content_minmax(0,1fr)_max-content] items-center gap-4 rounded-[1.75rem] border border-border/70 bg-background/90 px-3 py-1.5 shadow-sm backdrop-blur'
-
 const CANVAS_CARD_CLASS =
 	'stonedraw-editor-shell min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/82 shadow-sm backdrop-blur'
 
 const TOPBAR_GROUP_CLASS = 'flex min-w-0 items-center gap-4'
 const TOPBAR_LEFT_GROUP_CLASS = 'flex min-w-0 items-center gap-6'
-const TOPBAR_ACTIONS_CLASS = 'flex min-w-0 items-center justify-end gap-2.5 justify-self-end'
-const SEARCH_INPUT_CLASS =
-	'h-11 rounded-2xl border-primary/15 bg-white/95 pl-9 shadow-none focus-visible:border-primary/25 focus-visible:ring-primary/10'
+const TOPBAR_ACTIONS_CLASS = 'flex min-w-0 items-center justify-end gap-3'
 
 function EditorLoadingTopbar({ onBack }: { onBack: () => void }) {
 	return (
-		<div className={TOPBAR_CARD_CLASS}>
-			<div className={TOPBAR_LEFT_GROUP_CLASS}>
-				<Button
-					type='button'
-					size='lg'
-					variant='outline'
-					className='rounded-2xl bg-white/80 px-4'
-					onClick={onBack}>
-					<ArrowLeftIcon data-icon='inline-start' />
-					返回
-				</Button>
+		<SceneTopbar
+			left={
+				<div className={TOPBAR_LEFT_GROUP_CLASS}>
+					<Button
+						type='button'
+						size='lg'
+						variant='outline'
+						className='rounded-2xl bg-white/80 px-4'
+						onClick={onBack}>
+						<ArrowLeftIcon data-icon='inline-start' />
+						返回
+					</Button>
 
-				<div className={TOPBAR_GROUP_CLASS}>
-					<Skeleton className='h-6 w-24 rounded-full md:w-32' />
-					<Skeleton className='h-8 w-18 rounded-full md:w-20' />
+					<div className={TOPBAR_GROUP_CLASS}>
+						<Skeleton className='h-6 w-24 rounded-full md:w-32' />
+						<Skeleton className='h-8 w-[4.5rem] rounded-full md:w-20' />
+					</div>
 				</div>
-			</div>
-
-			<div className='relative min-w-0 w-full max-w-152 justify-self-center'>
-				<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-				<Input
-					type='search'
-					disabled
-					className={SEARCH_INPUT_CLASS}
-					placeholder='搜索画布内容（即将支持）'
-				/>
-			</div>
-
-			<div className={TOPBAR_ACTIONS_CLASS}>
-				<Button
-					type='button'
-					size='icon-lg'
-					variant='outline'
-					className='rounded-2xl bg-white/80'
-					title='导出'
-					disabled>
-					<DownloadIcon />
-				</Button>
-				<Button
-					type='button'
-					size='icon-lg'
-					variant='outline'
-					className='rounded-2xl bg-white/80'
-					title='更多'
-					disabled>
-					<MoreHorizontalIcon />
-				</Button>
-				<Button
-					type='button'
-					size='icon-lg'
-					variant='outline'
-					className='rounded-2xl bg-white/80 text-xs font-medium text-muted-foreground'
-					title='预留'
-					disabled>
-					预
-				</Button>
-			</div>
-		</div>
+			}
+			center={
+				<div className='relative w-full'>
+					<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+					<Input
+						type='search'
+						disabled
+						className={SCENE_TOPBAR_SEARCH_INPUT_CLASS}
+						placeholder='搜索画布内容（即将支持）'
+					/>
+				</div>
+			}
+			right={
+				<div className={TOPBAR_ACTIONS_CLASS}>
+					<Button
+						type='button'
+						size='icon-lg'
+						variant='outline'
+						className='rounded-2xl bg-white/80'
+						title='导出'
+						disabled>
+						<DownloadIcon />
+					</Button>
+					<Button
+						type='button'
+						size='icon-lg'
+						variant='outline'
+						className='rounded-2xl bg-white/80'
+						title='更多'
+						disabled>
+						<MoreHorizontalIcon />
+					</Button>
+					<Button
+						type='button'
+						size='icon-lg'
+						variant='outline'
+						className='rounded-2xl bg-white/80 text-xs font-medium text-muted-foreground'
+						title='预留'
+						disabled>
+						预
+					</Button>
+				</div>
+			}
+		/>
 	)
 }
 
@@ -310,74 +310,78 @@ function EditorPage() {
 		<section className='flex h-full min-h-0 flex-col gap-3 overflow-hidden md:gap-4'>
 			<div className='shrink-0'>
 				{isEditorReady ? (
-					<div className={TOPBAR_CARD_CLASS}>
-						<div className={TOPBAR_LEFT_GROUP_CLASS}>
-							<Button
-								type='button'
-								size='lg'
-								variant='outline'
-								className='rounded-2xl bg-white/80 px-4'
-								onClick={() => {
-									navigate(APP_ROUTES.WORKSPACE)
-								}}>
-								<ArrowLeftIcon data-icon='inline-start' />
-								返回
-							</Button>
+					<SceneTopbar
+						left={
+							<div className={TOPBAR_LEFT_GROUP_CLASS}>
+								<Button
+									type='button'
+									size='lg'
+									variant='outline'
+									className='rounded-2xl bg-white/80 px-4'
+									onClick={() => {
+										navigate(APP_ROUTES.WORKSPACE)
+									}}>
+									<ArrowLeftIcon data-icon='inline-start' />
+									返回
+								</Button>
 
-							<div className={TOPBAR_GROUP_CLASS}>
-								<h2 className='truncate text-base font-semibold tracking-tight md:text-lg'>
-									{editorLoadState.document.title}
-								</h2>
-								<span
-									className={`inline-flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-xs font-medium ${statusBadge.className}`}>
-									{statusBadge.label}
-								</span>
+								<div className={TOPBAR_GROUP_CLASS}>
+									<h2 className='truncate text-base font-semibold tracking-tight md:text-lg'>
+										{editorLoadState.document.title}
+									</h2>
+									<span
+										className={`inline-flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-xs font-medium ${statusBadge.className}`}>
+										{statusBadge.label}
+									</span>
+								</div>
 							</div>
-						</div>
-
-						<div className='relative min-w-0 w-full max-w-152 justify-self-center'>
-							<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-							<Input
-								value={searchDraft}
-								type='search'
-								className={SEARCH_INPUT_CLASS}
-								onChange={(event) => {
-									setSearchDraft(event.target.value)
-								}}
-								placeholder='搜索画布内容（即将支持）'
-							/>
-						</div>
-
-						<div className={TOPBAR_ACTIONS_CLASS}>
-							<Button
-								type='button'
-								size='icon-lg'
-								variant='outline'
-								className='rounded-2xl bg-white/80'
-								title='导出'
-								onClick={handleExportPlaceholder}>
-								<DownloadIcon />
-							</Button>
-							<Button
-								type='button'
-								size='icon-lg'
-								variant='outline'
-								className='rounded-2xl bg-white/80'
-								title='更多'
-								onClick={handleMorePlaceholder}>
-								<MoreHorizontalIcon />
-							</Button>
-							<Button
-								type='button'
-								size='icon-lg'
-								variant='outline'
-								className='rounded-2xl bg-white/80 text-xs font-medium text-muted-foreground'
-								title='预留'
-								disabled>
-								预
-							</Button>
-						</div>
-					</div>
+						}
+						center={
+							<div className='relative w-full'>
+								<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+								<Input
+									value={searchDraft}
+									type='search'
+									className={SCENE_TOPBAR_SEARCH_INPUT_CLASS}
+									onChange={(event) => {
+										setSearchDraft(event.target.value)
+									}}
+									placeholder='搜索画布内容（即将支持）'
+								/>
+							</div>
+						}
+						right={
+							<div className={TOPBAR_ACTIONS_CLASS}>
+								<Button
+									type='button'
+									size='icon-lg'
+									variant='outline'
+									className='rounded-2xl bg-white/80'
+									title='导出'
+									onClick={handleExportPlaceholder}>
+									<DownloadIcon />
+								</Button>
+								<Button
+									type='button'
+									size='icon-lg'
+									variant='outline'
+									className='rounded-2xl bg-white/80'
+									title='更多'
+									onClick={handleMorePlaceholder}>
+									<MoreHorizontalIcon />
+								</Button>
+								<Button
+									type='button'
+									size='icon-lg'
+									variant='outline'
+									className='rounded-2xl bg-white/80 text-xs font-medium text-muted-foreground'
+									title='预留'
+									disabled>
+									预
+								</Button>
+							</div>
+						}
+					/>
 				) : (
 					<EditorLoadingTopbar
 						onBack={() => {

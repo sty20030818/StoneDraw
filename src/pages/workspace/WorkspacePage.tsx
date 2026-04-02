@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
 	ArrowRightIcon,
@@ -6,6 +7,7 @@ import {
 	DatabaseZapIcon,
 	FilePlus2Icon,
 	FileStackIcon,
+	FolderKanbanIcon,
 	FolderOpenIcon,
 	LayoutGridIcon,
 	MoreHorizontalIcon,
@@ -13,20 +15,81 @@ import {
 	RefreshCwIcon,
 	RotateCcwIcon,
 	SearchIcon,
+	Settings2Icon,
 	Trash2Icon,
+	type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import WorkbenchLayout from '@/components/layout/WorkbenchLayout'
+import SceneTopbar, { SCENE_TOPBAR_SEARCH_INPUT_CLASS } from '@/components/layout/SceneTopbar'
 import { useDialogHost } from '@/components/feedback/DialogHost'
 import EmptyState from '@/components/states/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { APP_FEATURE_SCOPE, APP_STATUS_BADGE } from '@/constants'
 import { APP_ROUTES, buildEditorRoute } from '@/constants/routes'
+import { cn } from '@/lib/utils'
 import { documentService } from '@/services'
 import { useAppStore, useWorkspaceStore } from '@/stores'
 import type { DocumentMeta } from '@/types'
 import { formatDateTime } from '@/utils'
+
+const WORKBENCH_CARD_CLASS = 'rounded-[1.75rem] border border-border/70 bg-background/86 p-4 shadow-sm'
+const WORKBENCH_PANEL_HEADER_CLASS = 'flex items-start justify-between gap-3'
+const WORKBENCH_PANEL_BADGE_CLASS =
+	'inline-flex h-8 min-w-24 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card/90 px-4 text-xs font-medium text-muted-foreground'
+const WORKBENCH_ACTIONS_CLASS = 'flex min-w-0 items-center justify-end gap-3'
+const TOPBAR_LEFT_GROUP_CLASS = 'flex min-w-0 items-center gap-6'
+const TOPBAR_TITLE_GROUP_CLASS = 'flex min-w-0 items-center gap-4'
+const DOCUMENT_META_ROW_CLASS = 'mt-3 flex flex-wrap gap-2'
+
+type WorkbenchPanelProps = {
+	icon: LucideIcon
+	title: string
+	description: string
+	badge: string
+	children: ReactNode
+	className?: string
+	bodyClassName?: string
+}
+
+function WorkbenchPanel({
+	icon: Icon,
+	title,
+	description,
+	badge,
+	children,
+	className,
+	bodyClassName,
+}: WorkbenchPanelProps) {
+	return (
+		<section className={cn(WORKBENCH_CARD_CLASS, className)}>
+			<div className={WORKBENCH_PANEL_HEADER_CLASS}>
+				<div className='flex min-w-0 items-center gap-3'>
+					<div className='flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+						<Icon />
+					</div>
+					<div className='min-w-0'>
+						<h3 className='truncate text-sm font-semibold'>{title}</h3>
+						<p className='mt-1 text-sm leading-6 text-muted-foreground'>{description}</p>
+					</div>
+				</div>
+				<div className={WORKBENCH_PANEL_BADGE_CLASS}>{badge}</div>
+			</div>
+
+			<div className={cn('mt-4 min-w-0', bodyClassName)}>{children}</div>
+		</section>
+	)
+}
+
+function WorkspaceMetaPill({ label, value }: { label: string; value: string }) {
+	return (
+		<div className='inline-flex h-8 items-center rounded-full border border-border/70 bg-card/90 px-3 text-xs text-muted-foreground'>
+			<span className='truncate'>
+				{label}：{value}
+			</span>
+		</div>
+	)
+}
 
 function WorkspacePage() {
 	const navigate = useNavigate()
@@ -51,12 +114,71 @@ function WorkspacePage() {
 	const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null)
 	const [renameDraft, setRenameDraft] = useState('')
 	const [pendingDocumentId, setPendingDocumentId] = useState<string | null>(null)
+	const [searchDraft, setSearchDraft] = useState('')
+	const deferredSearchDraft = useDeferredValue(searchDraft)
 
-	const hasDocuments = documents.length > 0
-	const hasTrashedDocuments = trashedDocuments.length > 0
-	const documentCountLabel = useMemo(() => `${documents.length} 个文档`, [documents.length])
-	const recentCountLabel = useMemo(() => `${recentDocuments.length} 条记录`, [recentDocuments.length])
-	const trashedCountLabel = useMemo(() => `${trashedDocuments.length} 个已删除`, [trashedDocuments.length])
+	const normalizedSearchDraft = useMemo(() => deferredSearchDraft.trim().toLowerCase(), [deferredSearchDraft])
+
+	const filteredDocuments = useMemo(() => {
+		if (!normalizedSearchDraft) {
+			return documents
+		}
+
+		return documents.filter((document) => {
+			const title = document.title.toLowerCase()
+			const scenePath = document.currentScenePath.toLowerCase()
+			return title.includes(normalizedSearchDraft) || scenePath.includes(normalizedSearchDraft)
+		})
+	}, [documents, normalizedSearchDraft])
+
+	const filteredRecentDocuments = useMemo(() => {
+		if (!normalizedSearchDraft) {
+			return recentDocuments
+		}
+
+		return recentDocuments.filter((document) => {
+			const title = document.title.toLowerCase()
+			const scenePath = document.currentScenePath.toLowerCase()
+			return title.includes(normalizedSearchDraft) || scenePath.includes(normalizedSearchDraft)
+		})
+	}, [normalizedSearchDraft, recentDocuments])
+
+	const filteredTrashedDocuments = useMemo(() => {
+		if (!normalizedSearchDraft) {
+			return trashedDocuments
+		}
+
+		return trashedDocuments.filter((document) => {
+			const title = document.title.toLowerCase()
+			const scenePath = document.currentScenePath.toLowerCase()
+			return title.includes(normalizedSearchDraft) || scenePath.includes(normalizedSearchDraft)
+		})
+	}, [normalizedSearchDraft, trashedDocuments])
+
+	const hasDocuments = filteredDocuments.length > 0
+	const hasTrashedDocuments = filteredTrashedDocuments.length > 0
+	const hasSearchQuery = normalizedSearchDraft.length > 0
+	const documentCountLabel = useMemo(() => {
+		if (!hasSearchQuery) {
+			return `${documents.length} 个文档`
+		}
+
+		return `${filteredDocuments.length} / ${documents.length} 个文档`
+	}, [documents.length, filteredDocuments.length, hasSearchQuery])
+	const recentCountLabel = useMemo(() => {
+		if (!hasSearchQuery) {
+			return `${recentDocuments.length} 条记录`
+		}
+
+		return `${filteredRecentDocuments.length} / ${recentDocuments.length} 条记录`
+	}, [filteredRecentDocuments.length, hasSearchQuery, recentDocuments.length])
+	const trashedCountLabel = useMemo(() => {
+		if (!hasSearchQuery) {
+			return `${trashedDocuments.length} 个已删除`
+		}
+
+		return `${filteredTrashedDocuments.length} / ${trashedDocuments.length} 个已删除`
+	}, [filteredTrashedDocuments.length, hasSearchQuery, trashedDocuments.length])
 
 	const resetInlineActionState = useCallback(() => {
 		setExpandedDocumentId(null)
@@ -213,270 +335,257 @@ function WorkspacePage() {
 	}
 
 	return (
-		<div className='grid h-full min-h-0 gap-4 overflow-hidden xl:grid-cols-[minmax(0,1fr)_22rem]'>
-			<div className='flex min-w-0 min-h-0 flex-col gap-4 overflow-hidden'>
-				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
-					<div className='flex flex-col gap-3'>
-						<div className='flex flex-wrap items-center gap-2'>
-							<span className='inline-flex h-8 min-w-46 items-center justify-center rounded-full bg-primary/10 px-4 text-xs font-semibold tracking-[0.16em] text-primary uppercase'>
-								{APP_STATUS_BADGE}
-							</span>
-							<span className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
-								{documentCountLabel}
-							</span>
+		<WorkbenchLayout
+			topbar={
+				<SceneTopbar
+					left={
+						<div className={TOPBAR_LEFT_GROUP_CLASS}>
+							<div className='flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
+								<FolderKanbanIcon />
+							</div>
+							<div className={TOPBAR_TITLE_GROUP_CLASS}>
+								<h1 className='truncate text-lg font-semibold tracking-tight'>工作台</h1>
+								<span className='inline-flex h-8 items-center justify-center rounded-full border border-border/70 bg-card/90 px-4 text-xs font-medium text-muted-foreground'>
+									{documentCountLabel}
+								</span>
+							</div>
 						</div>
-						<div className='flex flex-col gap-2'>
-							<h2 className='text-2xl font-semibold tracking-tight'>文档工作区</h2>
-							<p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
-								这里是当前版本的主入口。你可以创建、打开、重命名、删除到回收站并恢复本地文档，最近打开与诊断信息也会在右侧持续可见。
-							</p>
+					}
+					center={
+						<div className='relative w-full'>
+							<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+							<Input
+								type='search'
+								className={SCENE_TOPBAR_SEARCH_INPUT_CLASS}
+								value={searchDraft}
+								onChange={(event) => {
+									setSearchDraft(event.target.value)
+								}}
+								placeholder='搜索文档标题或路径'
+							/>
 						</div>
-					</div>
-
-					<Separator className='my-5' />
-
-					<div className='flex flex-col gap-3'>
-						<div className='flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center'>
+					}
+					right={
+						<div className={WORKBENCH_ACTIONS_CLASS}>
 							<Button
 								type='button'
+								size='lg'
 								disabled={isCreating}
 								onClick={() => {
 									void handleCreateDocument()
 								}}>
 								<FilePlus2Icon data-icon='inline-start' />
-								{isCreating ? '正在创建文档' : '新建文档'}
+								{isCreating ? '正在创建' : '新建文档'}
 							</Button>
 							<Button
 								type='button'
+								size='lg'
 								variant='outline'
 								onClick={() => {
 									void loadWorkspaceData()
 								}}>
 								<RefreshCwIcon data-icon='inline-start' />
-								刷新列表
+								刷新
 							</Button>
-						</div>
-
-						<div className='grid min-w-0 w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto]'>
-							<div className='relative min-w-0 flex-1'>
-								<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-								<Input
-									disabled
-									className='h-10 rounded-xl pl-9'
-									placeholder='搜索功能暂未实现'
-									type='search'
-								/>
-							</div>
 							<Button
 								type='button'
-								variant='ghost'
-								className='shrink-0'
+								size='icon-lg'
+								variant='outline'
+								className='rounded-2xl bg-white/80'
+								title='设置'
 								onClick={() => {
 									navigate(APP_ROUTES.SETTINGS)
 								}}>
-								<ArrowRightIcon data-icon='inline-start' />
-								查看设置
+								<Settings2Icon />
 							</Button>
 						</div>
-					</div>
-				</section>
-
-				<section className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
-					<div className='flex flex-wrap items-start justify-between gap-3'>
-						<div className='flex items-center gap-3'>
-							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-								<LayoutGridIcon />
-							</div>
-							<div className='flex flex-col gap-1'>
-								<h3 className='font-semibold'>本地文档</h3>
-								<p className='text-sm text-muted-foreground'>按 `updatedAt DESC` 展示当前所有未删除文档。</p>
-							</div>
+					}
+				/>
+			}
+			primary={
+				<WorkbenchPanel
+					icon={LayoutGridIcon}
+					title='本地文档'
+					description='围绕真实文档操作组织主列表，只保留打开、重命名和回收站动作。'
+					badge={documentCountLabel}
+					className='flex min-h-0 flex-1 flex-col overflow-hidden'
+					bodyClassName='min-h-0 flex-1 overflow-y-auto scrollbar-hidden pr-1'>
+					{documentsStatus === 'loading' ? (
+						<div className='flex min-h-72 items-center justify-center rounded-[1.5rem] border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
+							正在读取文档列表...
 						</div>
-						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
-							{documentCountLabel}
-						</div>
-					</div>
+					) : null}
 
-					<div className='mt-5 min-h-0 flex-1 overflow-y-auto scrollbar-hidden pr-1'>
-						{documentsStatus === 'loading' ? (
-							<div className='flex min-h-72 items-center justify-center rounded-3xl border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
-								正在读取文档列表...
-							</div>
-						) : null}
-
-						{documentsStatus === 'error' ? (
-							<EmptyState
-								actionLabel='重新加载'
-								description={documentsErrorMessage ?? '文档列表读取失败，请重新加载。'}
-								icon={FolderOpenIcon}
-								onAction={() => {
-									void loadWorkspaceData()
-								}}
-								title='文档列表读取失败'
-							/>
-						) : null}
+					{documentsStatus === 'error' ? (
+						<EmptyState
+							actionLabel='重新加载'
+							description={documentsErrorMessage ?? '文档列表读取失败，请重新加载。'}
+							icon={FolderOpenIcon}
+							onAction={() => {
+								void loadWorkspaceData()
+							}}
+							title='文档列表读取失败'
+						/>
+					) : null}
 
 						{documentsStatus === 'ready' && !hasDocuments ? (
 							<EmptyState
-								actionLabel='新建第一份文档'
-								description='当前工作区还没有本地文档。现在可以从顶部工具栏开始创建第一份文档。'
+								actionLabel={hasSearchQuery ? undefined : '新建第一份文档'}
+								description={
+									hasSearchQuery
+										? '没有匹配当前搜索条件的文档，试试更短的标题关键词或路径片段。'
+										: '当前工作台还没有本地文档。现在可以直接从右上角新建。'
+								}
 								icon={FileStackIcon}
-								onAction={() => {
-									void handleCreateDocument()
-								}}
-								title='还没有文档'
+								onAction={
+									hasSearchQuery
+										? undefined
+										: () => {
+												void handleCreateDocument()
+											}
+								}
+								title={hasSearchQuery ? '没有搜索结果' : '还没有文档'}
 							/>
 						) : null}
 
 						{documentsStatus === 'ready' && hasDocuments ? (
 							<div className='grid gap-3'>
-								{documents.map((document) => {
+								{filteredDocuments.map((document) => {
 									const isExpanded = expandedDocumentId === document.id
 									const isEditing = editingDocumentId === document.id
 									const isPending = pendingDocumentId === document.id
 
-									return (
-										<div
-											key={document.id}
-											className='rounded-3xl border border-border/70 bg-card/82 p-4 shadow-xs'>
-											<div className='flex flex-wrap items-start justify-between gap-3'>
-												<div className='min-w-0 flex-1'>
-													<p className='truncate text-sm font-semibold'>{document.title}</p>
-													<p className='mt-1 break-all text-xs text-muted-foreground'>{document.currentScenePath}</p>
-												</div>
-												<div className='flex items-center gap-2'>
-													<Button
-														type='button'
-														size='sm'
-														variant='ghost'
-														disabled={isPending}
-														title='更多操作'
-														onClick={() => {
-															toggleDocumentActions(document.id)
-														}}>
-														<MoreHorizontalIcon />
-													</Button>
-													<Button
-														type='button'
-														size='sm'
-														disabled={isPending}
-														onClick={() => {
-															void handleOpenDocument(document.id)
-														}}>
-														<ArrowRightIcon data-icon='inline-start' />
-														打开
-													</Button>
-												</div>
+								return (
+									<div
+										key={document.id}
+										className='rounded-[1.5rem] border border-border/70 bg-card/88 p-4 shadow-xs'>
+										<div className='flex items-start justify-between gap-3'>
+											<div className='min-w-0 flex-1'>
+												<p className='truncate text-sm font-semibold'>{document.title}</p>
 											</div>
-
-											<div className='mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-4'>
-												<span>文档 ID：{document.id}</span>
-												<span>创建时间：{formatDateTime(document.createdAt)}</span>
-												<span>更新时间：{formatDateTime(document.updatedAt)}</span>
-												<span>保存状态：{document.saveStatus}</span>
+											<div className='flex shrink-0 items-center gap-2'>
+												<Button
+													type='button'
+													size='icon'
+													variant='outline'
+													className='rounded-xl bg-white/80'
+													disabled={isPending}
+													title='更多操作'
+													onClick={() => {
+														toggleDocumentActions(document.id)
+													}}>
+													<MoreHorizontalIcon />
+												</Button>
+												<Button
+													type='button'
+													size='default'
+													disabled={isPending}
+													onClick={() => {
+														void handleOpenDocument(document.id)
+													}}>
+													<ArrowRightIcon data-icon='inline-start' />
+													打开
+												</Button>
 											</div>
+										</div>
 
-											{isExpanded ? (
-												<div className='mt-4 rounded-2xl border border-border/70 bg-background/80 p-3'>
-													{isEditing ? (
-														<div className='flex flex-col gap-3'>
-															<Input
-																value={renameDraft}
-																maxLength={120}
-																disabled={isPending}
-																onChange={(event) => {
-																	setRenameDraft(event.target.value)
-																}}
-																placeholder='输入新的文档标题'
-															/>
-															<div className='flex flex-wrap gap-2'>
-																<Button
-																	type='button'
-																	size='sm'
-																	disabled={isPending}
-																	onClick={() => {
-																		void handleRenameDocument(document.id)
-																	}}>
-																	<PencilLineIcon data-icon='inline-start' />
-																	保存标题
-																</Button>
-																<Button
-																	type='button'
-																	size='sm'
-																	variant='outline'
-																	disabled={isPending}
-																	onClick={() => {
-																		setEditingDocumentId(null)
-																		setRenameDraft('')
-																	}}>
-																	取消
-																</Button>
-															</div>
-														</div>
-													) : (
+										<div className={DOCUMENT_META_ROW_CLASS}>
+											<WorkspaceMetaPill
+												label='创建'
+												value={formatDateTime(document.createdAt)}
+											/>
+											<WorkspaceMetaPill
+												label='更新'
+												value={formatDateTime(document.updatedAt)}
+											/>
+										</div>
+
+										{isExpanded ? (
+											<div className='mt-4 rounded-[1.25rem] border border-border/70 bg-background/82 p-3'>
+												{isEditing ? (
+													<div className='flex flex-col gap-3'>
+														<Input
+															value={renameDraft}
+															maxLength={120}
+															disabled={isPending}
+															onChange={(event) => {
+																setRenameDraft(event.target.value)
+															}}
+															placeholder='输入新的文档标题'
+														/>
 														<div className='flex flex-wrap gap-2'>
 															<Button
 																type='button'
-																size='sm'
-																variant='outline'
+																size='default'
 																disabled={isPending}
 																onClick={() => {
-																	beginRenameDocument(document)
+																	void handleRenameDocument(document.id)
 																}}>
 																<PencilLineIcon data-icon='inline-start' />
-																重命名
+																保存标题
 															</Button>
 															<Button
 																type='button'
-																size='sm'
+																size='default'
 																variant='outline'
 																disabled={isPending}
 																onClick={() => {
-																	handleMoveToTrash(document)
+																	setEditingDocumentId(null)
+																	setRenameDraft('')
 																}}>
-																<Trash2Icon data-icon='inline-start' />
-																删除到回收站
+																取消
 															</Button>
 														</div>
-													)}
-												</div>
-											) : null}
-										</div>
-									)
-								})}
-							</div>
-						) : null}
-					</div>
-				</section>
-			</div>
-
-			<div className='flex min-w-0 min-h-0 flex-col gap-4 overflow-y-auto scrollbar-hidden pr-1'>
-				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
-					<div className='flex flex-wrap items-start justify-between gap-3'>
-						<div className='flex items-center gap-3'>
-							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-								<Clock3Icon />
-							</div>
-							<div className='flex flex-col gap-1'>
-								<h3 className='font-semibold'>最近打开</h3>
-								<p className='text-sm text-muted-foreground'>
-									读取真实 `recent_opens` 记录，并按最近打开时间倒序展示。
-								</p>
-							</div>
+													</div>
+												) : (
+													<div className='flex flex-wrap gap-2'>
+														<Button
+															type='button'
+															size='default'
+															variant='outline'
+															disabled={isPending}
+															onClick={() => {
+																beginRenameDocument(document)
+															}}>
+															<PencilLineIcon data-icon='inline-start' />
+															重命名
+														</Button>
+														<Button
+															type='button'
+															size='default'
+															variant='outline'
+															disabled={isPending}
+															onClick={() => {
+																handleMoveToTrash(document)
+															}}>
+															<Trash2Icon data-icon='inline-start' />
+															删除到回收站
+														</Button>
+													</div>
+												)}
+											</div>
+										) : null}
+									</div>
+								)
+							})}
 						</div>
-						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
-							{recentCountLabel}
-						</div>
-					</div>
-
-					<div className='mt-4'>
-						{recentDocuments.length > 0 ? (
+					) : null}
+				</WorkbenchPanel>
+			}
+			secondary={
+				<div className='flex min-h-0 flex-col gap-4 overflow-y-auto scrollbar-hidden pr-1'>
+					<WorkbenchPanel
+						icon={Clock3Icon}
+						title='最近打开'
+						description='按最近打开时间回到上次编辑位置。'
+						badge={recentCountLabel}>
+						{filteredRecentDocuments.length > 0 ? (
 							<div className='grid gap-3'>
-								{recentDocuments.map((document) => (
+								{filteredRecentDocuments.map((document) => (
 									<button
 										key={document.id}
 										type='button'
-										className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-left text-sm transition-colors hover:bg-accent/35'
+										className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3 text-left text-sm transition-colors hover:bg-accent/35'
 										onClick={() => {
 											void handleOpenDocument(document.id)
 										}}>
@@ -489,40 +598,31 @@ function WorkspacePage() {
 							</div>
 						) : (
 							<EmptyState
-								description='当前还没有最近打开记录。成功进入编辑器后，这里会自动出现真实文档。'
+								description={
+									hasSearchQuery
+										? '当前搜索条件下没有最近打开记录。'
+										: '当前还没有最近打开记录。进入过编辑器后，这里会自动出现真实文档。'
+								}
 								icon={Clock3Icon}
-								title='最近打开为空'
+								title={hasSearchQuery ? '没有搜索结果' : '最近打开为空'}
 							/>
 						)}
-					</div>
-				</section>
+					</WorkbenchPanel>
 
-				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
-					<div className='flex flex-wrap items-start justify-between gap-3'>
-						<div className='flex items-center gap-3'>
-							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-								<RotateCcwIcon />
-							</div>
-							<div className='flex flex-col gap-1'>
-								<h3 className='font-semibold'>回收站</h3>
-								<p className='text-sm text-muted-foreground'>保留最小恢复入口，不新增独立页面。</p>
-							</div>
-						</div>
-						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
-							{trashedCountLabel}
-						</div>
-					</div>
-
-					<div className='mt-4'>
+					<WorkbenchPanel
+						icon={RotateCcwIcon}
+						title='回收站'
+						description='只保留恢复入口，不再拆独立页面。'
+						badge={trashedCountLabel}>
 						{hasTrashedDocuments ? (
 							<div className='grid gap-3'>
-								{trashedDocuments.map((document) => {
+								{filteredTrashedDocuments.map((document) => {
 									const isPending = pendingDocumentId === document.id
 
 									return (
 										<div
 											key={document.id}
-											className='rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm'>
+											className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3 text-sm'>
 											<p className='font-medium'>{document.title}</p>
 											<p className='mt-1 text-xs text-muted-foreground'>
 												删除时间：{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}
@@ -530,7 +630,7 @@ function WorkspacePage() {
 											<div className='mt-3'>
 												<Button
 													type='button'
-													size='sm'
+													size='default'
 													variant='outline'
 													disabled={isPending}
 													onClick={() => {
@@ -546,91 +646,62 @@ function WorkspacePage() {
 							</div>
 						) : (
 							<EmptyState
-								description='当前没有已删除文档。删除到回收站后的文档会在这里出现。'
+								description={
+									hasSearchQuery
+										? '当前搜索条件下没有回收站文档。'
+										: '当前没有已删除文档。删除到回收站后的文档会在这里出现。'
+								}
 								icon={RotateCcwIcon}
-								title='回收站为空'
+								title={hasSearchQuery ? '没有搜索结果' : '回收站为空'}
 							/>
 						)}
-					</div>
-				</section>
+					</WorkbenchPanel>
 
-				<section className='rounded-[1.75rem] border border-border/70 bg-background/86 p-5 shadow-sm'>
-					<div className='flex flex-wrap items-start justify-between gap-3'>
-						<div className='flex items-center gap-3'>
-							<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-								<DatabaseZapIcon />
+					<WorkbenchPanel
+						icon={DatabaseZapIcon}
+						title='系统状态'
+						description='保留必要的本地目录与数据库诊断信息，用于辅助排查。'
+						badge='运行状态'>
+						<div className='grid gap-3'>
+							<div className='grid gap-3'>
+								<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+									<p className='text-xs text-muted-foreground'>目录状态</p>
+									<p className='mt-1 text-sm font-medium'>{localDirectoryStatus}</p>
+								</div>
+								<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+									<p className='text-xs text-muted-foreground'>数据库状态</p>
+									<p className='mt-1 text-sm font-medium'>{databaseStatus}</p>
+								</div>
 							</div>
-							<div className='flex flex-col gap-1'>
-								<h3 className='font-semibold'>本地诊断信息</h3>
-								<p className='text-sm text-muted-foreground'>保留阶段性可观测性，但仅作为辅助信息展示。</p>
+							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>目录最近就绪时间</p>
+								<p className='mt-1 text-sm font-medium'>{localDirectoriesReadyAt ?? '尚未完成目录初始化'}</p>
+							</div>
+							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>数据库最近就绪时间</p>
+								<p className='mt-1 text-sm font-medium'>{databaseReadyAt ?? '尚未完成数据库初始化'}</p>
+							</div>
+							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>文档目录</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{localDirectories?.documentsDir.path ?? '等待目录初始化'}
+								</p>
+							</div>
+							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>数据库文件</p>
+								<p className='mt-1 break-all text-sm font-medium'>{databaseHealth?.databasePath ?? '等待数据库初始化'}</p>
+							</div>
+							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
+								<p className='text-xs text-muted-foreground'>schema 版本</p>
+								<p className='mt-1 text-sm font-medium'>
+									{databaseHealth?.schemaVersion ?? '未初始化'} / {databaseHealth?.targetSchemaVersion ?? '未初始化'}
+								</p>
 							</div>
 						</div>
-						<div className='inline-flex h-8 min-w-26 items-center justify-center rounded-full border border-border/70 bg-card px-4 text-xs font-medium text-muted-foreground'>
-							运行状态
-						</div>
-					</div>
-
-					<div className='mt-4 grid gap-3'>
-						<div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-1'>
-							<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-								<p className='text-xs text-muted-foreground'>目录状态</p>
-								<p className='mt-1 text-sm font-medium'>{localDirectoryStatus}</p>
-							</div>
-							<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-								<p className='text-xs text-muted-foreground'>数据库状态</p>
-								<p className='mt-1 text-sm font-medium'>{databaseStatus}</p>
-							</div>
-						</div>
-						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-							<p className='text-xs text-muted-foreground'>目录最近就绪时间</p>
-							<p className='mt-1 text-sm font-medium'>{localDirectoriesReadyAt ?? '尚未完成目录初始化'}</p>
-						</div>
-						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-							<p className='text-xs text-muted-foreground'>数据库最近就绪时间</p>
-							<p className='mt-1 text-sm font-medium'>{databaseReadyAt ?? '尚未完成数据库初始化'}</p>
-						</div>
-						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-							<p className='text-xs text-muted-foreground'>文档目录</p>
-							<p className='mt-1 break-all text-sm font-medium'>
-								{localDirectories?.documentsDir.path ?? '等待目录初始化'}
-							</p>
-						</div>
-						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-							<p className='text-xs text-muted-foreground'>数据库文件</p>
-							<p className='mt-1 break-all text-sm font-medium'>{databaseHealth?.databasePath ?? '等待数据库初始化'}</p>
-						</div>
-						<div className='rounded-lg border border-border/70 bg-card px-4 py-3'>
-							<p className='text-xs text-muted-foreground'>schema 版本</p>
-							<p className='mt-1 text-sm font-medium'>
-								{databaseHealth?.schemaVersion ?? '未初始化'} / {databaseHealth?.targetSchemaVersion ?? '未初始化'}
-							</p>
-						</div>
-					</div>
-				</section>
-
-				<section className='rounded-[1.75rem] border border-border/70 bg-background/82 p-5 shadow-sm'>
-					<div className='flex items-center gap-3'>
-						<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
-							<FileStackIcon />
-						</div>
-						<div className='flex flex-col gap-1'>
-							<h3 className='font-semibold'>当前版本覆盖范围</h3>
-							<p className='text-sm text-muted-foreground'>以下能力已稳定纳入当前工作区体验。</p>
-						</div>
-					</div>
-
-					<div className='mt-4 grid gap-2'>
-						{APP_FEATURE_SCOPE.map((item) => (
-							<div
-								key={item}
-								className='rounded-lg border border-border/70 bg-card px-4 py-3 text-sm font-medium'>
-								{item}
-							</div>
-						))}
-					</div>
-				</section>
-			</div>
-		</div>
+					</WorkbenchPanel>
+				</div>
+			}
+		/>
 	)
 }
 

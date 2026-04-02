@@ -61,7 +61,7 @@
 	}
 
 	body {
-		@apply min-w-80 antialiased bg-background text-foreground overflow-hidden;
+		@apply min-w-80 antialiased bg-background text-foreground overflow-hidden select-none;
 		background-image:
 			radial-gradient(circle at top, rgb(92 128 255 / 0.18), transparent 40%),
 			linear-gradient(180deg, #f5f7fb 0%, #edf2f7 100%);
@@ -78,6 +78,12 @@
 
 	html {
 		@apply font-sans;
+	}
+
+	input,
+	textarea,
+	[contenteditable='true'] {
+		@apply select-text;
 	}
 }
 
