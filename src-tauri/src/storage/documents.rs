@@ -37,15 +37,20 @@ pub struct DocumentMetaPayload {
 #[serde(rename_all = "camelCase")]
 pub struct SceneEnvelopePayload {
     pub elements: Vec<Value>,
+    #[serde(default)]
     pub app_state: Map<String, Value>,
+    #[serde(default)]
     pub files: Map<String, Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SceneMetaPayload {
+    #[serde(default = "default_document_title_owned")]
     pub title: String,
+    #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
     pub text_index: String,
 }
 
@@ -53,6 +58,7 @@ pub struct SceneMetaPayload {
 #[serde(rename_all = "camelCase")]
 pub struct SceneFilePayload {
     pub document_id: String,
+    #[serde(default = "default_schema_version")]
     pub schema_version: i64,
     pub updated_at: i64,
     pub scene: SceneEnvelopePayload,
@@ -128,6 +134,14 @@ pub fn open_document_scene(
 ) -> Result<SceneFilePayload, CommandError> {
     let root_dir = resolve_root_dir(app)?;
     open_document_scene_from_root(&root_dir, document_id)
+}
+
+pub fn save_document_scene(
+    app: &AppHandle,
+    scene_payload: SceneFilePayload,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    save_document_scene_from_root(&root_dir, scene_payload)
 }
 
 pub(crate) fn create_document_from_root(
@@ -397,6 +411,30 @@ pub(crate) fn open_document_scene_from_root(
     Ok(scene_payload)
 }
 
+pub(crate) fn save_document_scene_from_root(
+    root_dir_path: &Path,
+    mut scene_payload: SceneFilePayload,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let document_id = scene_payload.document_id.trim().to_string();
+
+    if document_id.is_empty() {
+        return Err(CommandError::invalid_argument("scene.documentId 不能为空"));
+    }
+
+    let existing_document = get_document_by_id_from_root(root_dir_path, &document_id)?;
+    let saved_at = current_timestamp_ms()?;
+
+    scene_payload.document_id = document_id.clone();
+    scene_payload.schema_version = default_schema_version();
+    scene_payload.updated_at = saved_at;
+    scene_payload.meta.title = existing_document.title.clone();
+
+    write_scene_file(&existing_document.current_scene_path, &scene_payload)?;
+    update_document_after_scene_save(root_dir_path, &document_id, saved_at)?;
+
+    get_document_by_id_from_root(root_dir_path, &document_id)
+}
+
 fn map_document_meta_row(row: &Row<'_>) -> rusqlite::Result<DocumentMetaPayload> {
     let is_deleted: i64 = row.get(6)?;
 
@@ -560,6 +598,38 @@ fn insert_document_meta(
     Ok(())
 }
 
+fn update_document_after_scene_save(
+    root_dir_path: &Path,
+    document_id: &str,
+    saved_at: i64,
+) -> Result<(), CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+    let affected_rows = connection
+        .execute(
+            "
+            UPDATE documents
+            SET updated_at = ?1, save_status = ?2
+            WHERE id = ?3 AND is_deleted = 0;
+            ",
+            params![saved_at, DEFAULT_SAVE_STATUS, document_id],
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "更新文档保存元数据失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+
+    if affected_rows == 0 {
+        return Err(CommandError::not_found(
+            "文档不存在或已删除",
+            format!("documentId={document_id} 无法更新保存结果"),
+        ));
+    }
+
+    Ok(())
+}
+
 fn record_document_opened(root_dir_path: &Path, document_id: &str) -> Result<(), CommandError> {
     let mut connection = open_ready_connection(root_dir_path)?;
     let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Active)?
@@ -658,18 +728,26 @@ fn create_empty_scene_payload(document_id: &str, title: &str, updated_at: i64) -
     }
 }
 
+fn default_document_title_owned() -> String {
+    DEFAULT_DOCUMENT_TITLE.into()
+}
+
+fn default_schema_version() -> i64 {
+    DEFAULT_SCHEMA_VERSION
+}
+
 fn write_scene_file(path: &str, scene_payload: &SceneFilePayload) -> Result<(), CommandError> {
     let scene_path = PathBuf::from(path);
     let bytes = serde_json::to_vec_pretty(scene_payload).map_err(|error| {
         CommandError::io(
-            "序列化空白 scene 文件失败",
+            "序列化 scene 文件失败",
             format!("path={}, error={error}", scene_path.display()),
         )
     })?;
 
     fs::write(&scene_path, bytes).map_err(|error| {
         CommandError::io(
-            "写入空白 scene 文件失败",
+            "写入 scene 文件失败",
             format!("path={}, error={error}", scene_path.display()),
         )
     })
@@ -744,12 +822,14 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::commands::CommandErrorCode;
+    use serde_json::Map;
 
     use super::{
         create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
         list_recent_documents_from_root, list_trashed_documents_from_root,
         move_document_to_trash_from_root, open_document_scene_from_root, rename_document_from_root,
-        restore_document_from_root,
+        restore_document_from_root, save_document_scene_from_root, SceneEnvelopePayload,
+        SceneFilePayload, SceneMetaPayload,
     };
 
     fn unique_temp_path(name: &str) -> std::path::PathBuf {
@@ -843,5 +923,134 @@ mod tests {
         if root_directory_path.exists() {
             std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
         }
+    }
+
+    #[test]
+    fn save_document_scene_updates_file_and_metadata() {
+        let root_directory_path = unique_temp_path("save-scene");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 C"))
+            .expect("创建文档应成功");
+
+        let save_result = save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: created_document.id.clone(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![serde_json::json!({
+                        "id": "element-save-1",
+                        "type": "rectangle"
+                    })],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "不会覆盖文档标题".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect("保存 scene 应成功");
+        let reopened_scene = open_document_scene_from_root(&root_directory_path, &created_document.id)
+            .expect("重新读取 scene 应成功");
+
+        assert_eq!(save_result.id, created_document.id);
+        assert!(save_result.updated_at >= created_document.updated_at);
+        assert_eq!(reopened_scene.meta.title, "白板 C");
+        assert_eq!(reopened_scene.scene.elements.len(), 1);
+        assert_eq!(reopened_scene.scene.elements[0]["id"], "element-save-1");
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn save_document_scene_overwrites_current_scene_with_latest_content() {
+        let root_directory_path = unique_temp_path("save-scene-overwrite");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 D"))
+            .expect("创建文档应成功");
+
+        save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: created_document.id.clone(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![serde_json::json!({ "id": "element-save-1" })],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 D".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect("第一次保存应成功");
+        save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: created_document.id.clone(),
+                schema_version: 1,
+                updated_at: 2,
+                scene: SceneEnvelopePayload {
+                    elements: vec![
+                        serde_json::json!({ "id": "element-save-2" }),
+                        serde_json::json!({ "id": "element-save-3" }),
+                    ],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 D".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect("第二次保存应成功");
+
+        let reopened_scene = open_document_scene_from_root(&root_directory_path, &created_document.id)
+            .expect("重新读取 scene 应成功");
+
+        assert_eq!(reopened_scene.scene.elements.len(), 2);
+        assert_eq!(reopened_scene.scene.elements[0]["id"], "element-save-2");
+        assert_eq!(reopened_scene.scene.elements[1]["id"], "element-save-3");
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn save_document_scene_rejects_invalid_payload() {
+        let root_directory_path = unique_temp_path("save-scene-invalid");
+        let _created_document = create_document_from_root(&root_directory_path, Some("白板 E"))
+            .expect("创建文档应成功");
+
+        let error = save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: "   ".into(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 E".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect_err("非法 payload 不应保存成功");
+
+        assert_eq!(error.code, CommandErrorCode::InvalidArgument);
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
 }

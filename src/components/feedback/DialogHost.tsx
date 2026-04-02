@@ -35,6 +35,8 @@ type ConfirmDialogPayload = {
 	confirmLabel?: string
 	cancelLabel?: string
 	onConfirm?: () => void
+	secondaryActionLabel?: string
+	onSecondaryAction?: () => void
 }
 
 type DialogHostContextValue = {
@@ -76,6 +78,11 @@ export function DialogHostProvider({ children }: { children: ReactNode }) {
 
 	const handleConfirm = useCallback(() => {
 		confirmDialogPayload?.onConfirm?.()
+		closeConfirmDialog()
+	}, [closeConfirmDialog, confirmDialogPayload])
+
+	const handleSecondaryAction = useCallback(() => {
+		confirmDialogPayload?.onSecondaryAction?.()
 		closeConfirmDialog()
 	}, [closeConfirmDialog, confirmDialogPayload])
 
@@ -134,10 +141,21 @@ export function DialogHostProvider({ children }: { children: ReactNode }) {
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>{confirmDialogPayload?.cancelLabel ?? '取消'}</AlertDialogCancel>
-						<AlertDialogAction onClick={handleConfirm}>
-							{confirmDialogPayload?.confirmLabel ?? '确认'}
-						</AlertDialogAction>
+						<div className='flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between'>
+							<AlertDialogCancel>{confirmDialogPayload?.cancelLabel ?? '取消'}</AlertDialogCancel>
+							<div className='flex flex-col-reverse gap-2 sm:flex-row'>
+								{confirmDialogPayload?.secondaryActionLabel ? (
+									<AlertDialogAction
+										variant='destructive'
+										onClick={handleSecondaryAction}>
+										{confirmDialogPayload.secondaryActionLabel}
+									</AlertDialogAction>
+								) : null}
+								<AlertDialogAction onClick={handleConfirm}>
+									{confirmDialogPayload?.confirmLabel ?? '确认'}
+								</AlertDialogAction>
+							</div>
+						</div>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>

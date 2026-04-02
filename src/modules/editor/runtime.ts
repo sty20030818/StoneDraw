@@ -4,19 +4,26 @@ import type {
 	ExcalidrawImperativeAPI,
 	ExcalidrawInitialDataState,
 } from '@excalidraw/excalidraw/types'
-import { createScenePayload, applySceneToApi, readSceneFromApi } from '@/adapters/excalidraw'
+import { applySceneToApi, createSceneFingerprint, readSceneFromApi, serializeScene } from '@/adapters/excalidraw'
 import { useEditorStore } from '@/stores'
 import { logger } from '@/utils'
 import type { SceneFilePayload } from '@/types'
 
 let currentEditorApi: ExcalidrawImperativeAPI | null = null
+let savedSceneFingerprint: string | null = null
 let currentSceneFingerprint: string | null = null
 
-function createSceneFingerprint(elements: NonNullable<ExcalidrawInitialDataState['elements']>, files: BinaryFiles) {
-	return JSON.stringify({
-		elements,
-		fileIds: Object.keys(files).sort(),
-	})
+function updateSceneRuntimeState(scene: SceneFilePayload, saveStatus: 'dirty' | 'saved') {
+	const editorStore = useEditorStore.getState()
+
+	editorStore.setLastSceneUpdatedAt(scene.updatedAt)
+	editorStore.setLastSceneElementCount(scene.scene.elements.length)
+	editorStore.setSaveStatus(saveStatus)
+}
+
+function updateCurrentSceneFingerprint(scene: SceneFilePayload) {
+	currentSceneFingerprint = createSceneFingerprint(scene)
+	return currentSceneFingerprint
 }
 
 export function setEditorApi(api: ExcalidrawImperativeAPI) {
@@ -34,6 +41,7 @@ export function setEditorApi(api: ExcalidrawImperativeAPI) {
 
 export function clearEditorApi() {
 	currentEditorApi = null
+	savedSceneFingerprint = null
 	currentSceneFingerprint = null
 	useEditorStore.getState().setEditorReady(false)
 }
@@ -42,14 +50,14 @@ export function getEditorApi() {
 	return currentEditorApi
 }
 
-export function readActiveScene(): SceneFilePayload | null {
-	const activeDocumentId = useEditorStore.getState().activeDocumentId
+export function readActiveScene(documentId?: string, title?: string): SceneFilePayload | null {
+	const activeDocumentId = documentId ?? useEditorStore.getState().activeDocumentId
 
 	if (!currentEditorApi || !activeDocumentId) {
 		return null
 	}
 
-	return readSceneFromApi(currentEditorApi, activeDocumentId)
+	return readSceneFromApi(currentEditorApi, activeDocumentId, title)
 }
 
 export function applyScene(scene: SceneFilePayload): boolean {
@@ -58,22 +66,32 @@ export function applyScene(scene: SceneFilePayload): boolean {
 	}
 
 	applySceneToApi(currentEditorApi, scene)
-	currentSceneFingerprint = createSceneFingerprint(
-		scene.scene.elements as NonNullable<ExcalidrawInitialDataState['elements']>,
-		scene.scene.files as BinaryFiles,
-	)
-	useEditorStore.getState().setLastSceneUpdatedAt(scene.updatedAt)
-	useEditorStore.getState().setLastSceneElementCount(scene.scene.elements.length)
-
+	markSceneAsSaved(scene)
 	return true
 }
 
 export function setSceneObservationBaseline(scene: SceneFilePayload) {
-	currentSceneFingerprint = createSceneFingerprint(
-		scene.scene.elements as NonNullable<ExcalidrawInitialDataState['elements']>,
-		scene.scene.files as BinaryFiles,
-	)
-	useEditorStore.getState().setLastSceneElementCount(scene.scene.elements.length)
+	const fingerprint = createSceneFingerprint(scene)
+
+	savedSceneFingerprint = fingerprint
+	currentSceneFingerprint = fingerprint
+	updateSceneRuntimeState(scene, 'saved')
+}
+
+export function markSceneAsSaved(scene: SceneFilePayload, updatedAt = scene.updatedAt) {
+	const savedScene = {
+		...scene,
+		updatedAt,
+	}
+	const fingerprint = createSceneFingerprint(savedScene)
+
+	savedSceneFingerprint = fingerprint
+	currentSceneFingerprint = fingerprint
+	updateSceneRuntimeState(savedScene, 'saved')
+}
+
+export function hasUnsavedSceneChanges() {
+	return Boolean(savedSceneFingerprint && currentSceneFingerprint && savedSceneFingerprint !== currentSceneFingerprint)
 }
 
 export function observeSceneChange(
@@ -83,23 +101,26 @@ export function observeSceneChange(
 	files: BinaryFiles,
 	title?: string,
 ): SceneFilePayload {
-	const scene = createScenePayload(documentId, elements, appState, files, title)
-	const editorStore = useEditorStore.getState()
-	const nextFingerprint = createSceneFingerprint(elements, files)
+	const scene =
+		readActiveScene(documentId, title) ??
+		serializeScene(
+			documentId,
+			{
+				elements,
+				appState,
+				files,
+			},
+			{ title },
+		)
+	const nextFingerprint = updateCurrentSceneFingerprint(scene)
+	const nextSaveStatus = savedSceneFingerprint === nextFingerprint ? 'saved' : 'dirty'
 
-	if (currentSceneFingerprint === nextFingerprint) {
-		return scene
-	}
+	updateSceneRuntimeState(scene, nextSaveStatus)
 
-	currentSceneFingerprint = nextFingerprint
-
-	editorStore.setLastSceneUpdatedAt(scene.updatedAt)
-	editorStore.setLastSceneElementCount(elements.length)
-	editorStore.setSaveStatus('dirty')
-
-	logger.info('editor.runtime', '画布变更已同步到应用层占位通道。', {
+	logger.info('editor.runtime', '画布变更已同步到应用层。', {
 		documentId,
-		elementCount: elements.length,
+		elementCount: scene.scene.elements.length,
+		saveStatus: nextSaveStatus,
 	})
 
 	return scene

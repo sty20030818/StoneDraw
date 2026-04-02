@@ -1,2 +1,11 @@
-export { applySceneToApi, createInitialSceneData, createScenePayload, readSceneFromApi } from './scene.adapter'
+export {
+	applySceneToApi,
+	createInitialSceneData,
+	createSceneFingerprint,
+	createScenePayload,
+	deserializeScene,
+	readSceneFromApi,
+	SceneValidationError,
+	serializeScene,
+} from './scene.adapter'
 export { exportScenePlaceholder } from './export.adapter'

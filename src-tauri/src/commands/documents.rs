@@ -3,7 +3,7 @@ use tauri::AppHandle;
 use crate::storage::documents::{
     create_document, get_document_by_id, list_documents, list_recent_documents,
     list_trashed_documents, move_document_to_trash, open_document_scene, rename_document,
-    restore_document, DocumentMetaPayload, SceneFilePayload,
+    restore_document, save_document_scene, DocumentMetaPayload, SceneFilePayload,
 };
 
 use super::{success, CommandError, CommandResult};
@@ -56,6 +56,21 @@ pub fn documents_open_scene(
 ) -> CommandResult<SceneFilePayload> {
     let document_id = validate_document_id(document_id)?;
     success(open_document_scene(&app, &document_id)?)
+}
+
+#[tauri::command]
+pub fn editor_save_scene(
+    app: AppHandle,
+    scene: SceneFilePayload,
+) -> CommandResult<DocumentMetaPayload> {
+    let raw_document_id = scene.document_id.clone();
+    let document_id = validate_document_id(raw_document_id.clone())?;
+
+    if document_id != raw_document_id {
+        return Err(CommandError::invalid_argument("scene.documentId 非法"));
+    }
+
+    success(save_document_scene(&app, scene)?)
 }
 
 #[tauri::command]
