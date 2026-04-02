@@ -1,8 +1,7 @@
 import { editorService } from '@/services'
 import { createFailureResult, createSuccessResult } from '@/services/tauri.service'
-import { useEditorStore } from '@/stores'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types'
-import { markSceneAsSaved, readActiveScene } from './runtime'
+import { markSceneAsSaveFailed, markSceneAsSaveStarted, markSceneAsSaved, readActiveScene } from './runtime'
 
 export type SaveSceneSuccessPayload = {
 	document: DocumentMeta
@@ -34,10 +33,12 @@ export async function saveActiveDocumentScene(
 		}) as TauriCommandResult<SaveSceneSuccessPayload>
 	}
 
+	markSceneAsSaveStarted(scene)
+
 	const saveResult = await editorService.saveScene(scene)
 
 	if (!saveResult.ok) {
-		useEditorStore.getState().setSaveStatus('dirty')
+		markSceneAsSaveFailed(saveResult.error.details ?? saveResult.error.message)
 		return saveResult as TauriCommandResult<SaveSceneSuccessPayload>
 	}
 

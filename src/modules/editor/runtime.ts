@@ -13,7 +13,7 @@ let currentEditorApi: ExcalidrawImperativeAPI | null = null
 let savedSceneFingerprint: string | null = null
 let currentSceneFingerprint: string | null = null
 
-function updateSceneRuntimeState(scene: SceneFilePayload, saveStatus: 'dirty' | 'saved') {
+function updateSceneRuntimeState(scene: SceneFilePayload, saveStatus: 'dirty' | 'saved' | 'saving') {
 	const editorStore = useEditorStore.getState()
 
 	editorStore.setLastSceneUpdatedAt(scene.updatedAt)
@@ -43,7 +43,12 @@ export function clearEditorApi() {
 	currentEditorApi = null
 	savedSceneFingerprint = null
 	currentSceneFingerprint = null
-	useEditorStore.getState().setEditorReady(false)
+	const editorStore = useEditorStore.getState()
+	editorStore.setEditorReady(false)
+	editorStore.setHasPendingCompensationSave(false)
+	editorStore.setHasScheduledSave(false)
+	editorStore.setIsFlushing(false)
+	editorStore.setLastSaveError(null)
 }
 
 export function getEditorApi() {
@@ -72,13 +77,18 @@ export function applyScene(scene: SceneFilePayload): boolean {
 
 export function setSceneObservationBaseline(scene: SceneFilePayload) {
 	const fingerprint = createSceneFingerprint(scene)
+	const editorStore = useEditorStore.getState()
 
 	savedSceneFingerprint = fingerprint
 	currentSceneFingerprint = fingerprint
+	editorStore.setHasPendingCompensationSave(false)
+	editorStore.setHasScheduledSave(false)
+	editorStore.setLastSaveError(null)
 	updateSceneRuntimeState(scene, 'saved')
 }
 
 export function markSceneAsSaved(scene: SceneFilePayload, updatedAt = scene.updatedAt) {
+	const editorStore = useEditorStore.getState()
 	const savedScene = {
 		...scene,
 		updatedAt,
@@ -86,8 +96,39 @@ export function markSceneAsSaved(scene: SceneFilePayload, updatedAt = scene.upda
 	const fingerprint = createSceneFingerprint(savedScene)
 
 	savedSceneFingerprint = fingerprint
-	currentSceneFingerprint = fingerprint
-	updateSceneRuntimeState(savedScene, 'saved')
+	editorStore.setLastSaveError(null)
+
+	if (!currentSceneFingerprint) {
+		currentSceneFingerprint = fingerprint
+	}
+
+	const nextSaveStatus = currentSceneFingerprint === fingerprint ? 'saved' : 'dirty'
+
+	updateSceneRuntimeState(savedScene, nextSaveStatus)
+}
+
+export function markSceneAsSaveStarted(scene?: SceneFilePayload) {
+	const nextScene = scene ?? readActiveScene()
+
+	useEditorStore.getState().setLastSaveError(null)
+
+	if (nextScene) {
+		updateSceneRuntimeState(nextScene, 'saving')
+		return
+	}
+
+	useEditorStore.getState().setSaveStatus('saving')
+}
+
+export function markSceneAsSaveFailed(details?: string) {
+	const editorStore = useEditorStore.getState()
+
+	editorStore.setLastSaveError(details ?? null)
+	editorStore.setSaveStatus('error')
+}
+
+export function clearPendingCompensationSave() {
+	useEditorStore.getState().setHasPendingCompensationSave(false)
 }
 
 export function hasUnsavedSceneChanges() {
@@ -101,6 +142,7 @@ export function observeSceneChange(
 	files: BinaryFiles,
 	title?: string,
 ): SceneFilePayload {
+	const editorStore = useEditorStore.getState()
 	const scene =
 		readActiveScene(documentId, title) ??
 		serializeScene(
@@ -113,7 +155,15 @@ export function observeSceneChange(
 			{ title },
 		)
 	const nextFingerprint = updateCurrentSceneFingerprint(scene)
-	const nextSaveStatus = savedSceneFingerprint === nextFingerprint ? 'saved' : 'dirty'
+	const hasUnsavedChanges = savedSceneFingerprint !== nextFingerprint
+	const isSaving = editorStore.saveStatus === 'saving'
+	const nextSaveStatus = hasUnsavedChanges ? (isSaving ? 'saving' : 'dirty') : 'saved'
+
+	if (isSaving && hasUnsavedChanges) {
+		editorStore.setHasPendingCompensationSave(true)
+	}
+
+	editorStore.setLastSaveError(null)
 
 	updateSceneRuntimeState(scene, nextSaveStatus)
 

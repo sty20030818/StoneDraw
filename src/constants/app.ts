@@ -5,11 +5,12 @@ export const APP_BOOT_STAGES: Record<'BOOTSTRAPPING' | 'READY', AppBootStage> = 
 	READY: 'ready',
 }
 
-export const SAVE_STATUSES: Record<'IDLE' | 'DIRTY' | 'SAVING' | 'SAVED', SaveStatus> = {
+export const SAVE_STATUSES: Record<'IDLE' | 'DIRTY' | 'SAVING' | 'SAVED' | 'ERROR', SaveStatus> = {
 	IDLE: 'idle',
 	DIRTY: 'dirty',
 	SAVING: 'saving',
 	SAVED: 'saved',
+	ERROR: 'error',
 }
 
 export const APP_STATUS_BADGE = '0.2.5 文档工作区阶段'

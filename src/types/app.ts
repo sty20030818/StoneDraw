@@ -22,4 +22,4 @@ export type LocalDirectoryStatus = 'idle' | 'ready' | 'error'
 
 export type DatabaseStatus = 'idle' | 'ready' | 'error'
 
-export type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved'
+export type SaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
