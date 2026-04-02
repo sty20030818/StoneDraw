@@ -44,6 +44,12 @@ bun dev
 bun lint
 ```
 
+## 一键检查
+
+```bash
+bun run check
+```
+
 ## 代码格式化
 
 ```bash
@@ -62,9 +68,35 @@ bun run format:check
 bun typecheck
 ```
 
+## 运行前端测试
+
+```bash
+bun run test
+```
+
+## 监听前端测试
+
+```bash
+bun run test:watch
+```
+
+## 生成前端覆盖率
+
+```bash
+bun run test:coverage
+```
+
+## 运行 Rust 测试
+
+```bash
+bun run test:rust
+```
+
 说明：
 
 - `bun lint`、`bun format` 与 `bun run format:check` 均基于 OXC 工具链执行。
+- 前端测试统一使用 `Vitest`，覆盖率输出位于 `coverage/`。
+- Rust 测试统一通过 `cargo test --manifest-path src-tauri/Cargo.toml` 执行，并由 `bun run test:rust` 包装调用。
 
 ## 启动桌面开发模式
 

@@ -1,7 +1,7 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { serializeScene } from '@/adapters/excalidraw'
 import { useEditorStore } from '@/stores'
+import { createScenePayload } from '@/test/fixtures/scene'
 import { clearEditorApi, observeSceneChange, setEditorApi, setSceneObservationBaseline } from './runtime'
 
 function createFakeApi(snapshot: {
@@ -27,17 +27,7 @@ describe('editor.runtime', () => {
 				elements: [],
 			}),
 		)
-		setSceneObservationBaseline(
-			serializeScene(
-				'doc-runtime-1',
-				{
-					elements: [],
-					appState: {} as never,
-					files: {},
-				},
-				{ title: '空白文档' },
-			),
-		)
+		setSceneObservationBaseline(createScenePayload({ documentId: 'doc-runtime-1', title: '空白文档' }))
 
 		const observedScene = observeSceneChange(
 			'doc-runtime-1',
@@ -61,17 +51,7 @@ describe('editor.runtime', () => {
 				elements: [{ id: 'element-after-save' }],
 			}),
 		)
-		setSceneObservationBaseline(
-			serializeScene(
-				'doc-runtime-2',
-				{
-					elements: [],
-					appState: {} as never,
-					files: {},
-				},
-				{ title: '空白文档' },
-			),
-		)
+		setSceneObservationBaseline(createScenePayload({ documentId: 'doc-runtime-2', title: '空白文档' }))
 		useEditorStore.getState().setSaveStatus('saving')
 
 		const observedScene = observeSceneChange(
@@ -86,5 +66,33 @@ describe('editor.runtime', () => {
 		expect(observedScene.scene.elements).toEqual([{ id: 'element-after-save' }])
 		expect(useEditorStore.getState().saveStatus).toBe('saving')
 		expect(runtimeState.hasPendingCompensationSave).toBe(true)
+	})
+
+	test('基线一致时应保持 saved', () => {
+		clearEditorApi()
+		useEditorStore.getState().reset()
+
+		setEditorApi(
+			createFakeApi({
+				elements: [{ id: 'element-same' }],
+			}),
+		)
+		setSceneObservationBaseline(
+			createScenePayload({
+				documentId: 'doc-runtime-3',
+				title: '一致文档',
+				elements: [{ id: 'element-same' }],
+			}),
+		)
+
+		observeSceneChange(
+			'doc-runtime-3',
+			[{ id: 'transient-change' }] as never,
+			{} as never,
+			{} as never,
+			'一致文档',
+		)
+
+		expect(useEditorStore.getState().saveStatus).toBe('saved')
 	})
 })

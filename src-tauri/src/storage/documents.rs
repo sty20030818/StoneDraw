@@ -144,7 +144,7 @@ pub fn save_document_scene(
     save_document_scene_from_root(&root_dir, scene_payload)
 }
 
-pub(crate) fn create_document_from_root(
+pub fn create_document_from_root(
     root_dir_path: &Path,
     title: Option<&str>,
 ) -> Result<DocumentMetaPayload, CommandError> {
@@ -179,7 +179,7 @@ pub(crate) fn create_document_from_root(
     Ok(document_meta)
 }
 
-pub(crate) fn get_document_by_id_from_root(
+pub fn get_document_by_id_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<DocumentMetaPayload, CommandError> {
@@ -193,7 +193,7 @@ pub(crate) fn get_document_by_id_from_root(
     })
 }
 
-pub(crate) fn list_documents_from_root(
+pub fn list_documents_from_root(
     root_dir_path: &Path,
 ) -> Result<Vec<DocumentMetaPayload>, CommandError> {
     let connection = open_ready_connection(root_dir_path)?;
@@ -219,7 +219,7 @@ pub(crate) fn list_documents_from_root(
     )
 }
 
-pub(crate) fn list_recent_documents_from_root(
+pub fn list_recent_documents_from_root(
     root_dir_path: &Path,
 ) -> Result<Vec<DocumentMetaPayload>, CommandError> {
     let connection = open_ready_connection(root_dir_path)?;
@@ -246,7 +246,7 @@ pub(crate) fn list_recent_documents_from_root(
     )
 }
 
-pub(crate) fn list_trashed_documents_from_root(
+pub fn list_trashed_documents_from_root(
     root_dir_path: &Path,
 ) -> Result<Vec<DocumentMetaPayload>, CommandError> {
     let connection = open_ready_connection(root_dir_path)?;
@@ -272,7 +272,7 @@ pub(crate) fn list_trashed_documents_from_root(
     )
 }
 
-pub(crate) fn rename_document_from_root(
+pub fn rename_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
     title: &str,
@@ -307,7 +307,7 @@ pub(crate) fn rename_document_from_root(
     get_document_by_id_from_root(root_dir_path, document_id)
 }
 
-pub(crate) fn move_document_to_trash_from_root(
+pub fn move_document_to_trash_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<DocumentMetaPayload, CommandError> {
@@ -349,7 +349,7 @@ pub(crate) fn move_document_to_trash_from_root(
     })
 }
 
-pub(crate) fn restore_document_from_root(
+pub fn restore_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<DocumentMetaPayload, CommandError> {
@@ -386,7 +386,7 @@ pub(crate) fn restore_document_from_root(
     get_document_by_id_from_root(root_dir_path, document_id)
 }
 
-pub(crate) fn open_document_scene_from_root(
+pub fn open_document_scene_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<SceneFilePayload, CommandError> {
@@ -411,7 +411,7 @@ pub(crate) fn open_document_scene_from_root(
     Ok(scene_payload)
 }
 
-pub(crate) fn save_document_scene_from_root(
+pub fn save_document_scene_from_root(
     root_dir_path: &Path,
     mut scene_payload: SceneFilePayload,
 ) -> Result<DocumentMetaPayload, CommandError> {
@@ -1050,6 +1050,54 @@ mod tests {
         .expect_err("非法 payload 不应保存成功");
 
         assert_eq!(error.code, CommandErrorCode::InvalidArgument);
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn save_document_scene_returns_not_found_for_unknown_document() {
+        let root_directory_path = unique_temp_path("save-scene-missing-document");
+        let _created_document = create_document_from_root(&root_directory_path, Some("白板 F"))
+            .expect("创建文档应成功");
+
+        let error = save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: "doc-missing".into(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 F".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect_err("不存在的文档不应保存成功");
+
+        assert_eq!(error.code, CommandErrorCode::NotFound);
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn open_document_scene_returns_io_error_for_corrupted_scene_file() {
+        let root_directory_path = unique_temp_path("open-scene-corrupted");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 G"))
+            .expect("创建文档应成功");
+
+        std::fs::write(&created_document.current_scene_path, "{ broken json }")
+            .expect("损坏 scene 文件应可写入");
+
+        let error = open_document_scene_from_root(&root_directory_path, &created_document.id)
+            .expect_err("损坏 scene 文件不应读取成功");
+
+        assert_eq!(error.code, CommandErrorCode::IoError);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }

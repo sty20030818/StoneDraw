@@ -4,10 +4,10 @@ import type {
 	ExcalidrawImperativeAPI,
 	ExcalidrawInitialDataState,
 } from '@excalidraw/excalidraw/types'
-import { applySceneToApi, createSceneFingerprint, readSceneFromApi, serializeScene } from '@/adapters/excalidraw'
-import { useEditorStore } from '@/stores'
-import { logger } from '@/utils'
-import type { SceneFilePayload } from '@/types'
+import { applySceneToApi, createSceneFingerprint, readSceneFromApi, serializeScene } from '@/adapters/excalidraw/index'
+import { useEditorStore } from '@/stores/editor.store'
+import { logger } from '@/utils/logger'
+import type { SceneFilePayload } from '@/types/index'
 
 let currentEditorApi: ExcalidrawImperativeAPI | null = null
 let savedSceneFingerprint: string | null = null

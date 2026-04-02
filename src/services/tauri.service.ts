@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore } from '@/stores'
-import type { AppError, AppErrorCode, CommandSuccessPayload, TauriCommandResult } from '@/types'
-import { logger } from '@/utils'
+import { useAppStore } from '@/stores/app.store'
+import type { AppError, AppErrorCode, CommandSuccessPayload, TauriCommandResult } from '@/types/index'
+import { logger } from '@/utils/logger'
 
 function createCommandError(command: string, code: AppErrorCode, message: string, details?: string): AppError {
 	return {

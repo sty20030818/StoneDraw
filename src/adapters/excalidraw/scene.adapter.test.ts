@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import {
 	SceneValidationError,
 	createInitialSceneData,
@@ -6,6 +6,7 @@ import {
 	deserializeScene,
 	serializeScene,
 } from './scene.adapter'
+import { createScenePayload } from '@/test/fixtures/scene'
 
 const EXCALIDRAW_DEFAULT_PERSISTED_APP_STATE = {
 	gridModeEnabled: false,
@@ -137,24 +138,15 @@ describe('scene.adapter', () => {
 	})
 
 	test('Excalidraw 默认 appState 不应触发初始化脏状态', () => {
-		const initialScene = serializeScene(
-			'doc-6',
-			{
-				elements: [],
-				appState: {} as never,
-				files: {},
-			},
-			{ title: '空白文档' },
-		)
-		const mountedScene = serializeScene(
-			'doc-6',
-			{
-				elements: [],
-				appState: EXCALIDRAW_DEFAULT_PERSISTED_APP_STATE as never,
-				files: {},
-			},
-			{ title: '空白文档' },
-		)
+		const initialScene = createScenePayload({
+			documentId: 'doc-6',
+			title: '空白文档',
+		})
+		const mountedScene = createScenePayload({
+			documentId: 'doc-6',
+			title: '空白文档',
+			appState: EXCALIDRAW_DEFAULT_PERSISTED_APP_STATE,
+		})
 
 		expect(initialScene.scene.appState).toEqual({})
 		expect(mountedScene.scene.appState).toEqual({})

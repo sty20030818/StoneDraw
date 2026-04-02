@@ -1,6 +1,6 @@
-import { editorService } from '@/services'
+import { editorService } from '@/services/editor.service'
 import { createFailureResult, createSuccessResult } from '@/services/tauri.service'
-import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types'
+import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types/index'
 import { markSceneAsSaveFailed, markSceneAsSaveStarted, markSceneAsSaved, readActiveScene } from './runtime'
 
 export type SaveSceneSuccessPayload = {

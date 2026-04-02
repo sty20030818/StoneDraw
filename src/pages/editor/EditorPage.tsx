@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDialogHost } from '@/components/feedback/DialogHost'
-import { createInitialSceneData } from '@/adapters/excalidraw'
+import { createInitialSceneData } from '@/adapters/excalidraw/index'
 import SceneTopbar, { SCENE_TOPBAR_SEARCH_INPUT_CLASS } from '@/components/layout/SceneTopbar'
 import EmptyState from '@/components/states/EmptyState'
 import { Button } from '@/components/ui/button'
@@ -31,10 +31,11 @@ import {
 	scheduleAutoSave,
 	setEditorApi,
 	setSceneObservationBaseline,
-} from '@/modules/editor'
-import { documentService, editorService } from '@/services'
-import { useEditorStore } from '@/stores'
-import type { DocumentMeta, SceneFilePayload } from '@/types'
+} from '@/modules/editor/index'
+import { documentService } from '@/services/document.service'
+import { editorService } from '@/services/editor.service'
+import { useEditorStore } from '@/stores/editor.store'
+import type { DocumentMeta, SceneFilePayload } from '@/types/index'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
 type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>

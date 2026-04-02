@@ -1,6 +1,6 @@
 import { createFailureResult } from '@/services/tauri.service'
-import { useEditorStore } from '@/stores'
-import type { DocumentMeta, SaveStatus, TauriCommandResult } from '@/types'
+import { useEditorStore } from '@/stores/editor.store'
+import type { DocumentMeta, SaveStatus, TauriCommandResult } from '@/types/index'
 import { saveActiveDocumentScene, type SaveSceneSuccessPayload } from './save'
 
 const DEFAULT_AUTO_SAVE_DEBOUNCE_MS = 1000

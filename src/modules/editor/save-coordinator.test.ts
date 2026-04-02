@@ -1,27 +1,14 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test, vi } from 'vitest'
 import { createSuccessResult } from '@/services/tauri.service'
-import type { DocumentMeta, SaveStatus } from '@/types'
+import type { SaveStatus } from '@/types'
+import { createDocumentMeta } from '@/test/fixtures/document'
+import { createScenePayload } from '@/test/fixtures/scene'
 
 type RuntimeSnapshot = {
 	saveStatus: SaveStatus | 'error'
 	hasPendingCompensationSave: boolean
 	hasScheduledSave: boolean
 	isFlushing: boolean
-}
-
-function createDocumentMeta(id: string, title: string): DocumentMeta {
-	return {
-		id,
-		title,
-		currentScenePath: '/tmp/current.scene.json',
-		createdAt: 1,
-		updatedAt: 1,
-		lastOpenedAt: 1,
-		isDeleted: false,
-		deletedAt: null,
-		sourceType: 'local',
-		saveStatus: 'saved',
-	}
 }
 
 function createRuntimeState(initialState?: Partial<RuntimeSnapshot>) {
@@ -43,6 +30,7 @@ function createRuntimeState(initialState?: Partial<RuntimeSnapshot>) {
 
 describe('editor.save-coordinator', () => {
 	test('scheduleAutoSave 应在防抖窗口后触发一次保存', async () => {
+		vi.useFakeTimers()
 		const runtime = createRuntimeState({
 			saveStatus: 'dirty',
 		})
@@ -59,14 +47,8 @@ describe('editor.save-coordinator', () => {
 				})
 
 				return createSuccessResult({
-					document: createDocumentMeta('doc-1', '文档'),
-					scene: {
-						documentId: 'doc-1',
-						schemaVersion: 1,
-						updatedAt: 1,
-						scene: { elements: [], appState: {}, files: {} },
-						meta: { title: '文档', tags: [], textIndex: '' },
-					},
+					document: createDocumentMeta({ id: 'doc-1', title: '文档' }),
+					scene: createScenePayload({ documentId: 'doc-1', title: '文档' }),
 				})
 			},
 		})
@@ -75,7 +57,7 @@ describe('editor.save-coordinator', () => {
 			id: 'doc-1',
 			title: '文档',
 		})
-		await new Promise((resolve) => setTimeout(resolve, 30))
+		await vi.advanceTimersByTimeAsync(30)
 
 		expect(saveCount).toBe(1)
 		expect(runtime.read().hasScheduledSave).toBe(false)
@@ -97,14 +79,12 @@ describe('editor.save-coordinator', () => {
 				})
 
 				return createSuccessResult({
-					document: createDocumentMeta('doc-2', '显式保存文档'),
-					scene: {
-						documentId: 'doc-2',
-						schemaVersion: 1,
+					document: createDocumentMeta({
+						id: 'doc-2',
+						title: '显式保存文档',
 						updatedAt: 2,
-						scene: { elements: [], appState: {}, files: {} },
-						meta: { title: '显式保存文档', tags: [], textIndex: '' },
-					},
+					}),
+					scene: createScenePayload({ documentId: 'doc-2', title: '显式保存文档' }),
 				})
 			},
 		})
@@ -116,6 +96,46 @@ describe('editor.save-coordinator', () => {
 
 		expect(result.ok).toBe(true)
 		expect(saveCount).toBe(1)
+	})
+
+	test('保存中再次标记补偿保存后应追加一次串行保存', async () => {
+		const runtime = createRuntimeState({
+			saveStatus: 'dirty',
+		})
+		let saveCount = 0
+		const { createSaveCoordinator } = await import('./save-coordinator')
+		const coordinator = createSaveCoordinator({
+			readRuntimeState: runtime.read,
+			writeRuntimeState: runtime.write,
+			executeSave: async () => {
+				saveCount += 1
+
+				if (saveCount === 1) {
+					runtime.write({
+						saveStatus: 'dirty',
+						hasPendingCompensationSave: true,
+					})
+				} else {
+					runtime.write({
+						saveStatus: 'saved',
+						hasPendingCompensationSave: false,
+					})
+				}
+
+				return createSuccessResult({
+					document: createDocumentMeta({ id: 'doc-4', title: '补偿保存文档' }),
+					scene: createScenePayload({ documentId: 'doc-4', title: '补偿保存文档' }),
+				})
+			},
+		})
+
+		const result = await coordinator.saveNow({
+			id: 'doc-4',
+			title: '补偿保存文档',
+		})
+
+		expect(result.ok).toBe(true)
+		expect(saveCount).toBe(2)
 	})
 
 	test('flushPendingSave 失败后应返回 false 并清理 flushing 状态', async () => {
