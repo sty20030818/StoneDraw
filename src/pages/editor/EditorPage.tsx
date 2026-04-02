@@ -11,7 +11,6 @@ import SceneTopbar, { SCENE_TOPBAR_SEARCH_INPUT_CLASS } from '@/components/layou
 import EmptyState from '@/components/states/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { APP_ROUTES } from '@/constants/routes'
 import { clearEditorApi, observeSceneChange, setEditorApi, setSceneObservationBaseline } from '@/modules/editor'
 import { documentService, editorService } from '@/services'
@@ -59,7 +58,7 @@ function EditorLoadingTopbar({ onBack }: { onBack: () => void }) {
 	return (
 		<SceneTopbar
 			left={
-				<div className={TOPBAR_LEFT_GROUP_CLASS}>
+				<div className={TOPBAR_GROUP_CLASS}>
 					<Button
 						type='button'
 						size='lg'
@@ -69,11 +68,6 @@ function EditorLoadingTopbar({ onBack }: { onBack: () => void }) {
 						<ArrowLeftIcon data-icon='inline-start' />
 						返回
 					</Button>
-
-					<div className={TOPBAR_GROUP_CLASS}>
-						<Skeleton className='h-6 w-24 rounded-full md:w-32' />
-						<Skeleton className='h-8 w-[4.5rem] rounded-full md:w-20' />
-					</div>
 				</div>
 			}
 			center={

@@ -1,8 +1,7 @@
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-	ArrowRightIcon,
 	Clock3Icon,
 	DatabaseZapIcon,
 	FilePlus2Icon,
@@ -254,6 +253,15 @@ function WorkspacePage() {
 		navigate(buildEditorRoute(result.data.id))
 	}
 
+	function handleDocumentCardKeyDown(event: KeyboardEvent<HTMLDivElement>, documentId: string) {
+		if (event.key !== 'Enter' && event.key !== ' ') {
+			return
+		}
+
+		event.preventDefault()
+		void handleOpenDocument(documentId)
+	}
+
 	function toggleDocumentActions(documentId: string) {
 		if (expandedDocumentId === documentId) {
 			resetInlineActionState()
@@ -411,7 +419,7 @@ function WorkspacePage() {
 					className='flex min-h-0 flex-1 flex-col overflow-hidden'
 					bodyClassName='min-h-0 flex-1 overflow-y-auto scrollbar-hidden pr-1'>
 					{documentsStatus === 'loading' ? (
-						<div className='flex min-h-72 items-center justify-center rounded-[1.5rem] border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
+						<div className='flex min-h-72 items-center justify-center rounded-lg border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
 							正在读取文档列表...
 						</div>
 					) : null}
@@ -428,37 +436,45 @@ function WorkspacePage() {
 						/>
 					) : null}
 
-						{documentsStatus === 'ready' && !hasDocuments ? (
-							<EmptyState
-								actionLabel={hasSearchQuery ? undefined : '新建第一份文档'}
-								description={
-									hasSearchQuery
-										? '没有匹配当前搜索条件的文档，试试更短的标题关键词或路径片段。'
-										: '当前工作台还没有本地文档。现在可以直接从右上角新建。'
-								}
-								icon={FileStackIcon}
-								onAction={
-									hasSearchQuery
-										? undefined
-										: () => {
-												void handleCreateDocument()
-											}
-								}
-								title={hasSearchQuery ? '没有搜索结果' : '还没有文档'}
-							/>
-						) : null}
+					{documentsStatus === 'ready' && !hasDocuments ? (
+						<EmptyState
+							actionLabel={hasSearchQuery ? undefined : '新建第一份文档'}
+							description={
+								hasSearchQuery
+									? '没有匹配当前搜索条件的文档，试试更短的标题关键词或路径片段。'
+									: '当前工作台还没有本地文档。现在可以直接从右上角新建。'
+							}
+							icon={FileStackIcon}
+							onAction={
+								hasSearchQuery
+									? undefined
+									: () => {
+											void handleCreateDocument()
+										}
+							}
+							title={hasSearchQuery ? '没有搜索结果' : '还没有文档'}
+						/>
+					) : null}
 
-						{documentsStatus === 'ready' && hasDocuments ? (
-							<div className='grid gap-3'>
-								{filteredDocuments.map((document) => {
-									const isExpanded = expandedDocumentId === document.id
-									const isEditing = editingDocumentId === document.id
-									const isPending = pendingDocumentId === document.id
+					{documentsStatus === 'ready' && hasDocuments ? (
+						<div className='grid gap-3'>
+							{filteredDocuments.map((document) => {
+								const isExpanded = expandedDocumentId === document.id
+								const isEditing = editingDocumentId === document.id
+								const isPending = pendingDocumentId === document.id
 
 								return (
 									<div
 										key={document.id}
-										className='rounded-[1.5rem] border border-border/70 bg-card/88 p-4 shadow-xs'>
+										role='button'
+										tabIndex={0}
+										className='cursor-pointer rounded-lg border border-border bg-card/88 p-4 shadow-xs transition-[background-color,border-color,box-shadow,transform] hover:border-primary/45 hover:bg-card hover:shadow-md hover:shadow-primary/8'
+										onClick={() => {
+											void handleOpenDocument(document.id)
+										}}
+										onKeyDown={(event) => {
+											handleDocumentCardKeyDown(event, document.id)
+										}}>
 										<div className='flex items-start justify-between gap-3'>
 											<div className='min-w-0 flex-1'>
 												<p className='truncate text-sm font-semibold'>{document.title}</p>
@@ -471,20 +487,11 @@ function WorkspacePage() {
 													className='rounded-xl bg-white/80'
 													disabled={isPending}
 													title='更多操作'
-													onClick={() => {
+													onClick={(event) => {
+														event.stopPropagation()
 														toggleDocumentActions(document.id)
 													}}>
 													<MoreHorizontalIcon />
-												</Button>
-												<Button
-													type='button'
-													size='default'
-													disabled={isPending}
-													onClick={() => {
-														void handleOpenDocument(document.id)
-													}}>
-													<ArrowRightIcon data-icon='inline-start' />
-													打开
 												</Button>
 											</div>
 										</div>
@@ -501,7 +508,14 @@ function WorkspacePage() {
 										</div>
 
 										{isExpanded ? (
-											<div className='mt-4 rounded-[1.25rem] border border-border/70 bg-background/82 p-3'>
+											<div
+												className='mt-4 rounded-[1.25rem] border border-border/70 bg-background/82 p-3'
+												onClick={(event) => {
+													event.stopPropagation()
+												}}
+												onKeyDown={(event) => {
+													event.stopPropagation()
+												}}>
 												{isEditing ? (
 													<div className='flex flex-col gap-3'>
 														<Input
@@ -689,7 +703,9 @@ function WorkspacePage() {
 							</div>
 							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
 								<p className='text-xs text-muted-foreground'>数据库文件</p>
-								<p className='mt-1 break-all text-sm font-medium'>{databaseHealth?.databasePath ?? '等待数据库初始化'}</p>
+								<p className='mt-1 break-all text-sm font-medium'>
+									{databaseHealth?.databasePath ?? '等待数据库初始化'}
+								</p>
 							</div>
 							<div className='rounded-[1.25rem] border border-border/70 bg-card/90 px-4 py-3'>
 								<p className='text-xs text-muted-foreground'>schema 版本</p>
