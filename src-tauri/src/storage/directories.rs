@@ -349,6 +349,27 @@ mod tests {
     }
 
     #[test]
+    fn read_local_directories_from_root_returns_error_when_documents_path_is_file() {
+        let root_directory_path = unique_temp_path("documents-file");
+        let documents_file_path = root_directory_path.join("data/documents");
+
+        fs::create_dir_all(root_directory_path.join("data")).expect("data 目录应可创建");
+        fs::create_dir_all(root_directory_path.join("config")).expect("config 目录应可创建");
+        fs::create_dir_all(root_directory_path.join("data/logs")).expect("logs 目录应可创建");
+        fs::create_dir_all(root_directory_path.join("data/exports")).expect("exports 目录应可创建");
+        fs::write(&documents_file_path, "not-a-directory").expect("documents 文件应可写入");
+
+        let error = read_local_directories_from_root(&root_directory_path)
+            .expect_err("文档目录路径为文件时不应读取成功");
+
+        assert_eq!(error.code, CommandErrorCode::IoError);
+        assert!(error.message.contains("文档目录"));
+        assert!(error.details.unwrap_or_default().contains("不是目录"));
+
+        fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
     fn document_path_layout_returns_stable_document_paths() {
         let root_directory_path = unique_temp_path("document-layout");
         let layout = document_path_layout(&root_directory_path, "doc-123");

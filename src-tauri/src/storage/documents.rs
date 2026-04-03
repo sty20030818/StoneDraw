@@ -1101,4 +1101,40 @@ mod tests {
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
+
+    #[test]
+    fn open_document_scene_returns_io_error_for_document_id_mismatch() {
+        let root_directory_path = unique_temp_path("open-scene-mismatch");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 H"))
+            .expect("创建文档应成功");
+
+        std::fs::write(
+            &created_document.current_scene_path,
+            serde_json::json!({
+                "documentId": "doc-other",
+                "schemaVersion": 1,
+                "updatedAt": 1,
+                "scene": {
+                    "elements": [],
+                    "appState": {},
+                    "files": {}
+                },
+                "meta": {
+                    "title": "白板 H",
+                    "tags": [],
+                    "textIndex": ""
+                }
+            })
+            .to_string(),
+        )
+        .expect("错误 documentId 的 scene 文件应可写入");
+
+        let error = open_document_scene_from_root(&root_directory_path, &created_document.id)
+            .expect_err("documentId 不匹配时不应读取成功");
+
+        assert_eq!(error.code, CommandErrorCode::IoError);
+        assert!(error.details.unwrap_or_default().contains("documentId mismatch"));
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
 }

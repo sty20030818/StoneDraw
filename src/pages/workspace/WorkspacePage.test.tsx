@@ -182,4 +182,112 @@ describe('WorkspacePage', () => {
 			expect(toastMock).toHaveBeenCalledWith('打开失败')
 		})
 	})
+
+	test('没有文档时应展示空状态并支持从空状态新建', async () => {
+		const user = userEvent.setup()
+		listMock.mockResolvedValueOnce({
+			ok: true,
+			data: [],
+		})
+		listRecentMock.mockResolvedValueOnce({
+			ok: true,
+			data: [],
+		})
+
+		renderWorkspacePage()
+
+		expect(await screen.findByText('还没有文档')).toBeInTheDocument()
+
+		await user.click(screen.getByRole('button', { name: '新建第一份文档' }))
+
+		await waitFor(() => {
+			expect(createMock).toHaveBeenCalledWith('未命名文档')
+			expect(screen.getByText('编辑器占位')).toBeInTheDocument()
+		})
+	})
+
+	test('重命名文档成功后应调用命令并提示成功', async () => {
+		const user = userEvent.setup()
+		renameMock.mockResolvedValueOnce({
+			ok: true,
+			data: createDocumentMeta({
+				id: 'doc-workspace-1',
+				title: '工作区文档-新标题',
+			}),
+		})
+
+		renderWorkspacePage()
+		await screen.findAllByText('工作区文档')
+
+		await user.click(screen.getByRole('button', { name: '更多操作' }))
+		await user.click(screen.getByRole('button', { name: '重命名' }))
+		await user.clear(screen.getByPlaceholderText('输入新的文档标题'))
+		await user.type(screen.getByPlaceholderText('输入新的文档标题'), '工作区文档-新标题')
+		await user.click(screen.getByRole('button', { name: '保存标题' }))
+
+		await waitFor(() => {
+			expect(renameMock).toHaveBeenCalledWith('doc-workspace-1', '工作区文档-新标题')
+			expect(toastMock).toHaveBeenCalledWith('文档标题已更新。')
+		})
+	})
+
+	test('删除到回收站时应先确认再执行移动', async () => {
+		const user = userEvent.setup()
+		moveToTrashMock.mockResolvedValueOnce({
+			ok: true,
+			data: createDocumentMeta({
+				id: 'doc-workspace-1',
+				isDeleted: true,
+				deletedAt: 2,
+			}),
+		})
+
+		renderWorkspacePage()
+		await screen.findAllByText('工作区文档')
+
+		await user.click(screen.getByRole('button', { name: '更多操作' }))
+		await user.click(screen.getByRole('button', { name: '删除到回收站' }))
+		expect(await screen.findByRole('button', { name: '移入回收站' })).toBeInTheDocument()
+
+		await user.click(screen.getByRole('button', { name: '移入回收站' }))
+
+		await waitFor(() => {
+			expect(moveToTrashMock).toHaveBeenCalledWith('doc-workspace-1')
+			expect(toastMock).toHaveBeenCalledWith('已将《工作区文档》移动到回收站。')
+		})
+	})
+
+	test('回收站文档应支持恢复', async () => {
+		const user = userEvent.setup()
+		listTrashedMock.mockResolvedValueOnce({
+			ok: true,
+			data: [
+				createDocumentMeta({
+					id: 'doc-trashed-1',
+					title: '已删除文档',
+					isDeleted: true,
+					deletedAt: 2,
+				}),
+			],
+		})
+		restoreMock.mockResolvedValueOnce({
+			ok: true,
+			data: createDocumentMeta({
+				id: 'doc-trashed-1',
+				title: '已删除文档',
+				isDeleted: false,
+			}),
+		})
+
+		renderWorkspacePage()
+
+		expect(await screen.findByText('已删除文档')).toBeInTheDocument()
+
+		await user.click(screen.getByRole('button', { name: '恢复文档' }))
+
+		await waitFor(() => {
+			expect(restoreMock).toHaveBeenCalledWith('doc-trashed-1')
+			expect(toastMock).toHaveBeenCalledWith('已恢复《已删除文档》。')
+		})
+	})
 })

@@ -118,3 +118,92 @@ fn document_error_paths_preserve_latest_saved_scene() {
 
     std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
 }
+
+#[test]
+fn invalid_save_and_corrupted_scene_recovery_keep_last_valid_scene() {
+    let root_directory_path = unique_temp_path("invalid-save-recovery");
+    let created_document =
+        create_document_from_root(&root_directory_path, Some("恢复文档")).expect("创建文档应成功");
+
+    save_document_scene_from_root(
+        &root_directory_path,
+        SceneFilePayload {
+            document_id: created_document.id.clone(),
+            schema_version: 1,
+            updated_at: 1,
+            scene: SceneEnvelopePayload {
+                elements: vec![serde_json::json!({ "id": "element-valid-1" })],
+                app_state: Map::new(),
+                files: Map::new(),
+            },
+            meta: SceneMetaPayload {
+                title: "恢复文档".into(),
+                tags: vec![],
+                text_index: String::new(),
+            },
+        },
+    )
+    .expect("初次保存应成功");
+
+    let invalid_save_error = save_document_scene_from_root(
+        &root_directory_path,
+        SceneFilePayload {
+            document_id: "   ".into(),
+            schema_version: 1,
+            updated_at: 2,
+            scene: SceneEnvelopePayload {
+                elements: vec![serde_json::json!({ "id": "element-invalid" })],
+                app_state: Map::new(),
+                files: Map::new(),
+            },
+            meta: SceneMetaPayload {
+                title: "恢复文档".into(),
+                tags: vec![],
+                text_index: String::new(),
+            },
+        },
+    )
+    .expect_err("非法保存不应成功");
+
+    assert_eq!(invalid_save_error.code, CommandErrorCode::InvalidArgument);
+
+    let scene_after_invalid_save =
+        open_document_scene_from_root(&root_directory_path, &created_document.id)
+            .expect("非法保存后仍应能读取最后一次有效 scene");
+    assert_eq!(scene_after_invalid_save.scene.elements.len(), 1);
+    assert_eq!(scene_after_invalid_save.scene.elements[0]["id"], "element-valid-1");
+
+    std::fs::write(&created_document.current_scene_path, "{ broken json }")
+        .expect("损坏 scene 文件应可写入");
+
+    let corrupted_open_error = open_document_scene_from_root(&root_directory_path, &created_document.id)
+        .expect_err("损坏 scene 文件不应读取成功");
+    assert_eq!(corrupted_open_error.code, CommandErrorCode::IoError);
+
+    save_document_scene_from_root(
+        &root_directory_path,
+        SceneFilePayload {
+            document_id: created_document.id.clone(),
+            schema_version: 1,
+            updated_at: 3,
+            scene: SceneEnvelopePayload {
+                elements: vec![serde_json::json!({ "id": "element-recovered-1" })],
+                app_state: Map::new(),
+                files: Map::new(),
+            },
+            meta: SceneMetaPayload {
+                title: "恢复文档".into(),
+                tags: vec![],
+                text_index: String::new(),
+            },
+        },
+    )
+    .expect("损坏后重新保存应恢复 scene");
+
+    let recovered_scene = open_document_scene_from_root(&root_directory_path, &created_document.id)
+        .expect("恢复后 scene 应可再次读取");
+    assert_eq!(recovered_scene.scene.elements.len(), 1);
+    assert_eq!(recovered_scene.scene.elements[0]["id"], "element-recovered-1");
+
+    std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+}

@@ -330,7 +330,8 @@ mod tests {
     use crate::commands::CommandErrorCode;
 
     use super::{
-        initialize_database_from_root, read_database_health_from_root, Migration,
+        initialize_database_from_root, read_database_health_from_root,
+        read_database_schema_version_from_root, Migration,
         DEFAULT_MIGRATIONS,
     };
 
@@ -418,5 +419,25 @@ mod tests {
         assert_eq!(health.target_schema_version, 2);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn read_database_health_from_root_returns_not_initialized_when_database_missing() {
+        let root_directory_path = unique_temp_path("missing-database");
+
+        let error = read_database_health_from_root(&root_directory_path, DEFAULT_MIGRATIONS)
+            .expect_err("数据库不存在时应返回未初始化错误");
+
+        assert_eq!(error.code, CommandErrorCode::NotInitialized);
+    }
+
+    #[test]
+    fn read_database_schema_version_from_root_returns_not_initialized_when_database_missing() {
+        let root_directory_path = unique_temp_path("missing-schema-version");
+
+        let error = read_database_schema_version_from_root(&root_directory_path, DEFAULT_MIGRATIONS)
+            .expect_err("数据库不存在时 schema 版本读取应返回未初始化错误");
+
+        assert_eq!(error.code, CommandErrorCode::NotInitialized);
     }
 }
