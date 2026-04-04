@@ -1,16 +1,23 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
-import AppLayout from '@/components/layout/AppLayout'
-import EditorLayout from '@/components/layout/EditorLayout'
-import WorkspaceLayout from '@/components/layout/WorkspaceLayout'
+import {
+	LegacyAppLayout,
+	LegacyEditorLayout,
+	LegacyWorkspaceLayout,
+} from '@/components/layout'
 import { APP_ROUTES } from '@/constants/routes'
-import { EditorPage, NotFoundPage, SettingsPage, WorkspacePage } from '@/pages'
+import {
+	LegacyEditorPage,
+	LegacySettingsPage,
+	LegacyWorkspacePage,
+	NotFoundPage,
+} from '@/pages'
 
 function AppRouter() {
 	return (
 		<HashRouter>
 			<Routes>
 				<Route
-					element={<AppLayout />}
+					element={<LegacyAppLayout />}
 					path={APP_ROUTES.ROOT}>
 					<Route
 						element={
@@ -21,19 +28,19 @@ function AppRouter() {
 						}
 						index
 					/>
-					<Route element={<WorkspaceLayout />}>
+					<Route element={<LegacyWorkspaceLayout />}>
 						<Route
-							element={<WorkspacePage />}
+							element={<LegacyWorkspacePage />}
 							path={APP_ROUTES.WORKSPACE}
 						/>
 						<Route
-							element={<SettingsPage />}
+							element={<LegacySettingsPage />}
 							path={APP_ROUTES.SETTINGS}
 						/>
 					</Route>
-					<Route element={<EditorLayout />}>
+					<Route element={<LegacyEditorLayout />}>
 						<Route
-							element={<EditorPage />}
+							element={<LegacyEditorPage />}
 							path={APP_ROUTES.EDITOR}
 						/>
 					</Route>

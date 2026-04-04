@@ -3,40 +3,28 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { resetHashRoute, setHashRoute } from '@/test/helpers/hash-route'
 
 vi.mock('@/pages', () => ({
-	EditorPage: () => <div>编辑器页面</div>,
+	LegacyEditorPage: () => <div>编辑器页面</div>,
+	LegacySettingsPage: () => <div>设置页面</div>,
+	LegacyWorkspacePage: () => <div>工作区页面</div>,
 	NotFoundPage: () => <div>未命中页面</div>,
-	SettingsPage: () => <div>设置页面</div>,
-	WorkspacePage: () => <div>工作区页面</div>,
 }))
 
-vi.mock('@/components/layout/AppLayout', async () => {
+vi.mock('@/components/layout', async () => {
 	const { Outlet } = await import('react-router-dom')
 	return {
-		default: () => (
+		LegacyAppLayout: () => (
 			<div>
 				<div>应用布局</div>
 				<Outlet />
 			</div>
 		),
-	}
-})
-
-vi.mock('@/components/layout/WorkspaceLayout', async () => {
-	const { Outlet } = await import('react-router-dom')
-	return {
-		default: () => (
+		LegacyWorkspaceLayout: () => (
 			<div>
 				<div>工作区布局</div>
 				<Outlet />
 			</div>
 		),
-	}
-})
-
-vi.mock('@/components/layout/EditorLayout', async () => {
-	const { Outlet } = await import('react-router-dom')
-	return {
-		default: () => (
+		LegacyEditorLayout: () => (
 			<div>
 				<div>编辑器布局</div>
 				<Outlet />
