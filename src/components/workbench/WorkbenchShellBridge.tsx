@@ -1,11 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from 'react'
+import type { PropsWithChildren } from 'react'
+import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { SaveStatus } from '@/types'
-import type { WorkbenchActivityItem } from '@/app/router'
-
-type WorkbenchPanelKey = WorkbenchActivityItem['key']
 
 type WorkbenchShellState = {
-	activePanel: WorkbenchPanelKey
+	activePanel: ReturnType<typeof useWorkbenchStore.getState>['activePanel']
 	documentId: string | null
 	documentTitle: string
 	searchDraft: string
@@ -19,78 +17,75 @@ type WorkbenchShellState = {
 	onSearchChange: (value: string) => void
 }
 
-type WorkbenchShellContextValue = {
-	shellState: WorkbenchShellState
-	setActivePanel: (panel: WorkbenchPanelKey) => void
-	patchShellState: (patch: Partial<WorkbenchShellState>) => void
-	resetShellState: () => void
-}
-
-const noop = () => undefined
-
-const initialShellState: WorkbenchShellState = {
-	activePanel: 'explorer',
-	documentId: null,
-	documentTitle: '未选择文档',
-	searchDraft: '',
-	isDocumentReady: false,
-	saveStatus: 'idle',
-	isFlushing: false,
-	onBack: noop,
-	onSave: noop,
-	onExport: noop,
-	onMore: noop,
-	onSearchChange: noop,
-}
-
-const WorkbenchShellContext = createContext<WorkbenchShellContextValue | null>(null)
-
 export function WorkbenchShellProvider({ children }: PropsWithChildren) {
-	const [shellState, setShellState] = useState<WorkbenchShellState>(initialShellState)
-
-	const setActivePanel = useCallback((activePanel: WorkbenchPanelKey) => {
-		setShellState((currentState) => ({
-			...currentState,
-			activePanel,
-		}))
-	}, [])
-
-	const patchShellState = useCallback((patch: Partial<WorkbenchShellState>) => {
-		setShellState((currentState) => ({
-			...currentState,
-			...patch,
-		}))
-	}, [])
-
-	const resetShellState = useCallback(() => {
-		setShellState(initialShellState)
-	}, [])
-
-	const value = useMemo(
-		() => ({
-			shellState,
-			setActivePanel,
-			patchShellState,
-			resetShellState,
-		}),
-		[patchShellState, resetShellState, setActivePanel, shellState],
-	)
-
-	return <WorkbenchShellContext.Provider value={value}>{children}</WorkbenchShellContext.Provider>
-}
-
-function useWorkbenchShellContext() {
-	const context = useContext(WorkbenchShellContext)
-
-	if (!context) {
-		throw new Error('useWorkbenchShellContext 必须在 WorkbenchShellProvider 内使用。')
-	}
-
-	return context
+	return children
 }
 
 export function useWorkbenchShell() {
-	return useWorkbenchShellContext()
+	const shellState = useWorkbenchStore((state) => ({
+		activePanel: state.activePanel,
+		documentId: state.activeDocumentId,
+		documentTitle: state.documentTitle,
+		searchDraft: state.searchDraft,
+		isDocumentReady: state.isWorkbenchReady,
+		saveStatus: state.saveStatus,
+		isFlushing: state.isFlushing,
+		onBack: state.onBack,
+		onSave: state.onSave,
+		onExport: state.onExport,
+		onMore: state.onMore,
+		onSearchChange: state.onSearchChange,
+	}))
+	const setActivePanel = useWorkbenchStore((state) => state.setActivePanel)
+	const resetShellState = useWorkbenchStore((state) => state.reset)
+	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
+	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
+	const setSearchDraft = useWorkbenchStore((state) => state.setSearchDraft)
+	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
+	const setSaveStatus = useWorkbenchStore((state) => state.setSaveStatus)
+	const setIsFlushing = useWorkbenchStore((state) => state.setIsFlushing)
+	const setWorkbenchActions = useWorkbenchStore((state) => state.setWorkbenchActions)
+
+	function patchShellState(patch: Partial<WorkbenchShellState>) {
+		if (patch.documentId !== undefined) {
+			setActiveDocumentId(patch.documentId)
+		}
+
+		if (patch.documentTitle !== undefined) {
+			setDocumentTitle(patch.documentTitle)
+		}
+
+		if (patch.searchDraft !== undefined) {
+			setSearchDraft(patch.searchDraft)
+		}
+
+		if (patch.isDocumentReady !== undefined) {
+			setWorkbenchReady(patch.isDocumentReady)
+		}
+
+		if (patch.saveStatus !== undefined) {
+			setSaveStatus(patch.saveStatus)
+		}
+
+		if (patch.isFlushing !== undefined) {
+			setIsFlushing(patch.isFlushing)
+		}
+
+		setWorkbenchActions({
+			onBack: patch.onBack,
+			onSave: patch.onSave,
+			onExport: patch.onExport,
+			onMore: patch.onMore,
+			onSearchChange: patch.onSearchChange,
+		})
+	}
+
+	return {
+		shellState,
+		setActivePanel,
+		patchShellState,
+		resetShellState,
+	}
 }
 
-export type { WorkbenchPanelKey, WorkbenchShellState }
+export type { WorkbenchShellState }

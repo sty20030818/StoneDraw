@@ -1,13 +1,13 @@
 import { FilePlus2Icon, FolderOpenIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/components/states/EmptyState'
-import { useWorkspaceStore } from '@/stores/workspace.store'
+import { useDocumentStore } from '@/stores/document.store'
 import { formatDateTime } from '@/utils/date'
 import { useWorkspaceDocuments } from '@/pages/workspace/shared/useWorkspaceDocuments'
 
 function HomePage() {
-	const recentDocuments = useWorkspaceStore((state) => state.recentDocuments)
-	const documentsStatus = useWorkspaceStore((state) => state.documentsStatus)
+	const recentDocuments = useDocumentStore((state) => state.recentDocuments)
+	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
 	const { handleCreateDocument, handleOpenDocument } = useWorkspaceDocuments()
 
 	return (
@@ -52,7 +52,7 @@ function HomePage() {
 					</div>
 				</div>
 
-				{documentsStatus === 'ready' && recentDocuments.length > 0 ? (
+				{collectionStatus === 'ready' && recentDocuments.length > 0 ? (
 					<div className='mt-5 grid gap-3'>
 						{recentDocuments.map((document) => (
 							<button

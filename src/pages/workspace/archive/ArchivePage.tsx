@@ -1,13 +1,15 @@
 import { RotateCcwIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/components/states/EmptyState'
-import { useWorkspaceStore } from '@/stores/workspace.store'
+import { useDocumentStore } from '@/stores/document.store'
+import { useOverlayStore } from '@/stores/overlay.store'
 import { formatDateTime } from '@/utils/date'
 import { useWorkspaceDocuments } from '@/pages/workspace/shared/useWorkspaceDocuments'
 
 function ArchivePage() {
-	const trashedDocuments = useWorkspaceStore((state) => state.trashedDocuments)
-	const documentsStatus = useWorkspaceStore((state) => state.documentsStatus)
+	const trashedDocuments = useDocumentStore((state) => state.trashedDocuments)
+	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
+	const openOverlay = useOverlayStore((state) => state.openOverlay)
 	const { handleRestoreDocument } = useWorkspaceDocuments()
 
 	return (
@@ -17,12 +19,24 @@ function ArchivePage() {
 					<h3 className='text-lg font-semibold tracking-tight'>Archive 页面容器</h3>
 					<p className='mt-2 text-sm leading-6 text-muted-foreground'>回收与历史页现在承接回收站文档恢复入口。</p>
 				</div>
-				<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
-					{trashedDocuments.length} 个已删除
+				<div className='flex items-center gap-2'>
+					<Button
+						type='button'
+						variant='outline'
+						onClick={() => {
+							openOverlay('recovery', {
+								source: 'archive-page',
+							})
+						}}>
+						打开恢复中心
+					</Button>
+					<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
+						{trashedDocuments.length} 个已删除
+					</div>
 				</div>
 			</div>
 
-			{documentsStatus === 'ready' && trashedDocuments.length > 0 ? (
+			{collectionStatus === 'ready' && trashedDocuments.length > 0 ? (
 				<div className='mt-5 grid gap-3'>
 					{trashedDocuments.map((document) => (
 						<div

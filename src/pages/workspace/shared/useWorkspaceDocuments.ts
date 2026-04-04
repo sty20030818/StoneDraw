@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { useDialogHost } from '@/components/feedback/DialogHost'
 import { buildWorkbenchRoute } from '@/constants/routes'
 import { documentService } from '@/services/document.service'
-import { useWorkspaceStore } from '@/stores/workspace.store'
+import { useDocumentStore } from '@/stores/document.store'
 import type { DocumentMeta } from '@/types'
 
 type WorkspaceDocumentsActions = {
@@ -20,17 +20,17 @@ type WorkspaceDocumentsActions = {
 export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsActions {
 	const navigate = useNavigate()
 	const { openConfirmDialog } = useDialogHost()
-	const documents = useWorkspaceStore((state) => state.documents)
-	const recentDocuments = useWorkspaceStore((state) => state.recentDocuments)
-	const trashedDocuments = useWorkspaceStore((state) => state.trashedDocuments)
-	const startDocumentsLoading = useWorkspaceStore((state) => state.startDocumentsLoading)
-	const completeDocumentsLoading = useWorkspaceStore((state) => state.completeDocumentsLoading)
-	const failDocumentsLoading = useWorkspaceStore((state) => state.failDocumentsLoading)
-	const setSelectedDocumentId = useWorkspaceStore((state) => state.setSelectedDocumentId)
+	const documents = useDocumentStore((state) => state.documents)
+	const recentDocuments = useDocumentStore((state) => state.recentDocuments)
+	const trashedDocuments = useDocumentStore((state) => state.trashedDocuments)
+	const startCollectionLoading = useDocumentStore((state) => state.startCollectionLoading)
+	const completeCollectionLoading = useDocumentStore((state) => state.completeCollectionLoading)
+	const failCollectionLoading = useDocumentStore((state) => state.failCollectionLoading)
+	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
 	const [isCreating, setIsCreating] = useState(false)
 
 	const loadWorkspaceData = useCallback(async () => {
-		startDocumentsLoading()
+		startCollectionLoading()
 
 		const [documentsResult, recentDocumentsResult, trashedDocumentsResult] = await Promise.all([
 			documentService.list(),
@@ -39,26 +39,26 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 		])
 
 		if (!documentsResult.ok) {
-			failDocumentsLoading(documentsResult.error.message)
+			failCollectionLoading(documentsResult.error.message)
 			return
 		}
 
 		if (!recentDocumentsResult.ok) {
-			failDocumentsLoading(recentDocumentsResult.error.message)
+			failCollectionLoading(recentDocumentsResult.error.message)
 			return
 		}
 
 		if (!trashedDocumentsResult.ok) {
-			failDocumentsLoading(trashedDocumentsResult.error.message)
+			failCollectionLoading(trashedDocumentsResult.error.message)
 			return
 		}
 
-		completeDocumentsLoading({
+		completeCollectionLoading({
 			documents: documentsResult.data,
 			recentDocuments: recentDocumentsResult.data,
 			trashedDocuments: trashedDocumentsResult.data,
 		})
-	}, [completeDocumentsLoading, failDocumentsLoading, startDocumentsLoading])
+	}, [completeCollectionLoading, failCollectionLoading, startCollectionLoading])
 
 	useEffect(() => {
 		if (!autoLoad) {
@@ -78,14 +78,14 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 			return
 		}
 
-		completeDocumentsLoading({
+		completeCollectionLoading({
 			documents: [result.data, ...documents.filter((item) => item.id !== result.data.id)],
 			recentDocuments,
 			trashedDocuments,
 		})
 		setSelectedDocumentId(result.data.id)
 		navigate(buildWorkbenchRoute(result.data.id))
-	}, [completeDocumentsLoading, documents, navigate, recentDocuments, setSelectedDocumentId, trashedDocuments])
+	}, [completeCollectionLoading, documents, navigate, recentDocuments, setSelectedDocumentId, trashedDocuments])
 
 	const handleOpenDocument = useCallback(async (documentId: string) => {
 		const result = await documentService.open(documentId)

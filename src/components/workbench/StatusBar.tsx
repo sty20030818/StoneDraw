@@ -1,5 +1,5 @@
 import type { SaveStatus } from '@/types'
-import type { WorkbenchPanelKey } from './WorkbenchShellBridge'
+import type { WorkbenchPanelKey } from '@/stores/workbench.store'
 import { resolveSaveStatusMeta } from './save-status'
 
 type StatusBarProps = {

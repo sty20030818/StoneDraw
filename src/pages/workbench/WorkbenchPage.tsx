@@ -14,8 +14,9 @@ import { APP_ROUTES } from '@/constants/routes'
 import { clearEditorApi, editorSaveSession, setEditorApi } from '@/modules/editor'
 import { documentService } from '@/services/document.service'
 import { editorService } from '@/services/editor.service'
-import { useEditorStore } from '@/stores/editor.store'
-import { useWorkspaceStore } from '@/stores/workspace.store'
+import { useDocumentStore } from '@/stores/document.store'
+import { useOverlayStore } from '@/stores/overlay.store'
+import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { DocumentMeta, SceneFilePayload } from '@/types'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
@@ -66,16 +67,19 @@ function WorkbenchPage() {
 	const [searchParams] = useSearchParams()
 	const documentId = searchParams.get('documentId')
 	const { patchShellState, resetShellState } = useWorkbenchShell()
-	const setSelectedDocumentId = useWorkspaceStore((state) => state.setSelectedDocumentId)
+	const openOverlay = useOverlayStore((state) => state.openOverlay)
+	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
+	const searchDraft = useWorkbenchStore((state) => state.searchDraft)
+	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
+	const lastSaveError = useWorkbenchStore((state) => state.lastSaveError)
+	const isFlushing = useWorkbenchStore((state) => state.isFlushing)
+	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
+	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
+	const setSearchDraft = useWorkbenchStore((state) => state.setSearchDraft)
+	const syncDocumentTab = useWorkbenchStore((state) => state.syncDocumentTab)
 	const [workbenchLoadState, setWorkbenchLoadState] = useState<WorkbenchLoadState>({
 		status: 'loading',
 	})
-	const [searchDraft, setSearchDraft] = useState('')
-	const saveStatus = useEditorStore((state) => state.saveStatus)
-	const lastSaveError = useEditorStore((state) => state.lastSaveError)
-	const isFlushing = useEditorStore((state) => state.isFlushing)
-	const setActiveDocumentId = useEditorStore((state) => state.setActiveDocumentId)
-	const setEditorReady = useEditorStore((state) => state.setEditorReady)
 	const latestApiIdRef = useRef<string | null>(null)
 	const latestSaveErrorRef = useRef<string | null>(null)
 
@@ -143,7 +147,7 @@ function WorkbenchPage() {
 				return
 			}
 
-			setEditorReady(false)
+			setWorkbenchReady(false)
 			setWorkbenchLoadState({
 				status: 'loading',
 			})
@@ -191,12 +195,12 @@ function WorkbenchPage() {
 			isMounted = false
 			editorSaveSession.dispose()
 			clearEditorApi()
-			setEditorReady(false)
+			setWorkbenchReady(false)
 			setActiveDocumentId(null)
 			setSelectedDocumentId(null)
 			resetShellState()
 		}
-	}, [documentId, resetShellState, setActiveDocumentId, setEditorReady, setSelectedDocumentId])
+	}, [documentId, resetShellState, setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady])
 
 	useEffect(() => {
 		if (workbenchLoadState.status !== 'ready') {
@@ -205,8 +209,13 @@ function WorkbenchPage() {
 
 		setActiveDocumentId(workbenchLoadState.document.id)
 		setSelectedDocumentId(workbenchLoadState.document.id)
+		setWorkbenchReady(true)
+		syncDocumentTab({
+			id: workbenchLoadState.document.id,
+			title: workbenchLoadState.document.title,
+		})
 		editorSaveSession.initialize(workbenchLoadState.scene)
-	}, [setActiveDocumentId, setSelectedDocumentId, workbenchLoadState])
+	}, [setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady, syncDocumentTab, workbenchLoadState])
 
 	const initialData = useMemo(() => {
 		if (workbenchLoadState.status !== 'ready') {
@@ -238,11 +247,11 @@ function WorkbenchPage() {
 
 			queueMicrotask(() => {
 				if (latestApiIdRef.current === api.id) {
-					setEditorReady(true)
+					setWorkbenchReady(true)
 				}
 			})
 		},
-		[setEditorReady],
+		[setWorkbenchReady],
 	)
 
 	useEffect(() => {
@@ -314,13 +323,21 @@ function WorkbenchPage() {
 		})
 	}, [lastSaveError])
 
-	const handleExportPlaceholder = useCallback(() => {
-		toast('导出入口已预留，真实导出流程后续接入。')
-	}, [])
+	const handleExportOverlay = useCallback(() => {
+		openOverlay('export', {
+			documentId,
+			documentTitle: workbenchLoadState.status === 'ready' ? workbenchLoadState.document.title : undefined,
+			source: 'workbench-titlebar',
+		})
+	}, [documentId, openOverlay, workbenchLoadState])
 
-	const handleMorePlaceholder = useCallback(() => {
-		toast('更多文档操作后续会统一收口到这里。')
-	}, [])
+	const handleShareOverlay = useCallback(() => {
+		openOverlay('share', {
+			documentId,
+			documentTitle: workbenchLoadState.status === 'ready' ? workbenchLoadState.document.title : undefined,
+			source: 'workbench-titlebar',
+		})
+	}, [documentId, openOverlay, workbenchLoadState])
 
 	useEffect(() => {
 		patchShellState({
@@ -341,20 +358,21 @@ function WorkbenchPage() {
 			onSave: () => {
 				void handleManualSave()
 			},
-			onExport: handleExportPlaceholder,
-			onMore: handleMorePlaceholder,
+			onExport: handleExportOverlay,
+			onMore: handleShareOverlay,
 			onSearchChange: setSearchDraft,
 		})
 	}, [
 		documentId,
-		handleExportPlaceholder,
+		handleExportOverlay,
 		handleManualSave,
-		handleMorePlaceholder,
+		handleShareOverlay,
 		isFlushing,
 		navigateToWorkspace,
 		patchShellState,
 		saveStatus,
 		searchDraft,
+		setSearchDraft,
 		workbenchLoadState,
 	])
 

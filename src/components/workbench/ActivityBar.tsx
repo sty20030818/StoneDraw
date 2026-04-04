@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
-import type { WorkbenchPanelKey } from './WorkbenchShellBridge'
+import type { WorkbenchPanelKey } from '@/stores/workbench.store'
 
 const panelIcons = {
 	explorer: FilesIcon,
