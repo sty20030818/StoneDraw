@@ -57,11 +57,11 @@ function renderWorkspacePage() {
 				element: <WorkspacePage />,
 			},
 			{
-				path: APP_ROUTES.EDITOR,
+				path: APP_ROUTES.WORKBENCH,
 				element: <div>编辑器占位</div>,
 			},
 			{
-				path: APP_ROUTES.SETTINGS,
+				path: APP_ROUTES.WORKSPACE_SETTINGS,
 				element: <div>设置页占位</div>,
 			},
 		],

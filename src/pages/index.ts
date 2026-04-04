@@ -1,6 +1,3 @@
-export { default as LegacyEditorPage } from './editor/EditorPage'
 export { default as NotFoundPage } from './not-found/NotFoundPage'
-export { default as LegacySettingsPage } from './settings/SettingsPage'
-export { default as LegacyWorkspacePage } from './workspace/WorkspacePage'
 export * from './workbench'
 export * from './workspace'
