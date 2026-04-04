@@ -8,12 +8,12 @@ import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { FileSearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { createInitialSceneData } from '@/adapters/excalidraw'
-import { useWorkbenchShell } from '@/components/workbench'
+import { CanvasShell, useWorkbenchShell } from '@/components/workbench'
 import EmptyState from '@/components/states/EmptyState'
 import { APP_ROUTES } from '@/constants/routes'
 import { clearEditorApi, editorSaveSession, setEditorApi } from '@/modules/editor'
-import { documentService } from '@/services/document.service'
-import { editorService } from '@/services/editor.service'
+import { documentService } from '@/services/documents/document.service'
+import { editorService } from '@/services/workbench/editor.service'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 import { useWorkbenchStore } from '@/stores/workbench.store'
@@ -395,7 +395,7 @@ function WorkbenchPage() {
 	}
 
 	return (
-		<div className={CANVAS_CARD_CLASS}>
+		<CanvasShell className={CANVAS_CARD_CLASS}>
 			<div className='h-full min-h-0 w-full [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
 				<Excalidraw
 					UIOptions={EXCALIDRAW_UI_OPTIONS}
@@ -407,7 +407,7 @@ function WorkbenchPage() {
 					theme='light'
 				/>
 			</div>
-		</div>
+		</CanvasShell>
 	)
 }
 

@@ -3,7 +3,7 @@ import { TAURI_COMMANDS } from '@/constants'
 
 const invokeTauriCommandMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 
-vi.mock('./tauri.service', () => ({
+vi.mock('../tauri.service', () => ({
 	invokeTauriCommand: invokeTauriCommandMock,
 }))
 

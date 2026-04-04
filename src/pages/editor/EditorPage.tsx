@@ -1,1 +1,1 @@
-export { default } from '../workbench/WorkbenchPage'
+export { default } from '../workbench/editor/WorkbenchPage'

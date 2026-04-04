@@ -1,6 +1,6 @@
 import { TAURI_COMMANDS } from '@/constants/index'
 import type { DocumentMeta, TauriCommandResult } from '@/types/index'
-import { invokeTauriCommand } from './tauri.service'
+import { invokeTauriCommand } from '../tauri.service'
 
 export const documentService = {
 	async create(title?: string): Promise<TauriCommandResult<DocumentMeta>> {

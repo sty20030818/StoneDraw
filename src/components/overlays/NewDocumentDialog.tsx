@@ -12,7 +12,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog'
 import { buildWorkbenchRoute } from '@/constants/routes'
-import { documentService } from '@/services/document.service'
+import { documentService } from '@/services/documents/document.service'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 

@@ -1,4 +1,5 @@
 export { default as ActivityBar } from './ActivityBar'
+export { default as CanvasShell } from './CanvasShell'
 export { default as RightPanel } from './RightPanel'
 export { default as StatusBar } from './StatusBar'
 export { default as WorkbenchTabs } from './WorkbenchTabs'

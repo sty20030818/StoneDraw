@@ -1,8 +1,7 @@
-import { FilePlus2Icon, FolderOpenIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { FolderOpenIcon } from 'lucide-react'
 import EmptyState from '@/components/states/EmptyState'
+import { HomeQuickActions, RecentDocumentList } from '@/components/workspace'
 import { useDocumentStore } from '@/stores/document.store'
-import { formatDateTime } from '@/utils/date'
 import { useWorkspaceDocuments } from '@/pages/workspace/shared/useWorkspaceDocuments'
 
 function HomePage() {
@@ -17,28 +16,18 @@ function HomePage() {
 				<p className='mt-3 text-sm leading-6 text-muted-foreground'>
 					Home 现在正式承担继续工作与快速开始的入口，不再只是临时占位页。
 				</p>
-				<div className='mt-5 flex flex-wrap gap-3'>
-					<Button
-						type='button'
-						onClick={() => {
-							void handleCreateDocument()
-						}}>
-						<FilePlus2Icon data-icon='inline-start' />
-						新建空白文档
-					</Button>
-					<Button
-						type='button'
-						variant='outline'
-						onClick={() => {
-							const firstDocument = recentDocuments[0]
-							if (firstDocument) {
-								void handleOpenDocument(firstDocument.id)
-							}
-						}}>
-						<FolderOpenIcon data-icon='inline-start' />
-						继续最近文档
-					</Button>
-				</div>
+				<HomeQuickActions
+					recentDocuments={recentDocuments}
+					onCreate={() => {
+						void handleCreateDocument()
+					}}
+					onContinue={() => {
+						const firstDocument = recentDocuments[0]
+						if (firstDocument) {
+							void handleOpenDocument(firstDocument.id)
+						}
+					}}
+				/>
 			</section>
 
 			<section className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
@@ -53,22 +42,12 @@ function HomePage() {
 				</div>
 
 				{collectionStatus === 'ready' && recentDocuments.length > 0 ? (
-					<div className='mt-5 grid gap-3'>
-						{recentDocuments.map((document) => (
-							<button
-								key={document.id}
-								type='button'
-								className='rounded-[1.25rem] border border-border/70 bg-background/88 px-4 py-4 text-left transition-colors hover:bg-background'
-								onClick={() => {
-									void handleOpenDocument(document.id)
-								}}>
-								<p className='text-sm font-semibold'>{document.title}</p>
-								<p className='mt-2 text-xs text-muted-foreground'>
-									最近打开：{document.lastOpenedAt ? formatDateTime(document.lastOpenedAt) : '尚未记录'}
-								</p>
-							</button>
-						))}
-					</div>
+					<RecentDocumentList
+						documents={recentDocuments}
+						onOpen={(documentId) => {
+							void handleOpenDocument(documentId)
+						}}
+					/>
 				) : (
 					<div className='mt-5'>
 						<EmptyState
