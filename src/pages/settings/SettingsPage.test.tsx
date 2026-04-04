@@ -33,10 +33,10 @@ vi.mock('@/services', async () => {
 
 function renderSettingsPage() {
 	return renderRoute({
-		initialEntry: APP_ROUTES.SETTINGS,
+		initialEntry: APP_ROUTES.WORKSPACE_SETTINGS,
 		routes: [
 			{
-				path: APP_ROUTES.SETTINGS,
+				path: APP_ROUTES.WORKSPACE_SETTINGS,
 				element: <SettingsPage />,
 			},
 		],

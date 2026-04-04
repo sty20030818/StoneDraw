@@ -11,8 +11,6 @@ export const APP_ROUTES = {
 	WORKSPACE_TEAM: '/workspace/team',
 	WORKSPACE_SETTINGS: '/workspace/settings',
 	WORKBENCH: '/workbench',
-	SETTINGS: '/workspace/settings',
-	EDITOR: '/workbench',
 } as const
 
 export function buildWorkbenchRoute(documentId?: string): string {
@@ -25,10 +23,6 @@ export function buildWorkbenchRoute(documentId?: string): string {
 	})
 
 	return `${APP_ROUTES.WORKBENCH}?${searchParams.toString()}`
-}
-
-export function buildEditorRoute(documentId?: string): string {
-	return buildWorkbenchRoute(documentId)
 }
 
 export type AppRoutePath = (typeof APP_ROUTES)[keyof typeof APP_ROUTES]

@@ -129,12 +129,12 @@ vi.mock('@/modules/editor/index', () => ({
 	setEditorApi: setEditorApiMock,
 }))
 
-function renderEditorPage(initialEntry = `${APP_ROUTES.EDITOR}?documentId=doc-editor-1`) {
+function renderEditorPage(initialEntry = `${APP_ROUTES.WORKBENCH}?documentId=doc-editor-1`) {
 	return renderRoute({
 		initialEntry,
 		routes: [
 			{
-				path: APP_ROUTES.EDITOR,
+				path: APP_ROUTES.WORKBENCH,
 				element: <EditorPage />,
 			},
 			{
