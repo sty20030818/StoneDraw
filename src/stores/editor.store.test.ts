@@ -25,8 +25,6 @@ describe('editor.store', () => {
 		editorStore.setEditorReady(true)
 		editorStore.setSaveStatus('dirty')
 		editorStore.setLastSaveError('保存失败')
-		editorStore.setHasScheduledSave(true)
-		editorStore.setHasPendingCompensationSave(true)
 		editorStore.setIsFlushing(true)
 		editorStore.reset()
 
@@ -35,8 +33,6 @@ describe('editor.store', () => {
 			isEditorReady: false,
 			saveStatus: 'idle',
 			lastSaveError: null,
-			hasScheduledSave: false,
-			hasPendingCompensationSave: false,
 			isFlushing: false,
 		})
 	})

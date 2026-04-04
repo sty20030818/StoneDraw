@@ -1,98 +1,68 @@
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { useEditorStore } from '@/stores'
 import { createScenePayload } from '@/test/fixtures/scene'
-import { clearEditorApi, observeSceneChange, setEditorApi, setSceneObservationBaseline } from './runtime'
+import { applyScene, clearEditorApi, readActiveScene, setEditorApi } from './runtime'
 
 function createFakeApi(snapshot: {
 	elements: unknown[]
 	appState?: Record<string, unknown>
 	files?: Record<string, unknown>
-}): ExcalidrawImperativeAPI {
+}) {
+	const updateScene = vi.fn<(...args: unknown[]) => void>()
+
 	return {
-		id: 'fake-api',
-		getSceneElements: () => snapshot.elements as never,
-		getAppState: () => (snapshot.appState ?? {}) as never,
-		getFiles: () => (snapshot.files ?? {}) as never,
-	} as unknown as ExcalidrawImperativeAPI
+		api: {
+			id: 'fake-api',
+			getSceneElements: () => snapshot.elements as never,
+			getAppState: () => (snapshot.appState ?? {}) as never,
+			getFiles: () => (snapshot.files ?? {}) as never,
+			updateScene,
+		} as unknown as ExcalidrawImperativeAPI,
+		updateScene,
+	}
 }
 
 describe('editor.runtime', () => {
-	test('应基于 API 权威快照而不是 onChange 临时元素判定 dirty', () => {
+	beforeEach(() => {
 		clearEditorApi()
-		useEditorStore.getState().reset()
-
-		setEditorApi(
-			createFakeApi({
-				elements: [],
-			}),
-		)
-		setSceneObservationBaseline(createScenePayload({ documentId: 'doc-runtime-1', title: '空白文档' }))
-
-		const observedScene = observeSceneChange(
-			'doc-runtime-1',
-			[{ id: 'transient-text' }] as never,
-			{} as never,
-			{} as never,
-			'空白文档',
-		)
-
-		expect(observedScene.scene.elements).toEqual([])
-		expect(useEditorStore.getState().saveStatus).toBe('saved')
-		expect(useEditorStore.getState().lastSceneElementCount).toBe(0)
 	})
 
-	test('保存中再次编辑时应保留 saving 并标记补偿保存', () => {
-		clearEditorApi()
-		useEditorStore.getState().reset()
+	test('readActiveScene 应返回 API 的权威快照', () => {
+		const { api } = createFakeApi({
+			elements: [{ id: 'element-1' }],
+			appState: {
+				gridModeEnabled: true,
+			},
+		})
 
-		setEditorApi(
-			createFakeApi({
-				elements: [{ id: 'element-after-save' }],
-			}),
-		)
-		setSceneObservationBaseline(createScenePayload({ documentId: 'doc-runtime-2', title: '空白文档' }))
-		useEditorStore.getState().setSaveStatus('saving')
+		setEditorApi(api)
 
-		const observedScene = observeSceneChange(
-			'doc-runtime-2',
-			[{ id: 'transient-text' }] as never,
-			{} as never,
-			{} as never,
-			'空白文档',
-		)
-		const runtimeState = useEditorStore.getState() as Record<string, unknown>
+		const observedScene = readActiveScene('doc-runtime-1', '空白文档')
 
-		expect(observedScene.scene.elements).toEqual([{ id: 'element-after-save' }])
-		expect(useEditorStore.getState().saveStatus).toBe('saving')
-		expect(runtimeState.hasPendingCompensationSave).toBe(true)
+		expect(observedScene).not.toBeNull()
+		expect(observedScene?.scene.elements).toEqual([{ id: 'element-1' }])
+		expect(observedScene?.meta.title).toBe('空白文档')
 	})
 
-	test('基线一致时应保持 saved', () => {
-		clearEditorApi()
-		useEditorStore.getState().reset()
+	test('未设置 API 时 readActiveScene 应返回 null', () => {
+		expect(readActiveScene('doc-runtime-2', '空白文档')).toBeNull()
+	})
 
-		setEditorApi(
-			createFakeApi({
-				elements: [{ id: 'element-same' }],
-			}),
-		)
-		setSceneObservationBaseline(
-			createScenePayload({
-				documentId: 'doc-runtime-3',
-				title: '一致文档',
-				elements: [{ id: 'element-same' }],
-			}),
-		)
+	test('applyScene 在 API 存在时应写回画布并返回 true', () => {
+		const { api, updateScene } = createFakeApi({
+			elements: [],
+		})
 
-		observeSceneChange(
-			'doc-runtime-3',
-			[{ id: 'transient-change' }] as never,
-			{} as never,
-			{} as never,
-			'一致文档',
-		)
+		setEditorApi(api)
 
-		expect(useEditorStore.getState().saveStatus).toBe('saved')
+		expect(
+			applyScene(
+				createScenePayload({
+					documentId: 'doc-runtime-3',
+					title: '一致文档',
+				}),
+			),
+		).toBe(true)
+		expect(updateScene).toHaveBeenCalledTimes(1)
 	})
 })

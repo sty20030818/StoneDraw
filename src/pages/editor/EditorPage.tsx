@@ -15,7 +15,6 @@ import {
 	SearchIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useDialogHost } from '@/components/feedback/DialogHost'
 import { createInitialSceneData } from '@/adapters/excalidraw/index'
 import SceneTopbar, { SCENE_TOPBAR_SEARCH_INPUT_CLASS } from '@/components/layout/SceneTopbar'
 import EmptyState from '@/components/states/EmptyState'
@@ -23,14 +22,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { APP_ROUTES } from '@/constants/routes'
 import {
-	cancelScheduledSave,
 	clearEditorApi,
-	flushPendingSave,
-	observeSceneChange,
-	saveNow,
-	scheduleAutoSave,
+	editorSaveSession,
 	setEditorApi,
-	setSceneObservationBaseline,
 } from '@/modules/editor/index'
 import { documentService } from '@/services/document.service'
 import { editorService } from '@/services/editor.service'
@@ -148,7 +142,6 @@ function EditorLoadingCanvas() {
 
 function EditorPage() {
 	const navigate = useNavigate()
-	const { openConfirmDialog } = useDialogHost()
 	const [searchParams] = useSearchParams()
 	const documentId = searchParams.get('documentId')
 	const [editorLoadState, setEditorLoadState] = useState<EditorLoadState>({
@@ -160,28 +153,15 @@ function EditorPage() {
 	const isFlushing = useEditorStore((state) => state.isFlushing)
 	const setActiveDocumentId = useEditorStore((state) => state.setActiveDocumentId)
 	const setEditorReady = useEditorStore((state) => state.setEditorReady)
-	const setSaveStatus = useEditorStore((state) => state.setSaveStatus)
 	const latestApiIdRef = useRef<string | null>(null)
 	const latestSaveErrorRef = useRef<string | null>(null)
-	const shouldBypassUnloadGuardRef = useRef(false)
-
-	const destroyWindowSafely = useCallback(async () => {
-		shouldBypassUnloadGuardRef.current = true
-
-		try {
-			await getCurrentWindow().destroy()
-		} catch (error) {
-			shouldBypassUnloadGuardRef.current = false
-			throw error
-		}
-	}, [])
 
 	const handleManualSave = useCallback(async () => {
 		if (editorLoadState.status !== 'ready') {
 			return false
 		}
 
-		const saveResult = await saveNow(editorLoadState.document)
+		const saveResult = await editorSaveSession.saveNow(editorLoadState.document)
 
 		if (!saveResult.ok) {
 			latestSaveErrorRef.current = saveResult.error.details ?? saveResult.error.message
@@ -200,44 +180,34 @@ function EditorPage() {
 		return true
 	}, [editorLoadState])
 
-	const navigateWithDirtyGuard = useCallback(
-		async (to: string) => {
+	const tryFlushBeforeLeaving = useCallback(
+		async (options?: { timeoutMs?: number }) => {
 			if (
 				editorLoadState.status !== 'ready' ||
 				(saveStatus !== 'dirty' && saveStatus !== 'saving' && saveStatus !== 'error')
 			) {
-				navigate(to)
-				return
+				return true
 			}
 
-			const isFlushed = await flushPendingSave(editorLoadState.document, 'route-leave')
+			const isFlushed = await editorSaveSession.flushBeforeLeave(editorLoadState.document, options)
 
-			if (isFlushed) {
-				navigate(to)
-				return
+			if (!isFlushed && options?.timeoutMs === undefined) {
+				toast('自动保存未完成', {
+					description: '系统已继续离开当前页面，最近修改可能未保存。',
+				})
 			}
 
-			openConfirmDialog({
-				title: '离开当前画布？',
-				description: '系统已尝试保存当前修改，但仍未成功。你可以继续编辑、放弃修改，或重试保存后离开。',
-				confirmLabel: '重试保存后离开',
-				cancelLabel: '继续编辑',
-				secondaryActionLabel: '放弃修改',
-				onConfirm: async () => {
-					const isSaved = await handleManualSave()
-
-					if (!isSaved) {
-						return
-					}
-
-					navigate(to)
-				},
-				onSecondaryAction: () => {
-					navigate(to)
-				},
-			})
+			return isFlushed
 		},
-		[editorLoadState, handleManualSave, navigate, openConfirmDialog, saveStatus],
+		[editorLoadState, saveStatus],
+	)
+
+	const navigateTo = useCallback(
+		async (to: string) => {
+			await tryFlushBeforeLeaving()
+			navigate(to)
+		},
+		[tryFlushBeforeLeaving, navigate],
 	)
 
 	useEffect(() => {
@@ -299,13 +269,12 @@ function EditorPage() {
 
 		return () => {
 			isMounted = false
-			cancelScheduledSave()
+			editorSaveSession.dispose()
 			clearEditorApi()
 			setEditorReady(false)
 			setActiveDocumentId(null)
-			setSaveStatus('idle')
 		}
-	}, [documentId, setActiveDocumentId, setEditorReady, setSaveStatus])
+	}, [documentId, setActiveDocumentId, setEditorReady])
 
 	useEffect(() => {
 		if (editorLoadState.status !== 'ready') {
@@ -313,9 +282,8 @@ function EditorPage() {
 		}
 
 		setActiveDocumentId(editorLoadState.document.id)
-		setSaveStatus('saved')
-		setSceneObservationBaseline(editorLoadState.scene)
-	}, [editorLoadState, setActiveDocumentId, setSaveStatus])
+		editorSaveSession.initialize(editorLoadState.scene)
+	}, [editorLoadState, setActiveDocumentId])
 
 	const initialData = useMemo(() => {
 		if (editorLoadState.status !== 'ready') {
@@ -360,8 +328,7 @@ function EditorPage() {
 			}
 
 			const [elements, appState, files] = args
-			observeSceneChange(editorLoadState.document.id, elements, appState, files, editorLoadState.document.title)
-			scheduleAutoSave(editorLoadState.document)
+			editorSaveSession.onSceneChange(editorLoadState.document, elements, appState, files)
 		},
 		[editorLoadState],
 	)
@@ -389,31 +356,6 @@ function EditorPage() {
 			return
 		}
 
-		function handleBeforeUnload(event: BeforeUnloadEvent) {
-			if (shouldBypassUnloadGuardRef.current) {
-				return
-			}
-
-			if (saveStatus === 'saved' || saveStatus === 'idle') {
-				return
-			}
-
-			event.preventDefault()
-			event.returnValue = ''
-		}
-
-		window.addEventListener('beforeunload', handleBeforeUnload)
-
-		return () => {
-			window.removeEventListener('beforeunload', handleBeforeUnload)
-		}
-	}, [editorLoadState.status, saveStatus])
-
-	useEffect(() => {
-		if (editorLoadState.status !== 'ready') {
-			return
-		}
-
 		let isClosingWindow = false
 		let unlistenCloseRequested: (() => void) | undefined
 
@@ -424,36 +366,11 @@ function EditorPage() {
 				}
 
 				event.preventDefault()
-
-				const isFlushed = await flushPendingSave(editorLoadState.document, 'window-close')
-
-				if (isFlushed) {
-					isClosingWindow = true
-					await destroyWindowSafely()
-					return
-				}
-
-				openConfirmDialog({
-					title: '关闭应用前保存失败',
-					description: '系统已尝试在退出前保存当前修改，但仍未成功。你可以继续编辑、放弃修改后退出，或重试保存后退出。',
-					confirmLabel: '重试保存后退出',
-					cancelLabel: '继续编辑',
-					secondaryActionLabel: '放弃修改并退出',
-					onConfirm: async () => {
-						const isSaved = await flushPendingSave(editorLoadState.document, 'app-exit')
-
-						if (!isSaved) {
-							return
-						}
-
-						isClosingWindow = true
-						await destroyWindowSafely()
-					},
-					onSecondaryAction: async () => {
-						isClosingWindow = true
-						await destroyWindowSafely()
-					},
+				await tryFlushBeforeLeaving({
+					timeoutMs: 2000,
 				})
+				isClosingWindow = true
+				await getCurrentWindow().destroy()
 			})
 			.then((unlisten) => {
 				unlistenCloseRequested = unlisten
@@ -462,7 +379,7 @@ function EditorPage() {
 		return () => {
 			unlistenCloseRequested?.()
 		}
-	}, [destroyWindowSafely, editorLoadState, openConfirmDialog, saveStatus])
+	}, [editorLoadState.status, saveStatus, tryFlushBeforeLeaving])
 
 	useEffect(() => {
 		if (editorLoadState.status !== 'ready') {
@@ -518,7 +435,7 @@ function EditorPage() {
 				description={editorLoadState.description}
 				icon={FileSearchIcon}
 				onAction={() => {
-					void navigateWithDirtyGuard(APP_ROUTES.WORKSPACE)
+					void navigateTo(APP_ROUTES.WORKSPACE)
 				}}
 				title={editorLoadState.title}
 			/>
@@ -540,7 +457,7 @@ function EditorPage() {
 									variant='outline'
 									className='rounded-2xl bg-white/80 px-4'
 									onClick={() => {
-										void navigateWithDirtyGuard(APP_ROUTES.WORKSPACE)
+										void navigateTo(APP_ROUTES.WORKSPACE)
 									}}>
 									<ArrowLeftIcon data-icon='inline-start' />
 									返回
@@ -617,7 +534,7 @@ function EditorPage() {
 				) : (
 					<EditorLoadingTopbar
 						onBack={() => {
-							void navigateWithDirtyGuard(APP_ROUTES.WORKSPACE)
+							void navigateTo(APP_ROUTES.WORKSPACE)
 						}}
 					/>
 				)}

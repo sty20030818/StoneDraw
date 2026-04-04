@@ -12,7 +12,7 @@ export type DocumentMeta = {
 	isDeleted: boolean
 	deletedAt: number | null
 	sourceType: DocumentSourceType
-	saveStatus: SaveStatus | 'error'
+	saveStatus: SaveStatus
 }
 
 export type SceneEnvelopePayload = {

@@ -1,53 +1,83 @@
+import type { AppState, BinaryFiles, ExcalidrawInitialDataState } from '@excalidraw/excalidraw/types'
+import { createSceneFingerprint, serializeScene } from '@/adapters/excalidraw'
 import { createFailureResult } from '@/services/tauri.service'
 import { useEditorStore } from '@/stores/editor.store'
-import type { DocumentMeta, SaveStatus, TauriCommandResult } from '@/types/index'
+import type { DocumentMeta, SaveStatus, SceneFilePayload, TauriCommandResult } from '@/types'
 import { saveActiveDocumentScene, type SaveSceneSuccessPayload } from './save'
+import { readActiveScene } from './runtime'
 
 const DEFAULT_AUTO_SAVE_DEBOUNCE_MS = 1000
-const DEFAULT_FLUSH_TIMEOUT_MS = 2000
-
-export type FlushReason = 'route-leave' | 'document-switch' | 'window-close' | 'app-exit'
+const DEFAULT_WINDOW_CLOSE_FLUSH_TIMEOUT_MS = 2000
 
 type SaveDocumentRef = Pick<DocumentMeta, 'id' | 'title'>
 
-type SaveCoordinatorRuntimeState = {
+export type FlushBeforeLeaveOptions = {
+	timeoutMs?: number
+}
+
+type SaveSessionUiState = {
 	saveStatus: SaveStatus
-	hasScheduledSave: boolean
-	hasPendingCompensationSave: boolean
+	lastSaveError: string | null
 	isFlushing: boolean
 }
 
-type SaveCoordinatorDependencies = {
-	debounceMs?: number
-	readRuntimeState: () => SaveCoordinatorRuntimeState
-	writeRuntimeState: (patch: Partial<SaveCoordinatorRuntimeState>) => void
-	executeSave: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveSceneSuccessPayload>>
+type SaveExecutionOutcome = {
+	result: TauriCommandResult<SaveSceneSuccessPayload>
+	stale: boolean
 }
 
-function createStoreRuntimeState(): SaveCoordinatorRuntimeState {
-	const editorStore = useEditorStore.getState()
+type SaveSessionState = SaveSessionUiState & {
+	savedSceneFingerprint: string | null
+	currentSceneFingerprint: string | null
+	hasPendingCompensationSave: boolean
+	scheduledTimer: ReturnType<typeof setTimeout> | null
+	activeSavePromise: Promise<SaveExecutionOutcome> | null
+	lifecycleToken: number
+}
 
+type SaveSessionDependencies = {
+	debounceMs?: number
+	readScene: (documentId: string, title?: string) => SceneFilePayload | null
+	executeSave: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveSceneSuccessPayload>>
+	writeUiState: (patch: Partial<SaveSessionUiState>) => void
+}
+
+export type EditorSaveSession = {
+	initialize: (scene: SceneFilePayload) => void
+	onSceneChange: (
+		document: SaveDocumentRef,
+		elements: NonNullable<ExcalidrawInitialDataState['elements']>,
+		appState: AppState,
+		files: BinaryFiles,
+	) => SceneFilePayload
+	saveNow: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveSceneSuccessPayload>>
+	flushBeforeLeave: (document: SaveDocumentRef, options?: FlushBeforeLeaveOptions) => Promise<boolean>
+	dispose: () => void
+}
+
+function createInitialSessionState(): SaveSessionState {
 	return {
-		saveStatus: editorStore.saveStatus,
-		hasScheduledSave: editorStore.hasScheduledSave,
-		hasPendingCompensationSave: editorStore.hasPendingCompensationSave,
-		isFlushing: editorStore.isFlushing,
+		saveStatus: 'idle',
+		lastSaveError: null,
+		isFlushing: false,
+		savedSceneFingerprint: null,
+		currentSceneFingerprint: null,
+		hasPendingCompensationSave: false,
+		scheduledTimer: null,
+		activeSavePromise: null,
+		lifecycleToken: 0,
 	}
 }
 
-function updateStoreRuntimeState(patch: Partial<SaveCoordinatorRuntimeState>) {
+function writeStoreUiState(patch: Partial<SaveSessionUiState>) {
 	const editorStore = useEditorStore.getState()
 
 	if (patch.saveStatus !== undefined) {
 		editorStore.setSaveStatus(patch.saveStatus)
 	}
 
-	if (patch.hasScheduledSave !== undefined) {
-		editorStore.setHasScheduledSave(patch.hasScheduledSave)
-	}
-
-	if (patch.hasPendingCompensationSave !== undefined) {
-		editorStore.setHasPendingCompensationSave(patch.hasPendingCompensationSave)
+	if (patch.lastSaveError !== undefined) {
+		editorStore.setLastSaveError(patch.lastSaveError)
 	}
 
 	if (patch.isFlushing !== undefined) {
@@ -55,28 +85,158 @@ function updateStoreRuntimeState(patch: Partial<SaveCoordinatorRuntimeState>) {
 	}
 }
 
-export function createSaveCoordinator(dependencies: SaveCoordinatorDependencies) {
+export function createEditorSaveSession(dependencies: SaveSessionDependencies): EditorSaveSession {
 	const debounceMs = dependencies.debounceMs ?? DEFAULT_AUTO_SAVE_DEBOUNCE_MS
-	let scheduledTimer: ReturnType<typeof setTimeout> | null = null
-	let activeSavePromise: Promise<TauriCommandResult<SaveSceneSuccessPayload>> | null = null
+	const state = createInitialSessionState()
 
-	function cancelScheduledSave() {
-		if (scheduledTimer) {
-			clearTimeout(scheduledTimer)
-			scheduledTimer = null
+	function updateUiState(patch: Partial<SaveSessionUiState>) {
+		if (patch.saveStatus !== undefined) {
+			state.saveStatus = patch.saveStatus
 		}
 
-		dependencies.writeRuntimeState({
-			hasScheduledSave: false,
+		if (patch.lastSaveError !== undefined) {
+			state.lastSaveError = patch.lastSaveError
+		}
+
+		if (patch.isFlushing !== undefined) {
+			state.isFlushing = patch.isFlushing
+		}
+
+		dependencies.writeUiState(patch)
+	}
+
+	function cancelScheduledSave() {
+		if (!state.scheduledTimer) {
+			return
+		}
+
+		clearTimeout(state.scheduledTimer)
+		state.scheduledTimer = null
+	}
+
+	function createObservedScene(
+		document: SaveDocumentRef,
+		elements: NonNullable<ExcalidrawInitialDataState['elements']>,
+		appState: AppState,
+		files: BinaryFiles,
+	) {
+		return (
+			dependencies.readScene(document.id, document.title)
+			?? serializeScene(
+				document.id,
+				{
+					elements,
+					appState,
+					files,
+				},
+				{ title: document.title },
+			)
+		)
+	}
+
+	function initialize(scene: SceneFilePayload) {
+		cancelScheduledSave()
+		state.lifecycleToken += 1
+		state.savedSceneFingerprint = createSceneFingerprint(scene)
+		state.currentSceneFingerprint = state.savedSceneFingerprint
+		state.hasPendingCompensationSave = false
+		state.activeSavePromise = null
+		updateUiState({
+			saveStatus: 'saved',
+			lastSaveError: null,
+			isFlushing: false,
 		})
 	}
 
-	async function waitForActiveSave() {
-		if (!activeSavePromise) {
-			return null
+	function scheduleAutoSave(document: SaveDocumentRef) {
+		if (state.saveStatus === 'saved' || state.saveStatus === 'idle') {
+			cancelScheduledSave()
+			return
 		}
 
-		return activeSavePromise
+		if (state.saveStatus === 'saving') {
+			return
+		}
+
+		cancelScheduledSave()
+		state.scheduledTimer = setTimeout(() => {
+			state.scheduledTimer = null
+			void runSaveLoop(document)
+		}, debounceMs)
+	}
+
+	function onSceneChange(
+		document: SaveDocumentRef,
+		elements: NonNullable<ExcalidrawInitialDataState['elements']>,
+		appState: AppState,
+		files: BinaryFiles,
+	) {
+		const scene = createObservedScene(document, elements, appState, files)
+		const nextFingerprint = createSceneFingerprint(scene)
+		const hasUnsavedChanges = state.savedSceneFingerprint !== nextFingerprint
+		const isSaving = state.saveStatus === 'saving'
+
+		state.currentSceneFingerprint = nextFingerprint
+
+		if (isSaving && hasUnsavedChanges) {
+			state.hasPendingCompensationSave = true
+		}
+
+		updateUiState({
+			saveStatus: hasUnsavedChanges ? (isSaving ? 'saving' : 'dirty') : 'saved',
+			lastSaveError: null,
+		})
+		scheduleAutoSave(document)
+
+		return scene
+	}
+
+	async function executeSaveOnce(document: SaveDocumentRef): Promise<SaveExecutionOutcome> {
+		const lifecycleToken = state.lifecycleToken
+
+		updateUiState({
+			saveStatus: 'saving',
+			lastSaveError: null,
+		})
+
+		const result = await dependencies.executeSave(document)
+
+		if (lifecycleToken !== state.lifecycleToken) {
+			return {
+				result,
+				stale: true,
+			}
+		}
+
+		if (!result.ok) {
+			updateUiState({
+				saveStatus: 'error',
+				lastSaveError: result.error.details ?? result.error.message,
+			})
+
+			return {
+				result,
+				stale: false,
+			}
+		}
+
+		const savedFingerprint = createSceneFingerprint(result.data.scene)
+
+		state.savedSceneFingerprint = savedFingerprint
+
+		if (!state.currentSceneFingerprint) {
+			state.currentSceneFingerprint = savedFingerprint
+		}
+
+		updateUiState({
+			saveStatus: state.currentSceneFingerprint === savedFingerprint ? 'saved' : 'dirty',
+			lastSaveError: null,
+		})
+
+		return {
+			result,
+			stale: false,
+		}
 	}
 
 	async function runSaveLoop(
@@ -89,13 +249,17 @@ export function createSaveCoordinator(dependencies: SaveCoordinatorDependencies)
 		let hasForcedInitialSave = false
 
 		while (true) {
-			const runtimeState = dependencies.readRuntimeState()
+			if (state.activeSavePromise) {
+				const activeSavePromise = state.activeSavePromise
+				const activeSaveResult = await activeSavePromise
 
-			if (activeSavePromise) {
-				latestResult = await activeSavePromise
-				activeSavePromise = null
+				if (state.activeSavePromise === activeSavePromise) {
+					state.activeSavePromise = null
+				}
 
-				if (!latestResult.ok) {
+				latestResult = activeSaveResult.result
+
+				if (activeSaveResult.stale || !latestResult.ok) {
 					return latestResult
 				}
 
@@ -104,9 +268,9 @@ export function createSaveCoordinator(dependencies: SaveCoordinatorDependencies)
 
 			const shouldSave =
 				(Boolean(options?.forceInitialSave) && !hasForcedInitialSave)
-				|| runtimeState.saveStatus === 'dirty'
-				|| runtimeState.saveStatus === 'error'
-				|| runtimeState.hasPendingCompensationSave
+				|| state.saveStatus === 'dirty'
+				|| state.saveStatus === 'error'
+				|| state.hasPendingCompensationSave
 
 			if (!shouldSave) {
 				if (latestResult) {
@@ -120,17 +284,21 @@ export function createSaveCoordinator(dependencies: SaveCoordinatorDependencies)
 				}) as TauriCommandResult<SaveSceneSuccessPayload>
 			}
 
-			dependencies.writeRuntimeState({
-				hasPendingCompensationSave: false,
-			})
+			state.hasPendingCompensationSave = false
 			hasForcedInitialSave = true
 
-			const savePromise = dependencies.executeSave(document)
-			activeSavePromise = savePromise
-			latestResult = await savePromise
-			activeSavePromise = null
+			const savePromise = executeSaveOnce(document)
+			state.activeSavePromise = savePromise
 
-			if (!latestResult.ok) {
+			const saveOutcome = await savePromise
+
+			if (state.activeSavePromise === savePromise) {
+				state.activeSavePromise = null
+			}
+
+			latestResult = saveOutcome.result
+
+			if (saveOutcome.stale || !latestResult.ok) {
 				return latestResult
 			}
 		}
@@ -138,114 +306,93 @@ export function createSaveCoordinator(dependencies: SaveCoordinatorDependencies)
 
 	async function saveNow(document: SaveDocumentRef) {
 		cancelScheduledSave()
+
 		return runSaveLoop(document, {
 			forceInitialSave: true,
 		})
 	}
 
-	function scheduleAutoSave(document: SaveDocumentRef) {
-		const runtimeState = dependencies.readRuntimeState()
-
-		if (runtimeState.saveStatus === 'saved' || runtimeState.saveStatus === 'idle') {
-			cancelScheduledSave()
-			return
-		}
-
-		if (runtimeState.saveStatus === 'saving') {
-			return
-		}
-
+	async function flushBeforeLeave(document: SaveDocumentRef, options?: FlushBeforeLeaveOptions) {
 		cancelScheduledSave()
-		dependencies.writeRuntimeState({
-			hasScheduledSave: true,
-		})
-
-		scheduledTimer = setTimeout(() => {
-			scheduledTimer = null
-			dependencies.writeRuntimeState({
-				hasScheduledSave: false,
-			})
-			void runSaveLoop(document)
-		}, debounceMs)
-	}
-
-	async function flushPendingSave(document: SaveDocumentRef, reason: FlushReason) {
-		cancelScheduledSave()
-		dependencies.writeRuntimeState({
+		updateUiState({
 			isFlushing: true,
 		})
 
 		try {
-			const runtimeState = dependencies.readRuntimeState()
-
-			if (runtimeState.saveStatus === 'saved' && !runtimeState.hasPendingCompensationSave) {
+			if (state.saveStatus === 'saved' && !state.hasPendingCompensationSave) {
 				return true
 			}
 
 			const flushPromise =
-				runtimeState.saveStatus === 'saving' && activeSavePromise
-					? activeSavePromise.then(async (result) => {
-							if (!result.ok) {
-								return result
+				state.saveStatus === 'saving' && state.activeSavePromise
+					? state.activeSavePromise.then(async (activeSaveResult) => {
+							if (activeSaveResult.stale || !activeSaveResult.result.ok) {
+								return activeSaveResult.result
 							}
 
-							const nextRuntimeState = dependencies.readRuntimeState()
-
 							if (
-								nextRuntimeState.saveStatus === 'dirty'
-								|| nextRuntimeState.saveStatus === 'error'
-								|| nextRuntimeState.hasPendingCompensationSave
+								state.saveStatus === 'dirty'
+								|| state.saveStatus === 'error'
+								|| state.hasPendingCompensationSave
 							) {
 								return runSaveLoop(document)
 							}
 
-							return result
+							return activeSaveResult.result
 						})
 					: runSaveLoop(document)
 
 			const result =
-				reason === 'window-close' || reason === 'app-exit'
-					? await Promise.race([
+				options?.timeoutMs === undefined
+					? await flushPromise
+					: await Promise.race([
 							flushPromise,
 							new Promise<TauriCommandResult<SaveSceneSuccessPayload>>((resolve) => {
 								setTimeout(() => {
 									resolve(
 										createFailureResult({
 											code: 'UNKNOWN_ERROR',
-											message: '退出前保存超时',
+											message: '关闭窗口前保存超时',
 											details: `documentId=${document.id}`,
 										}) as TauriCommandResult<SaveSceneSuccessPayload>,
 									)
-								}, DEFAULT_FLUSH_TIMEOUT_MS)
+								}, options.timeoutMs ?? DEFAULT_WINDOW_CLOSE_FLUSH_TIMEOUT_MS)
 							}),
 						])
-					: await flushPromise
 
 			return result.ok
 		} finally {
-			dependencies.writeRuntimeState({
+			updateUiState({
 				isFlushing: false,
 			})
 		}
 	}
 
+	function dispose() {
+		cancelScheduledSave()
+		state.lifecycleToken += 1
+		state.savedSceneFingerprint = null
+		state.currentSceneFingerprint = null
+		state.hasPendingCompensationSave = false
+		state.activeSavePromise = null
+		updateUiState({
+			saveStatus: 'idle',
+			lastSaveError: null,
+			isFlushing: false,
+		})
+	}
+
 	return {
-		cancelScheduledSave,
-		flushPendingSave,
+		initialize,
+		onSceneChange,
 		saveNow,
-		scheduleAutoSave,
-		waitForActiveSave,
+		flushBeforeLeave,
+		dispose,
 	}
 }
 
-const defaultSaveCoordinator = createSaveCoordinator({
-	readRuntimeState: createStoreRuntimeState,
-	writeRuntimeState: updateStoreRuntimeState,
+export const editorSaveSession = createEditorSaveSession({
+	readScene: readActiveScene,
 	executeSave: saveActiveDocumentScene,
+	writeUiState: writeStoreUiState,
 })
-
-export const cancelScheduledSave = defaultSaveCoordinator.cancelScheduledSave
-export const flushPendingSave = defaultSaveCoordinator.flushPendingSave
-export const saveNow = defaultSaveCoordinator.saveNow
-export const scheduleAutoSave = defaultSaveCoordinator.scheduleAutoSave
-export const waitForActiveSave = defaultSaveCoordinator.waitForActiveSave

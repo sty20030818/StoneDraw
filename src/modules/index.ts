@@ -1,1 +1,1 @@
-export { applyScene, clearEditorApi, getEditorApi, observeSceneChange, readActiveScene, setEditorApi } from './editor'
+export { applyScene, clearEditorApi, editorSaveSession, getEditorApi, readActiveScene, setEditorApi } from './editor'

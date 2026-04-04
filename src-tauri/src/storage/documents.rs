@@ -1,6 +1,9 @@
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+#[cfg(windows)]
+use std::os::windows::ffi::OsStrExt;
 
 use rusqlite::{params, Connection, OptionalExtension, Row};
 use serde::{Deserialize, Serialize};
@@ -17,6 +20,20 @@ const DEFAULT_DOCUMENT_TITLE: &str = "未命名文档";
 const DEFAULT_SOURCE_TYPE: &str = "local";
 const DEFAULT_SAVE_STATUS: &str = "saved";
 const DEFAULT_SCHEMA_VERSION: i64 = 1;
+
+#[cfg(windows)]
+const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
+#[cfg(windows)]
+const MOVEFILE_WRITE_THROUGH: u32 = 0x8;
+
+#[cfg(windows)]
+unsafe extern "system" {
+    fn MoveFileExW(
+        existing_file_name: *const u16,
+        new_file_name: *const u16,
+        flags: u32,
+    ) -> i32;
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -156,7 +173,7 @@ pub fn create_document_from_root(
     ensure_document_layout_ready(&layout)?;
 
     let scene_payload = create_empty_scene_payload(&document_id, &normalized_title, now);
-    write_scene_file(&layout.current_scene_path, &scene_payload)?;
+    write_scene_file(Path::new(&layout.current_scene_path), &scene_payload)?;
 
     let document_meta = DocumentMetaPayload {
         id: document_id,
@@ -429,8 +446,25 @@ pub fn save_document_scene_from_root(
     scene_payload.updated_at = saved_at;
     scene_payload.meta.title = existing_document.title.clone();
 
-    write_scene_file(&existing_document.current_scene_path, &scene_payload)?;
-    update_document_after_scene_save(root_dir_path, &document_id, saved_at)?;
+    write_scene_file(Path::new(&existing_document.current_scene_path), &scene_payload)?;
+
+    if let Err(error) = update_document_after_scene_save(root_dir_path, &document_id, saved_at) {
+        let details = error.details.unwrap_or_default();
+        let details_suffix = if details.is_empty() {
+            String::new()
+        } else {
+            format!(", cause={details}")
+        };
+
+        return Err(CommandError {
+            code: error.code,
+            message: error.message,
+            details: Some(format!(
+                "documentId={document_id}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
+                existing_document.current_scene_path
+            )),
+        });
+    }
 
     get_document_by_id_from_root(root_dir_path, &document_id)
 }
@@ -736,21 +770,112 @@ fn default_schema_version() -> i64 {
     DEFAULT_SCHEMA_VERSION
 }
 
-fn write_scene_file(path: &str, scene_payload: &SceneFilePayload) -> Result<(), CommandError> {
-    let scene_path = PathBuf::from(path);
+fn write_scene_file(path: &Path, scene_payload: &SceneFilePayload) -> Result<(), CommandError> {
     let bytes = serde_json::to_vec_pretty(scene_payload).map_err(|error| {
         CommandError::io(
             "序列化 scene 文件失败",
-            format!("path={}, error={error}", scene_path.display()),
+            format!("path={}, error={error}", path.display()),
         )
     })?;
+    let temp_path = create_scene_temp_path(path)?;
+    let write_result = (|| -> Result<(), CommandError> {
+        let mut temp_file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp_path)
+            .map_err(|error| {
+                CommandError::io(
+                    "创建临时 scene 文件失败",
+                    format!("path={}, error={error}", temp_path.display()),
+                )
+            })?;
 
-    fs::write(&scene_path, bytes).map_err(|error| {
+        temp_file.write_all(&bytes).map_err(|error| {
+            CommandError::io(
+                "写入临时 scene 文件失败",
+                format!("path={}, error={error}", temp_path.display()),
+            )
+        })?;
+        temp_file.sync_all().map_err(|error| {
+            CommandError::io(
+                "刷盘临时 scene 文件失败",
+                format!("path={}, error={error}", temp_path.display()),
+            )
+        })?;
+        drop(temp_file);
+
+        replace_file_atomically(&temp_path, path).map_err(|error| {
+            CommandError::io(
+                "替换正式 scene 文件失败",
+                format!(
+                    "tempPath={}, targetPath={}, error={error}",
+                    temp_path.display(),
+                    path.display()
+                ),
+            )
+        })?;
+
+        Ok(())
+    })();
+
+    if write_result.is_err() && temp_path.exists() {
+        let _ = fs::remove_file(&temp_path);
+    }
+
+    write_result
+}
+
+fn create_scene_temp_path(path: &Path) -> Result<PathBuf, CommandError> {
+    let parent = path.parent().ok_or_else(|| {
         CommandError::io(
-            "写入 scene 文件失败",
-            format!("path={}, error={error}", scene_path.display()),
+            "解析临时 scene 文件目录失败",
+            format!("path={} 缺少父目录", path.display()),
         )
-    })
+    })?;
+    let file_name = path.file_name().and_then(|value| value.to_str()).ok_or_else(|| {
+        CommandError::io(
+            "解析临时 scene 文件名失败",
+            format!("path={} 缺少有效文件名", path.display()),
+        )
+    })?;
+    let timestamp = current_timestamp_ms()?;
+
+    Ok(parent.join(format!(
+        "{file_name}.tmp-{timestamp}-{}",
+        std::process::id()
+    )))
+}
+
+#[cfg(windows)]
+fn replace_file_atomically(source: &Path, target: &Path) -> std::io::Result<()> {
+    let source_wide = encode_wide_path(source);
+    let target_wide = encode_wide_path(target);
+    let result = unsafe {
+        MoveFileExW(
+            source_wide.as_ptr(),
+            target_wide.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+
+    if result == 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+
+    Ok(())
+}
+
+#[cfg(windows)]
+fn encode_wide_path(path: &Path) -> Vec<u16> {
+    path.as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect()
+}
+
+#[cfg(not(windows))]
+fn replace_file_atomically(source: &Path, target: &Path) -> std::io::Result<()> {
+    fs::rename(source, target)
 }
 
 fn read_scene_file(path: &Path) -> Result<SceneFilePayload, CommandError> {
@@ -822,14 +947,16 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::commands::CommandErrorCode;
+    use crate::storage::database::open_ready_connection;
+    use rusqlite::params;
     use serde_json::Map;
 
     use super::{
         create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
         list_recent_documents_from_root, list_trashed_documents_from_root,
         move_document_to_trash_from_root, open_document_scene_from_root, rename_document_from_root,
-        restore_document_from_root, save_document_scene_from_root, SceneEnvelopePayload,
-        SceneFilePayload, SceneMetaPayload,
+        restore_document_from_root, save_document_scene_from_root, read_scene_file,
+        SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
     };
 
     fn unique_temp_path(name: &str) -> std::path::PathBuf {
@@ -1024,9 +1151,124 @@ mod tests {
     }
 
     #[test]
+    fn save_document_scene_does_not_update_metadata_when_scene_write_fails() {
+        let root_directory_path = unique_temp_path("save-scene-write-failure");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 E"))
+            .expect("创建文档应成功");
+        let connection = open_ready_connection(&root_directory_path).expect("数据库连接应成功");
+        let invalid_scene_path = root_directory_path.join("invalid-scene-target");
+
+        std::fs::create_dir_all(&invalid_scene_path).expect("目录路径应可创建");
+        connection
+            .execute(
+                "UPDATE documents SET current_scene_path = ?1 WHERE id = ?2;",
+                params![invalid_scene_path.display().to_string(), created_document.id.clone()],
+            )
+            .expect("测试前置应可改写 scene 路径");
+
+        let document_before_save =
+            get_document_by_id_from_root(&root_directory_path, &created_document.id)
+                .expect("保存前应可读取元数据");
+        let error = save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: created_document.id.clone(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![serde_json::json!({ "id": "element-write-fail" })],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 E".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect_err("scene 写入失败时不应保存成功");
+        let document_after_failure =
+            get_document_by_id_from_root(&root_directory_path, &created_document.id)
+                .expect("失败后仍应可读取元数据");
+        let reopened_original_scene =
+            read_scene_file(PathBuf::from(&created_document.current_scene_path).as_path())
+                .expect("原始 scene 文件仍应可读取");
+
+        assert_eq!(error.code, CommandErrorCode::IoError);
+        assert_eq!(document_after_failure.updated_at, document_before_save.updated_at);
+        assert!(reopened_original_scene.scene.elements.is_empty());
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn save_document_scene_reports_metadata_failure_after_scene_written() {
+        let root_directory_path = unique_temp_path("save-scene-db-failure");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 F"))
+            .expect("创建文档应成功");
+        let connection = open_ready_connection(&root_directory_path).expect("数据库连接应成功");
+
+        connection
+            .execute(
+                "
+                CREATE TRIGGER fail_scene_save_metadata_update
+                BEFORE UPDATE ON documents
+                BEGIN
+                    SELECT RAISE(FAIL, 'forced-metadata-update-error');
+                END;
+                ",
+                [],
+            )
+            .expect("测试前置 trigger 应可创建");
+
+        let document_before_save =
+            get_document_by_id_from_root(&root_directory_path, &created_document.id)
+                .expect("保存前应可读取元数据");
+        let error = save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: created_document.id.clone(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![serde_json::json!({ "id": "element-db-fail" })],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 F".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect_err("元数据更新失败时不应返回成功");
+        let document_after_failure =
+            get_document_by_id_from_root(&root_directory_path, &created_document.id)
+                .expect("失败后仍应可读取元数据");
+        let reopened_scene =
+            read_scene_file(PathBuf::from(&created_document.current_scene_path).as_path())
+                .expect("scene 文件应保留最新写入结果");
+
+        assert_eq!(error.code, CommandErrorCode::DbError);
+        assert!(
+            error
+                .details
+                .unwrap_or_default()
+                .contains("scene 已保存但元数据更新失败")
+        );
+        assert_eq!(document_after_failure.updated_at, document_before_save.updated_at);
+        assert_eq!(reopened_scene.scene.elements.len(), 1);
+        assert_eq!(reopened_scene.scene.elements[0]["id"], "element-db-fail");
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
     fn save_document_scene_rejects_invalid_payload() {
         let root_directory_path = unique_temp_path("save-scene-invalid");
-        let _created_document = create_document_from_root(&root_directory_path, Some("白板 E"))
+        let _created_document = create_document_from_root(&root_directory_path, Some("白板 G"))
             .expect("创建文档应成功");
 
         let error = save_document_scene_from_root(
@@ -1041,7 +1283,7 @@ mod tests {
                     files: Map::new(),
                 },
                 meta: SceneMetaPayload {
-                    title: "白板 E".into(),
+                    title: "白板 G".into(),
                     tags: vec![],
                     text_index: String::new(),
                 },
@@ -1057,7 +1299,7 @@ mod tests {
     #[test]
     fn save_document_scene_returns_not_found_for_unknown_document() {
         let root_directory_path = unique_temp_path("save-scene-missing-document");
-        let _created_document = create_document_from_root(&root_directory_path, Some("白板 F"))
+        let _created_document = create_document_from_root(&root_directory_path, Some("白板 H"))
             .expect("创建文档应成功");
 
         let error = save_document_scene_from_root(
@@ -1072,7 +1314,7 @@ mod tests {
                     files: Map::new(),
                 },
                 meta: SceneMetaPayload {
-                    title: "白板 F".into(),
+                    title: "白板 H".into(),
                     tags: vec![],
                     text_index: String::new(),
                 },
@@ -1088,7 +1330,7 @@ mod tests {
     #[test]
     fn open_document_scene_returns_io_error_for_corrupted_scene_file() {
         let root_directory_path = unique_temp_path("open-scene-corrupted");
-        let created_document = create_document_from_root(&root_directory_path, Some("白板 G"))
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 I"))
             .expect("创建文档应成功");
 
         std::fs::write(&created_document.current_scene_path, "{ broken json }")
@@ -1105,7 +1347,7 @@ mod tests {
     #[test]
     fn open_document_scene_returns_io_error_for_document_id_mismatch() {
         let root_directory_path = unique_temp_path("open-scene-mismatch");
-        let created_document = create_document_from_root(&root_directory_path, Some("白板 H"))
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 J"))
             .expect("创建文档应成功");
 
         std::fs::write(
@@ -1120,7 +1362,7 @@ mod tests {
                     "files": {}
                 },
                 "meta": {
-                    "title": "白板 H",
+                    "title": "白板 J",
                     "tags": [],
                     "textIndex": ""
                 }
