@@ -1,1 +1,5 @@
-export {}
+export { default as ExplorerPanel } from './ExplorerPanel'
+export { default as HistoryPanel } from './HistoryPanel'
+export { default as LibraryPanel } from './LibraryPanel'
+export { default as SearchPanel } from './SearchPanel'
+export { default as TeamPanel } from './TeamPanel'
