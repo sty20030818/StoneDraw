@@ -37,7 +37,7 @@ function CommandPalette() {
 					<DialogDescription>当前阶段先统一命令入口，后续再接入真正的搜索与动作匹配。</DialogDescription>
 				</DialogHeader>
 				<div className='grid gap-3'>
-					<div className='grid gap-2 rounded-[1rem] border border-border/70 bg-card/60 p-4'>
+					<div className='grid gap-2 rounded-md border border-border/70 bg-card/60 p-4'>
 						<Button
 							type='button'
 							variant='outline'

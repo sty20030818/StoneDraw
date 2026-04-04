@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import AppProviders from '@/app/providers/AppProviders'
 import AppToaster from '@/components/feedback/AppToaster'
-import OverlayRoot from '@/app/layouts/OverlayRoot'
 
 type AppShellProps = {
 	children: ReactNode
@@ -15,7 +14,6 @@ function AppShell({ children }: AppShellProps) {
 					{children}
 				</div>
 			</div>
-			<OverlayRoot />
 			<AppToaster />
 		</AppProviders>
 	)

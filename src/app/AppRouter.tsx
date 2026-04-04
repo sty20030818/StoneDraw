@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
+import { OverlayRoot, WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
 import { resolveSceneByPathname, APP_ROUTES } from '@/constants/routes'
 import { useAppStore } from '@/stores/app.store'
 import {
@@ -95,6 +95,7 @@ function AppRouter() {
 					path='*'
 				/>
 			</Routes>
+			<OverlayRoot />
 		</HashRouter>
 	)
 }
