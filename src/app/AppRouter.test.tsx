@@ -1,35 +1,37 @@
+import type { ReactNode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { resetHashRoute, setHashRoute } from '@/test/helpers/hash-route'
 
 vi.mock('@/pages', () => ({
-	LegacyEditorPage: () => <div>编辑器页面</div>,
-	LegacySettingsPage: () => <div>设置页面</div>,
-	LegacyWorkspacePage: () => <div>工作区页面</div>,
+	ArchivePage: () => <div>归档页面</div>,
+	DocumentsPage: () => <div>文档页面</div>,
+	HomePage: () => <div>首页页面</div>,
 	NotFoundPage: () => <div>未命中页面</div>,
+	SearchCenterPage: () => <div>搜索页面</div>,
+	SettingsPage: () => <div>设置页面</div>,
+	TeamPage: () => <div>团队页面</div>,
+	TemplatesPage: () => <div>模板页面</div>,
+	WorkbenchPage: () => <div>工作台页面</div>,
 }))
 
-vi.mock('@/components/layout', async () => {
+vi.mock('@/app/layouts', async () => {
 	const { Outlet } = await import('react-router-dom')
 	return {
-		LegacyAppLayout: () => (
-			<div>
-				<div>应用布局</div>
-				<Outlet />
-			</div>
-		),
-		LegacyWorkspaceLayout: () => (
+		WorkspaceLayout: () => (
 			<div>
 				<div>工作区布局</div>
 				<Outlet />
 			</div>
 		),
-		LegacyEditorLayout: () => (
+		WorkbenchLayout: () => (
 			<div>
-				<div>编辑器布局</div>
+				<div>工作台布局</div>
 				<Outlet />
 			</div>
 		),
+		AppShell: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+		OverlayRoot: () => null,
 	}
 })
 
@@ -38,19 +40,18 @@ describe('AppRouter', () => {
 		resetHashRoute()
 	})
 
-	test('根路由应重定向到工作区', async () => {
+	test('根路由应重定向到 Workspace 首页', async () => {
 		setHashRoute('/')
 		const { default: AppRouter } = await import('./AppRouter')
 
 		render(<AppRouter />)
 
-		expect(await screen.findByText('工作区页面')).toBeInTheDocument()
-		expect(screen.getByText('应用布局')).toBeInTheDocument()
+		expect(await screen.findByText('首页页面')).toBeInTheDocument()
 		expect(screen.getByText('工作区布局')).toBeInTheDocument()
 	})
 
-	test('设置路由应渲染设置页', async () => {
-		setHashRoute('/settings')
+	test('Workspace 设置路由应渲染设置页', async () => {
+		setHashRoute('/workspace/settings')
 		const { default: AppRouter } = await import('./AppRouter')
 
 		render(<AppRouter />)
@@ -59,14 +60,14 @@ describe('AppRouter', () => {
 		expect(screen.getByText('工作区布局')).toBeInTheDocument()
 	})
 
-	test('编辑器路由应渲染编辑器页', async () => {
-		setHashRoute('/editor?documentId=doc-router-1')
+	test('Workbench 路由应渲染工作台页', async () => {
+		setHashRoute('/workbench?documentId=doc-router-1')
 		const { default: AppRouter } = await import('./AppRouter')
 
 		render(<AppRouter />)
 
-		expect(await screen.findByText('编辑器页面')).toBeInTheDocument()
-		expect(screen.getByText('编辑器布局')).toBeInTheDocument()
+		expect(await screen.findByText('工作台页面')).toBeInTheDocument()
+		expect(screen.getByText('工作台布局')).toBeInTheDocument()
 	})
 
 	test('未知路由应渲染兜底页', async () => {

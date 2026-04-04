@@ -1,15 +1,16 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
-import {
-	LegacyAppLayout,
-	LegacyEditorLayout,
-	LegacyWorkspaceLayout,
-} from '@/components/layout'
+import { WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
 import { APP_ROUTES } from '@/constants/routes'
 import {
-	LegacyEditorPage,
-	LegacySettingsPage,
-	LegacyWorkspacePage,
+	ArchivePage,
+	DocumentsPage,
+	HomePage,
 	NotFoundPage,
+	SearchCenterPage,
+	SettingsPage,
+	TeamPage,
+	TemplatesPage,
+	WorkbenchPage,
 } from '@/pages'
 
 function AppRouter() {
@@ -17,38 +18,67 @@ function AppRouter() {
 		<HashRouter>
 			<Routes>
 				<Route
-					element={<LegacyAppLayout />}
-					path={APP_ROUTES.ROOT}>
+					element={
+						<Navigate
+							replace
+							to={APP_ROUTES.WORKSPACE_HOME}
+						/>
+					}
+					path={APP_ROUTES.ROOT}
+				/>
+				<Route
+					element={<WorkspaceLayout />}
+					path={APP_ROUTES.WORKSPACE}>
 					<Route
 						element={
 							<Navigate
 								replace
-								to={APP_ROUTES.WORKSPACE}
+								to={APP_ROUTES.WORKSPACE_HOME}
 							/>
 						}
 						index
 					/>
-					<Route element={<LegacyWorkspaceLayout />}>
-						<Route
-							element={<LegacyWorkspacePage />}
-							path={APP_ROUTES.WORKSPACE}
-						/>
-						<Route
-							element={<LegacySettingsPage />}
-							path={APP_ROUTES.SETTINGS}
-						/>
-					</Route>
-					<Route element={<LegacyEditorLayout />}>
-						<Route
-							element={<LegacyEditorPage />}
-							path={APP_ROUTES.EDITOR}
-						/>
-					</Route>
 					<Route
-						element={<NotFoundPage />}
-						path='*'
+						element={<HomePage />}
+						path='home'
+					/>
+					<Route
+						element={<DocumentsPage />}
+						path='documents'
+					/>
+					<Route
+						element={<TemplatesPage />}
+						path='templates'
+					/>
+					<Route
+						element={<SearchCenterPage />}
+						path='search'
+					/>
+					<Route
+						element={<ArchivePage />}
+						path='archive'
+					/>
+					<Route
+						element={<TeamPage />}
+						path='team'
+					/>
+					<Route
+						element={<SettingsPage />}
+						path='settings'
 					/>
 				</Route>
+				<Route
+					element={<WorkbenchLayout />}
+					path={APP_ROUTES.WORKBENCH}>
+					<Route
+						element={<WorkbenchPage />}
+						index
+					/>
+				</Route>
+				<Route
+					element={<NotFoundPage />}
+					path='*'
+				/>
 			</Routes>
 		</HashRouter>
 	)

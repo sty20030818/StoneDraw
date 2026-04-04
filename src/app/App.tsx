@@ -1,10 +1,8 @@
 import { useEffect } from 'react'
-import { APP_BOOT_STAGES } from '@/constants'
 import AppRouter from '@/app/AppRouter'
-import AppToaster from '@/components/feedback/AppToaster'
-import { DialogHostProvider } from '@/components/feedback/DialogHost'
+import { AppShell } from '@/app/layouts'
+import { APP_BOOT_STAGES } from '@/constants'
 import LoadingState from '@/components/states/LoadingState'
-import { TooltipProvider } from '@/components/ui/tooltip'
 import { databaseService, directoryService, systemService } from '@/services'
 import { useAppStore } from '@/stores'
 
@@ -77,12 +75,9 @@ function App() {
 	}
 
 	return (
-		<TooltipProvider>
-			<DialogHostProvider>
-				<AppRouter />
-				<AppToaster />
-			</DialogHostProvider>
-		</TooltipProvider>
+		<AppShell>
+			<AppRouter />
+		</AppShell>
 	)
 }
 
