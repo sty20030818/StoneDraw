@@ -163,6 +163,18 @@ function EditorPage() {
 	const setSaveStatus = useEditorStore((state) => state.setSaveStatus)
 	const latestApiIdRef = useRef<string | null>(null)
 	const latestSaveErrorRef = useRef<string | null>(null)
+	const shouldBypassUnloadGuardRef = useRef(false)
+
+	const destroyWindowSafely = useCallback(async () => {
+		shouldBypassUnloadGuardRef.current = true
+
+		try {
+			await getCurrentWindow().destroy()
+		} catch (error) {
+			shouldBypassUnloadGuardRef.current = false
+			throw error
+		}
+	}, [])
 
 	const handleManualSave = useCallback(async () => {
 		if (editorLoadState.status !== 'ready') {
@@ -378,6 +390,10 @@ function EditorPage() {
 		}
 
 		function handleBeforeUnload(event: BeforeUnloadEvent) {
+			if (shouldBypassUnloadGuardRef.current) {
+				return
+			}
+
 			if (saveStatus === 'saved' || saveStatus === 'idle') {
 				return
 			}
@@ -413,7 +429,7 @@ function EditorPage() {
 
 				if (isFlushed) {
 					isClosingWindow = true
-					await getCurrentWindow().destroy()
+					await destroyWindowSafely()
 					return
 				}
 
@@ -431,11 +447,11 @@ function EditorPage() {
 						}
 
 						isClosingWindow = true
-						await getCurrentWindow().destroy()
+						await destroyWindowSafely()
 					},
 					onSecondaryAction: async () => {
 						isClosingWindow = true
-						await getCurrentWindow().destroy()
+						await destroyWindowSafely()
 					},
 				})
 			})
@@ -446,7 +462,7 @@ function EditorPage() {
 		return () => {
 			unlistenCloseRequested?.()
 		}
-	}, [editorLoadState, openConfirmDialog, saveStatus])
+	}, [destroyWindowSafely, editorLoadState, openConfirmDialog, saveStatus])
 
 	useEffect(() => {
 		if (editorLoadState.status !== 'ready') {

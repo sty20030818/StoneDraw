@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { APP_ROUTES } from '@/constants/routes'
 import { useEditorStore } from '@/stores'
 import { createDocumentMeta } from '@/test/fixtures/document'
@@ -146,6 +146,10 @@ function renderEditorPage(initialEntry = `${APP_ROUTES.EDITOR}?documentId=doc-ed
 	})
 }
 
+const nativeWindowAddEventListener = window.addEventListener.bind(window)
+const nativeWindowRemoveEventListener = window.removeEventListener.bind(window)
+let beforeUnloadHandler: ((event: BeforeUnloadEvent) => void) | null = null
+
 describe('EditorPage', () => {
 	beforeEach(() => {
 		currentSnapshot = {
@@ -166,6 +170,31 @@ describe('EditorPage', () => {
 		toastMock.mockClear()
 		tauriWindowMock.window.onCloseRequested.mockClear()
 		tauriWindowMock.window.destroy.mockClear()
+		beforeUnloadHandler = null
+
+		vi.spyOn(window, 'addEventListener').mockImplementation((
+			type: string,
+			listener: EventListenerOrEventListenerObject,
+			options?: boolean | AddEventListenerOptions,
+		) => {
+			if (type === 'beforeunload' && typeof listener === 'function') {
+				beforeUnloadHandler = listener as (event: BeforeUnloadEvent) => void
+			}
+
+			nativeWindowAddEventListener(type, listener, options)
+		})
+
+		vi.spyOn(window, 'removeEventListener').mockImplementation((
+			type: string,
+			listener: EventListenerOrEventListenerObject,
+			options?: boolean | EventListenerOptions,
+		) => {
+			if (type === 'beforeunload' && beforeUnloadHandler === listener) {
+				beforeUnloadHandler = null
+			}
+
+			nativeWindowRemoveEventListener(type, listener, options)
+		})
 
 		documentGetByIdMock.mockResolvedValue({
 			ok: true,
@@ -207,6 +236,10 @@ describe('EditorPage', () => {
 				},
 			}
 		})
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
 	})
 
 	test('画布变化后应调用 observeSceneChange 与 scheduleAutoSave', async () => {
@@ -318,6 +351,43 @@ describe('EditorPage', () => {
 			'window-close',
 		)
 		expect(tauriWindowMock.window.destroy).toHaveBeenCalled()
+	})
+
+	test('窗口关闭 flush 失败后选择放弃修改并退出时不应再触发 beforeunload 拦截', async () => {
+		const user = userEvent.setup()
+		flushPendingSaveMock.mockResolvedValue(false)
+
+		renderEditorPage()
+		await screen.findByText('编辑器文档')
+
+		act(() => {
+			useEditorStore.getState().setSaveStatus('dirty')
+		})
+
+		const closeHandler = tauriWindowMock.getCloseHandler()
+		expect(closeHandler).toBeTypeOf('function')
+
+		const preventDefault = vi.fn<() => void>()
+		await closeHandler?.({ preventDefault })
+
+		expect(await screen.findByText('关闭应用前保存失败')).toBeInTheDocument()
+		expect(beforeUnloadHandler).toBeTypeOf('function')
+
+		await user.click(screen.getByRole('button', { name: '放弃修改并退出' }))
+
+		await waitFor(() => {
+			expect(tauriWindowMock.window.destroy).toHaveBeenCalledTimes(1)
+		})
+
+		const beforeUnloadEvent = {
+			preventDefault: vi.fn<() => void>(),
+			returnValue: undefined as string | undefined,
+		} as unknown as BeforeUnloadEvent
+
+		beforeUnloadHandler?.(beforeUnloadEvent)
+
+		expect(beforeUnloadEvent.preventDefault).not.toHaveBeenCalled()
+		expect(beforeUnloadEvent.returnValue).toBeUndefined()
 	})
 
 	test('保存失败错误变化时应提示自动保存失败', async () => {
