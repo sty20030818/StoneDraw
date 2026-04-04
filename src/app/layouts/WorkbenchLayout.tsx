@@ -16,9 +16,14 @@ import {
 	SearchPanel,
 	TeamPanel,
 } from '@/components/panels'
+import { useWorkbenchStore } from '@/stores/workbench.store'
 
 function WorkbenchShellContent() {
 	const { shellState, setActivePanel } = useWorkbenchShell()
+	const tabs = useWorkbenchStore((state) => state.tabs)
+	const activeTabId = useWorkbenchStore((state) => state.activeTabId)
+	const isSidePanelOpen = useWorkbenchStore((state) => state.isSidePanelOpen)
+	const isRightPanelOpen = useWorkbenchStore((state) => state.isRightPanelOpen)
 	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === shellState.activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
 
 	function renderSidePanel() {
@@ -49,17 +54,21 @@ function WorkbenchShellContent() {
 				onPanelChange={setActivePanel}
 			/>
 
-			<aside className='flex w-72 shrink-0 flex-col border-r border-border/70 bg-card/72 p-4'>
-				<p className='text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground'>Side Panel</p>
-				<h2 className='mt-2 text-base font-semibold tracking-tight'>{activeItem.label}</h2>
-				<p className='mt-2 text-sm leading-6 text-muted-foreground'>{activeItem.description}</p>
-				<div className='mt-4 min-h-0 flex-1 overflow-auto'>{renderSidePanel()}</div>
-			</aside>
+			{isSidePanelOpen ? (
+				<aside className='flex w-72 shrink-0 flex-col border-r border-border/70 bg-card/72 p-4'>
+					<p className='text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground'>Side Panel</p>
+					<h2 className='mt-2 text-base font-semibold tracking-tight'>{activeItem.label}</h2>
+					<p className='mt-2 text-sm leading-6 text-muted-foreground'>{activeItem.description}</p>
+					<div className='mt-4 min-h-0 flex-1 overflow-auto'>{renderSidePanel()}</div>
+				</aside>
+			) : null}
 
 			<div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
 				<WorkbenchTabs
-					documentId={shellState.documentId}
-					documentTitle={shellState.documentTitle}
+					tabs={tabs}
+					activeTabId={activeTabId}
+					fallbackDocumentId={shellState.documentId}
+					fallbackDocumentTitle={shellState.documentTitle}
 					isDocumentReady={shellState.isDocumentReady}
 				/>
 				<WorkbenchTitleBar
@@ -87,12 +96,14 @@ function WorkbenchShellContent() {
 				/>
 			</div>
 
-			<RightPanel
-				documentId={shellState.documentId}
-				documentTitle={shellState.documentTitle}
-				isDocumentReady={shellState.isDocumentReady}
-				saveStatus={shellState.saveStatus}
-			/>
+			{isRightPanelOpen ? (
+				<RightPanel
+					documentId={shellState.documentId}
+					documentTitle={shellState.documentTitle}
+					isDocumentReady={shellState.isDocumentReady}
+					saveStatus={shellState.saveStatus}
+				/>
+			) : null}
 		</section>
 	)
 }

@@ -1,7 +1,20 @@
-import { Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import { WorkspaceNav, WorkspaceTopbar } from '@/components/navigation'
+import { useWorkspaceStore, type WorkspaceSection } from '@/stores/workspace.store'
 
 function WorkspaceLayout() {
+	const location = useLocation()
+	const setActiveSection = useWorkspaceStore((state) => state.setActiveSection)
+
+	useEffect(() => {
+		const section = location.pathname.split('/').at(-1) as WorkspaceSection | undefined
+
+		if (section) {
+			setActiveSection(section)
+		}
+	}, [location.pathname, setActiveSection])
+
 	return (
 		<section className='flex h-full min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/82 shadow-sm backdrop-blur'>
 			<aside className='flex w-72 shrink-0 flex-col border-r border-border/70 bg-card/75 p-4'>

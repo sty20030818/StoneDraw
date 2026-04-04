@@ -1,6 +1,8 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
-import { APP_ROUTES } from '@/constants/routes'
+import { resolveSceneByPathname, APP_ROUTES } from '@/constants/routes'
+import { useAppStore } from '@/stores/app.store'
 import {
 	ArchivePage,
 	DocumentsPage,
@@ -13,9 +15,22 @@ import {
 	WorkbenchPage,
 } from '@/pages'
 
+function RouteStateSync() {
+	const location = useLocation()
+	const setActiveScene = useAppStore((state) => state.setActiveScene)
+
+	useEffect(() => {
+		const scene = resolveSceneByPathname(location.pathname)
+		setActiveScene(scene.key, location.pathname)
+	}, [location.pathname, setActiveScene])
+
+	return null
+}
+
 function AppRouter() {
 	return (
 		<HashRouter>
+			<RouteStateSync />
 			<Routes>
 				<Route
 					element={

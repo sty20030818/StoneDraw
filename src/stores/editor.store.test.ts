@@ -18,11 +18,11 @@ describe('editor.store', () => {
 		expect(useEditorStore.getState().saveStatus).toBe('error')
 	})
 
-	test('reset 应恢复编辑器运行态初始值', () => {
+	test('reset 应恢复工作台运行态初始值', () => {
 		const editorStore = useEditorStore.getState()
 
 		editorStore.setActiveDocumentId('doc-store-1')
-		editorStore.setEditorReady(true)
+		editorStore.setWorkbenchReady(true)
 		editorStore.setSaveStatus('dirty')
 		editorStore.setLastSaveError('保存失败')
 		editorStore.setIsFlushing(true)
@@ -30,7 +30,7 @@ describe('editor.store', () => {
 
 		expect(useEditorStore.getState()).toMatchObject({
 			activeDocumentId: null,
-			isEditorReady: false,
+			isWorkbenchReady: false,
 			saveStatus: 'idle',
 			lastSaveError: null,
 			isFlushing: false,

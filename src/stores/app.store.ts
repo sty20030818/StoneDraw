@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { APP_BOOT_STAGES } from '@/constants'
+import type { AppSceneKey } from '@/constants/routes'
 import { toIsoString } from '@/utils'
 import type {
 	AppBootStage,
@@ -24,8 +25,11 @@ type AppStoreState = {
 	databaseReadyAt: string | null
 	lastCommandName: string | null
 	lastCommandAt: string | null
+	activeSceneKey: AppSceneKey
+	activeRoutePath: string | null
 	setBootStage: (bootStage: AppBootStage) => void
 	setAppReady: (isReady: boolean) => void
+	setActiveScene: (sceneKey: AppSceneKey, pathname: string) => void
 	setLastError: (error: AppError | null) => void
 	setLocalDirectoryStatus: (status: LocalDirectoryStatus) => void
 	setLocalDirectories: (directories: LocalDirectoriesPayload) => void
@@ -52,6 +56,8 @@ const initialAppState = {
 	databaseReadyAt: null,
 	lastCommandName: null,
 	lastCommandAt: null,
+	activeSceneKey: 'workspace' as AppSceneKey,
+	activeRoutePath: null,
 } satisfies Pick<
 	AppStoreState,
 	| 'bootStage'
@@ -66,6 +72,8 @@ const initialAppState = {
 	| 'databaseReadyAt'
 	| 'lastCommandName'
 	| 'lastCommandAt'
+	| 'activeSceneKey'
+	| 'activeRoutePath'
 >
 
 // 应用级 store 只负责全局状态，不承担外部副作用。
@@ -73,6 +81,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
 	...initialAppState,
 	setBootStage: (bootStage) => set({ bootStage }),
 	setAppReady: (isAppReady) => set({ isAppReady }),
+	setActiveScene: (activeSceneKey, activeRoutePath) => set({ activeSceneKey, activeRoutePath }),
 	setLastError: (lastError) => set({ lastError }),
 	setLocalDirectoryStatus: (localDirectoryStatus) => set({ localDirectoryStatus }),
 	setLocalDirectories: (localDirectories) =>
