@@ -8,4 +8,5 @@ export {
 	SceneValidationError,
 	serializeScene,
 } from './scene.adapter'
+export { connectEditorAdapter } from './editor.adapter'
 export { exportScenePlaceholder } from './export.adapter'

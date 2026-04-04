@@ -5,7 +5,7 @@ import { createScenePayload } from '@/test/fixtures/scene'
 
 const invokeTauriCommandMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 
-vi.mock('./tauri.service', () => ({
+vi.mock('../tauri.service', () => ({
 	createSuccessResult: <TData>(data: TData) => ({ ok: true as const, data }),
 	createFailureResult: (error: unknown) => ({ ok: false as const, error }),
 	invokeTauriCommand: invokeTauriCommandMock,

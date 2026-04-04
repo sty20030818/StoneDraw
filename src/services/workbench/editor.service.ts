@@ -1,7 +1,7 @@
 import { TAURI_COMMANDS } from '@/constants/index'
 import { deserializeScene, serializeScene, SceneValidationError } from '@/adapters/excalidraw/scene.adapter'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types/index'
-import { createFailureResult, createSuccessResult, invokeTauriCommand } from './tauri.service'
+import { createFailureResult, createSuccessResult, invokeTauriCommand } from '../tauri.service'
 
 function createEmptyScene(documentId: string, title = '未命名文档'): SceneFilePayload {
 	return serializeScene(

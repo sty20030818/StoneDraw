@@ -35,7 +35,7 @@ vi.mock('sonner', () => ({
 	}),
 }))
 
-vi.mock('@/services/document.service', () => ({
+vi.mock('@/services/documents/document.service', () => ({
 	documentService: {
 		create: createMock,
 		list: listMock,

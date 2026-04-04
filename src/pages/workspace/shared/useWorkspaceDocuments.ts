@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useDialogHost } from '@/components/feedback/DialogHost'
 import { buildWorkbenchRoute } from '@/constants/routes'
-import { documentService } from '@/services/document.service'
+import { documentService } from '@/services/documents/document.service'
 import { useDocumentStore } from '@/stores/document.store'
 import type { DocumentMeta } from '@/types'
 

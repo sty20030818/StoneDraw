@@ -1,4 +1,4 @@
-import { editorService } from '@/services/editor.service'
+import { editorService } from '@/services/workbench/editor.service'
 import { createFailureResult, createSuccessResult } from '@/services/tauri.service'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types/index'
 import { readActiveScene } from './runtime'

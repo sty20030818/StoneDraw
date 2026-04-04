@@ -105,13 +105,13 @@ vi.mock('sonner', () => ({
 	}),
 }))
 
-vi.mock('@/services/document.service', () => ({
+vi.mock('@/services/documents/document.service', () => ({
 	documentService: {
 		getById: documentGetByIdMock,
 	},
 }))
 
-vi.mock('@/services/editor.service', () => ({
+vi.mock('@/services/workbench/editor.service', () => ({
 	editorService: {
 		loadScene: editorLoadSceneMock,
 	},

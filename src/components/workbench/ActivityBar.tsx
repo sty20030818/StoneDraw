@@ -5,9 +5,9 @@ import {
 	SearchIcon,
 	UsersIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import type { WorkbenchPanelKey } from '@/stores/workbench.store'
+import ActivityIcon from '@/components/navigation/ActivityIcon'
 
 const panelIcons = {
 	explorer: FilesIcon,
@@ -30,18 +30,15 @@ function ActivityBar({ activePanel, onPanelChange }: ActivityBarProps) {
 				const isActive = item.key === activePanel
 
 				return (
-					<Button
+					<ActivityIcon
 						key={item.key}
-						type='button'
-						size='icon-lg'
-						variant={isActive ? 'default' : 'outline'}
-						className='rounded-2xl'
-						title={item.label}
+						icon={Icon}
+						isActive={isActive}
+						label={item.label}
 						onClick={() => {
 							onPanelChange(item.key)
-						}}>
-						<Icon />
-					</Button>
+						}}
+					/>
 				)
 			})}
 		</aside>

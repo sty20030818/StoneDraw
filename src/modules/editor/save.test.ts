@@ -13,7 +13,7 @@ async function importSaveModule() {
 	const readActiveSceneMock = vi.fn<(...args: never[]) => unknown>()
 
 	vi.resetModules()
-	vi.doMock('@/services/editor.service', () => ({
+	vi.doMock('@/services/workbench/editor.service', () => ({
 		editorService: {
 			saveScene: saveSceneMock,
 		},
