@@ -48,6 +48,10 @@ const DEFAULT_MIGRATIONS: &[Migration] = &[Migration {
     version: 2,
     name: "0002_document_index",
     sql: include_str!("../../migrations/0002_document_index.sql"),
+}, Migration {
+    version: 3,
+    name: "0003_document_foundation",
+    sql: include_str!("../../migrations/0003_document_foundation.sql"),
 }];
 
 pub fn initialize_database(app: &AppHandle) -> Result<DatabaseHealthPayload, CommandError> {
@@ -359,8 +363,8 @@ mod tests {
             .join("data/db/app.db")
             .exists());
         assert!(payload.is_ready);
-        assert_eq!(payload.schema_version, 2);
-        assert_eq!(payload.target_schema_version, 2);
+        assert_eq!(payload.schema_version, 3);
+        assert_eq!(payload.target_schema_version, 3);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
@@ -380,6 +384,11 @@ mod tests {
                 name: "0002_settings",
                 sql: "CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
             },
+            Migration {
+                version: 3,
+                name: "0003_document_foundation",
+                sql: "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
+            },
         ];
 
         initialize_database_from_root(&root_directory_path, &first_pass)
@@ -388,8 +397,8 @@ mod tests {
             .expect("已有旧版本数据库应顺序升级到目标版本");
 
         assert!(payload.is_ready);
-        assert_eq!(payload.schema_version, 2);
-        assert_eq!(payload.target_schema_version, 2);
+        assert_eq!(payload.schema_version, 3);
+        assert_eq!(payload.target_schema_version, 3);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
@@ -408,6 +417,11 @@ mod tests {
                 name: "0002_invalid",
                 sql: "CREATE TABE broken_sql (id INTEGER PRIMARY KEY);",
             },
+            Migration {
+                version: 3,
+                name: "0003_never_reached",
+                sql: "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
+            },
         ];
 
         let error = initialize_database_from_root(&root_directory_path, &migrations)
@@ -420,7 +434,7 @@ mod tests {
 
         assert!(!health.is_ready);
         assert_eq!(health.schema_version, 1);
-        assert_eq!(health.target_schema_version, 2);
+        assert_eq!(health.target_schema_version, 3);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }

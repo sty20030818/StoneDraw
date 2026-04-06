@@ -8,10 +8,11 @@ use crate::commands::CommandError;
 
 const STONEDRAW_HOME_DIRECTORY_NAME: &str = ".stonedraw";
 const DATA_DIRECTORY_NAME: &str = "data";
-const CONFIG_DIRECTORY_NAME: &str = "config";
 const DOCUMENTS_DIRECTORY_NAME: &str = "documents";
 const LOGS_DIRECTORY_NAME: &str = "logs";
-const EXPORTS_DIRECTORY_NAME: &str = "exports";
+const TEMPLATES_DIRECTORY_NAME: &str = "templates";
+const ROOT_ASSETS_DIRECTORY_NAME: &str = "assets";
+const CACHE_DIRECTORY_NAME: &str = "cache";
 const CURRENT_SCENE_FILE_NAME: &str = "current.scene.json";
 const ASSETS_DIRECTORY_NAME: &str = "assets";
 const VERSIONS_DIRECTORY_NAME: &str = "versions";
@@ -29,10 +30,11 @@ pub struct DirectoryHealth {
 pub struct LocalDirectoriesPayload {
     pub root_dir: DirectoryHealth,
     pub data_dir: DirectoryHealth,
-    pub config_dir: DirectoryHealth,
     pub documents_dir: DirectoryHealth,
     pub logs_dir: DirectoryHealth,
-    pub exports_dir: DirectoryHealth,
+    pub templates_dir: DirectoryHealth,
+    pub assets_dir: DirectoryHealth,
+    pub cache_dir: DirectoryHealth,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -91,18 +93,20 @@ fn prepare_local_directories_from_root(
 ) -> Result<LocalDirectoriesPayload, CommandError> {
     let root_dir = ensure_directory_ready(root_dir_path, "StoneDraw 根目录")?;
     let data_dir = ensure_directory_ready(&data_dir_path(root_dir_path), "本地数据目录")?;
-    let config_dir = ensure_directory_ready(&config_dir_path(root_dir_path), "本地配置目录")?;
     let documents_dir = ensure_directory_ready(&documents_dir_path(root_dir_path), "文档目录")?;
     let logs_dir = ensure_directory_ready(&logs_dir_path(root_dir_path), "日志目录")?;
-    let exports_dir = ensure_directory_ready(&exports_dir_path(root_dir_path), "导出目录")?;
+    let templates_dir = ensure_directory_ready(&templates_dir_path(root_dir_path), "模板目录")?;
+    let assets_dir = ensure_directory_ready(&root_assets_dir_path(root_dir_path), "资源目录")?;
+    let cache_dir = ensure_directory_ready(&cache_dir_path(root_dir_path), "缓存目录")?;
 
     Ok(LocalDirectoriesPayload {
         root_dir,
         data_dir,
-        config_dir,
         documents_dir,
         logs_dir,
-        exports_dir,
+        templates_dir,
+        assets_dir,
+        cache_dir,
     })
 }
 
@@ -111,18 +115,20 @@ fn read_local_directories_from_root(
 ) -> Result<LocalDirectoriesPayload, CommandError> {
     let root_dir = inspect_directory_health(root_dir_path, "StoneDraw 根目录")?;
     let data_dir = inspect_directory_health(&data_dir_path(root_dir_path), "本地数据目录")?;
-    let config_dir = inspect_directory_health(&config_dir_path(root_dir_path), "本地配置目录")?;
     let documents_dir = inspect_directory_health(&documents_dir_path(root_dir_path), "文档目录")?;
     let logs_dir = inspect_directory_health(&logs_dir_path(root_dir_path), "日志目录")?;
-    let exports_dir = inspect_directory_health(&exports_dir_path(root_dir_path), "导出目录")?;
+    let templates_dir = inspect_directory_health(&templates_dir_path(root_dir_path), "模板目录")?;
+    let assets_dir = inspect_directory_health(&root_assets_dir_path(root_dir_path), "资源目录")?;
+    let cache_dir = inspect_directory_health(&cache_dir_path(root_dir_path), "缓存目录")?;
 
     Ok(LocalDirectoriesPayload {
         root_dir,
         data_dir,
-        config_dir,
         documents_dir,
         logs_dir,
-        exports_dir,
+        templates_dir,
+        assets_dir,
+        cache_dir,
     })
 }
 
@@ -131,7 +137,7 @@ pub(crate) fn data_dir_path(root_dir_path: &Path) -> PathBuf {
 }
 
 fn config_dir_path(root_dir_path: &Path) -> PathBuf {
-    root_dir_path.join(CONFIG_DIRECTORY_NAME)
+    root_dir_path.join("config")
 }
 
 pub(crate) fn documents_dir_path(root_dir_path: &Path) -> PathBuf {
@@ -142,8 +148,16 @@ pub(crate) fn logs_dir_path(root_dir_path: &Path) -> PathBuf {
     data_dir_path(root_dir_path).join(LOGS_DIRECTORY_NAME)
 }
 
-fn exports_dir_path(root_dir_path: &Path) -> PathBuf {
-    data_dir_path(root_dir_path).join(EXPORTS_DIRECTORY_NAME)
+pub(crate) fn templates_dir_path(root_dir_path: &Path) -> PathBuf {
+    data_dir_path(root_dir_path).join(TEMPLATES_DIRECTORY_NAME)
+}
+
+pub(crate) fn root_assets_dir_path(root_dir_path: &Path) -> PathBuf {
+    data_dir_path(root_dir_path).join(ROOT_ASSETS_DIRECTORY_NAME)
+}
+
+pub(crate) fn cache_dir_path(root_dir_path: &Path) -> PathBuf {
+    data_dir_path(root_dir_path).join(CACHE_DIRECTORY_NAME)
 }
 
 pub(crate) fn document_dir_path(root_dir_path: &Path, document_id: &str) -> PathBuf {
@@ -283,7 +297,6 @@ mod tests {
 
         assert!(root_directory_path.exists());
         assert!(root_directory_path.join("data").exists());
-        assert!(root_directory_path.join("config").exists());
         assert_eq!(
             payload.root_dir.path,
             root_directory_path.display().to_string()
@@ -291,10 +304,6 @@ mod tests {
         assert_eq!(
             payload.data_dir.path,
             root_directory_path.join("data").display().to_string()
-        );
-        assert_eq!(
-            payload.config_dir.path,
-            root_directory_path.join("config").display().to_string()
         );
         assert_eq!(
             payload.documents_dir.path,
@@ -305,8 +314,16 @@ mod tests {
             root_directory_path.join("data/logs").display().to_string()
         );
         assert_eq!(
-            payload.exports_dir.path,
-            root_directory_path.join("data/exports").display().to_string()
+            payload.templates_dir.path,
+            root_directory_path.join("data/templates").display().to_string()
+        );
+        assert_eq!(
+            payload.assets_dir.path,
+            root_directory_path.join("data/assets").display().to_string()
+        );
+        assert_eq!(
+            payload.cache_dir.path,
+            root_directory_path.join("data/cache").display().to_string()
         );
 
         fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
@@ -329,10 +346,6 @@ mod tests {
             root_directory_path.join("data").display().to_string()
         );
         assert_eq!(
-            payload.config_dir.path,
-            root_directory_path.join("config").display().to_string()
-        );
-        assert_eq!(
             payload.documents_dir.path,
             root_directory_path.join("data/documents").display().to_string()
         );
@@ -341,8 +354,16 @@ mod tests {
             root_directory_path.join("data/logs").display().to_string()
         );
         assert_eq!(
-            payload.exports_dir.path,
-            root_directory_path.join("data/exports").display().to_string()
+            payload.templates_dir.path,
+            root_directory_path.join("data/templates").display().to_string()
+        );
+        assert_eq!(
+            payload.assets_dir.path,
+            root_directory_path.join("data/assets").display().to_string()
+        );
+        assert_eq!(
+            payload.cache_dir.path,
+            root_directory_path.join("data/cache").display().to_string()
         );
 
         fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
@@ -354,9 +375,10 @@ mod tests {
         let documents_file_path = root_directory_path.join("data/documents");
 
         fs::create_dir_all(root_directory_path.join("data")).expect("data 目录应可创建");
-        fs::create_dir_all(root_directory_path.join("config")).expect("config 目录应可创建");
         fs::create_dir_all(root_directory_path.join("data/logs")).expect("logs 目录应可创建");
-        fs::create_dir_all(root_directory_path.join("data/exports")).expect("exports 目录应可创建");
+        fs::create_dir_all(root_directory_path.join("data/templates")).expect("templates 目录应可创建");
+        fs::create_dir_all(root_directory_path.join("data/assets")).expect("assets 目录应可创建");
+        fs::create_dir_all(root_directory_path.join("data/cache")).expect("cache 目录应可创建");
         fs::write(&documents_file_path, "not-a-directory").expect("documents 文件应可写入");
 
         let error = read_local_directories_from_root(&root_directory_path)

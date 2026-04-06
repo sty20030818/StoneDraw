@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { DocumentMeta } from '@/types'
+import type { DocumentMeta, WorkspaceDocumentCollections } from '@/types'
 
 type DocumentCollectionStatus = 'idle' | 'loading' | 'ready' | 'error'
 
@@ -15,6 +15,7 @@ type DocumentStoreState = {
 	setTrashedDocuments: (documents: DocumentMeta[]) => void
 	setSelectedDocumentId: (documentId: string | null) => void
 	startCollectionLoading: () => void
+	syncWorkspaceCollections: (payload: WorkspaceDocumentCollections) => void
 	completeCollectionLoading: (payload: {
 		documents: DocumentMeta[]
 		recentDocuments: DocumentMeta[]
@@ -51,6 +52,14 @@ export const useDocumentStore = create<DocumentStoreState>((set) => ({
 	startCollectionLoading: () =>
 		set({
 			collectionStatus: 'loading',
+			collectionErrorMessage: null,
+		}),
+	syncWorkspaceCollections: ({ documents, recentDocuments, trashedDocuments }) =>
+		set({
+			documents,
+			recentDocuments,
+			trashedDocuments,
+			collectionStatus: 'ready',
 			collectionErrorMessage: null,
 		}),
 	completeCollectionLoading: ({ documents, recentDocuments, trashedDocuments }) =>

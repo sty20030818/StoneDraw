@@ -11,12 +11,11 @@ import EmptyState from '@/components/states/EmptyState'
 import { APP_ROUTES } from '@/constants/routes'
 import { clearEditorApi, createEditorInitialData, editorSaveSession, setEditorApi } from '@/modules/editor'
 import { documentService } from '@/services/documents/document.service'
-import { editorService } from '@/services/workbench/editor.service'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { DocumentMeta, SceneFilePayload } from '@/types'
-import { CanvasShell, useWorkbenchShell } from '@/workbench'
+import { CanvasShell, useWorkbenchShellController } from '@/workbench'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
 type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>
@@ -65,9 +64,10 @@ function WorkbenchPage() {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const documentId = searchParams.get('documentId')
-	const { patchShellState, resetShellState } = useWorkbenchShell()
+	const { patchShellState, resetShellState } = useWorkbenchShellController()
 	const openOverlay = useOverlayStore((state) => state.openOverlay)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
+	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
 	const searchDraft = useWorkbenchStore((state) => state.searchDraft)
 	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
 	const lastSaveError = useWorkbenchStore((state) => state.lastSaveError)
@@ -151,40 +151,28 @@ function WorkbenchPage() {
 				status: 'loading',
 			})
 
-			const documentResult = await documentService.getById(documentId)
+			const openResult = await documentService.openDocument(documentId)
 
 			if (!isMounted) {
 				return
 			}
 
-			if (!documentResult.ok) {
+			if (!openResult.ok) {
 				setWorkbenchLoadState({
 					status: 'error',
 					title: '文档不存在',
-					description: documentResult.error.message,
+					description: openResult.error.details ?? openResult.error.message,
 				})
 				return
 			}
 
-			const sceneResult = await editorService.loadScene(documentId)
-
-			if (!isMounted) {
-				return
-			}
-
-			if (!sceneResult.ok) {
-				setWorkbenchLoadState({
-					status: 'error',
-					title: 'scene 读取失败',
-					description: sceneResult.error.message,
-				})
-				return
-			}
+			// 工作台进入文档时同步刷新 Workspace 集合，保证最近打开与回退视图是最新状态。
+			syncWorkspaceCollections(openResult.data.collections)
 
 			setWorkbenchLoadState({
 				status: 'ready',
-				document: documentResult.data,
-				scene: sceneResult.data,
+				document: openResult.data.document,
+				scene: openResult.data.scene,
 			})
 		}
 
@@ -199,7 +187,7 @@ function WorkbenchPage() {
 			setSelectedDocumentId(null)
 			resetShellState()
 		}
-	}, [documentId, resetShellState, setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady])
+	}, [documentId, resetShellState, setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady, syncWorkspaceCollections])
 
 	useEffect(() => {
 		if (workbenchLoadState.status !== 'ready') {

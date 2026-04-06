@@ -4,7 +4,7 @@ export { default as RightPanel } from './RightPanel'
 export { default as StatusBar } from './StatusBar'
 export { default as WorkbenchTabs } from './WorkbenchTabs'
 export { default as WorkbenchTitleBar } from './WorkbenchTitleBar'
-export { WorkbenchShellProvider, useWorkbenchShell } from './WorkbenchShellBridge'
+export { WorkbenchShellProvider, useWorkbenchShell, useWorkbenchShellController } from './WorkbenchShellBridge'
 export type { WorkbenchShellState } from './WorkbenchShellBridge'
 export {
 	ExplorerPanel,

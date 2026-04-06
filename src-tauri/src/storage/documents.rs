@@ -145,6 +145,22 @@ pub fn restore_document(
     restore_document_from_root(&root_dir, document_id)
 }
 
+pub fn open_document(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    open_document_from_root(&root_dir, document_id)
+}
+
+pub fn permanently_delete_document(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<(), CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    permanently_delete_document_from_root(&root_dir, document_id)
+}
+
 pub fn open_document_scene(
     app: &AppHandle,
     document_id: &str,
@@ -178,7 +194,7 @@ pub fn create_document_from_root(
     let document_meta = DocumentMetaPayload {
         id: document_id,
         title: normalized_title,
-        current_scene_path: layout.current_scene_path.clone(),
+        current_scene_path: scene_relative_path(&layout),
         created_at: now,
         updated_at: now,
         last_opened_at: None,
@@ -403,12 +419,83 @@ pub fn restore_document_from_root(
     get_document_by_id_from_root(root_dir_path, document_id)
 }
 
+pub fn open_document_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
+
+    // 正式打开动作必须先保证 current.scene 就绪，再写最近打开，最后返回最新元数据。
+    ensure_document_scene_ready(root_dir_path, &document_meta)?;
+    record_document_opened(root_dir_path, document_id)?;
+
+    get_document_by_id_from_root(root_dir_path, document_id)
+}
+
+pub fn permanently_delete_document_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<(), CommandError> {
+    let mut connection = open_ready_connection(root_dir_path)?;
+    let existing_document =
+        fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?.ok_or_else(|| {
+            CommandError::not_found(
+                "文档不存在",
+                format!("documentId={document_id} 无法永久删除"),
+            )
+        })?;
+    let layout = document_path_layout(root_dir_path, &existing_document.id);
+    let transaction = connection.transaction().map_err(|error| {
+        CommandError::db(
+            "开启永久删除事务失败",
+            format!("documentId={document_id}, error={error}"),
+        )
+    })?;
+
+    for sql in [
+        "DELETE FROM recent_opens WHERE document_id = ?1;",
+        "DELETE FROM document_tags WHERE document_id = ?1;",
+        "DELETE FROM document_search_index WHERE document_id = ?1;",
+        "DELETE FROM versions WHERE document_id = ?1;",
+        "DELETE FROM recovery_drafts WHERE document_id = ?1;",
+        "DELETE FROM assets WHERE document_id = ?1;",
+        "DELETE FROM workspace_states WHERE active_document_id = ?1;",
+        "DELETE FROM workbench_sessions WHERE document_id = ?1;",
+        "DELETE FROM documents WHERE id = ?1;",
+    ] {
+        transaction.execute(sql, params![document_id]).map_err(|error| {
+            CommandError::db(
+                "清理文档元数据失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+    }
+
+    transaction.commit().map_err(|error| {
+        CommandError::db(
+            "提交永久删除事务失败",
+            format!("documentId={document_id}, error={error}"),
+        )
+    })?;
+
+    if Path::new(&layout.document_dir).exists() {
+        fs::remove_dir_all(&layout.document_dir).map_err(|error| {
+            CommandError::io(
+                "删除文档目录失败",
+                format!("documentId={document_id}, path={}, error={error}", layout.document_dir),
+            )
+        })?;
+    }
+
+    Ok(())
+}
+
 pub fn open_document_scene_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<SceneFilePayload, CommandError> {
     let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
-    let scene_path = PathBuf::from(&document_meta.current_scene_path);
+    let scene_path = ensure_document_scene_ready(root_dir_path, &document_meta)?;
     let scene_payload = read_scene_file(&scene_path)?;
 
     if scene_payload.document_id != document_id {
@@ -422,8 +509,6 @@ pub fn open_document_scene_from_root(
             ),
         ));
     }
-
-    record_document_opened(root_dir_path, document_id)?;
 
     Ok(scene_payload)
 }
@@ -446,7 +531,8 @@ pub fn save_document_scene_from_root(
     scene_payload.updated_at = saved_at;
     scene_payload.meta.title = existing_document.title.clone();
 
-    write_scene_file(Path::new(&existing_document.current_scene_path), &scene_payload)?;
+    let scene_path = ensure_document_scene_ready(root_dir_path, &existing_document)?;
+    write_scene_file(scene_path.as_path(), &scene_payload)?;
 
     if let Err(error) = update_document_after_scene_save(root_dir_path, &document_id, saved_at) {
         let details = error.details.as_deref().unwrap_or_default();
@@ -461,7 +547,7 @@ pub fn save_document_scene_from_root(
                 .with_object_id(document_id.clone())
                 .with_details(format!(
                     "documentId={document_id}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
-                    existing_document.current_scene_path
+                    scene_path.display()
                 )),
         );
     }
@@ -471,11 +557,12 @@ pub fn save_document_scene_from_root(
 
 fn map_document_meta_row(row: &Row<'_>) -> rusqlite::Result<DocumentMetaPayload> {
     let is_deleted: i64 = row.get(6)?;
+    let document_id: String = row.get(0)?;
 
     Ok(DocumentMetaPayload {
-        id: row.get(0)?,
+        id: document_id.clone(),
         title: row.get(1)?,
-        current_scene_path: row.get(2)?,
+        current_scene_path: normalize_scene_path_for_payload(&document_id),
         created_at: row.get(3)?,
         updated_at: row.get(4)?,
         last_opened_at: row.get(5)?,
@@ -484,6 +571,61 @@ fn map_document_meta_row(row: &Row<'_>) -> rusqlite::Result<DocumentMetaPayload>
         source_type: row.get(8)?,
         save_status: row.get(9)?,
     })
+}
+
+fn normalize_scene_path_for_payload(document_id: &str) -> String {
+    PathBuf::from("documents")
+        .join(document_id)
+        .join("current.scene.json")
+        .display()
+        .to_string()
+}
+
+fn scene_relative_path(layout: &super::directories::DocumentPathLayout) -> String {
+    PathBuf::from("documents")
+        .join(
+            Path::new(&layout.document_dir)
+                .file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default(),
+        )
+        .join("current.scene.json")
+        .display()
+        .to_string()
+}
+
+fn ensure_document_scene_ready(
+    root_dir_path: &Path,
+    document_meta: &DocumentMetaPayload,
+) -> Result<PathBuf, CommandError> {
+    let layout = document_path_layout(root_dir_path, &document_meta.id);
+    let scene_path = PathBuf::from(&layout.current_scene_path);
+
+    // current.scene 的真实位置固定由 documentId 派生，数据库里的路径字段不再参与运行时决策。
+    ensure_document_layout_ready(&layout)?;
+
+    if scene_path.exists() {
+        return Ok(scene_path);
+    }
+
+    let scene_payload = create_empty_scene_payload(
+        &document_meta.id,
+        &document_meta.title,
+        current_timestamp_ms()?,
+    );
+    write_scene_file(scene_path.as_path(), &scene_payload).map_err(|error| {
+        let details = error.details.as_deref().unwrap_or_default().to_string();
+
+        error
+            .with_object_id(document_meta.id.clone())
+            .with_details(format!(
+                "documentId={}, scenePath={}, scene 缺失且自愈初始化失败, cause={details}",
+                document_meta.id,
+                scene_path.display(),
+            ))
+    })?;
+
+    Ok(scene_path)
 }
 
 fn fetch_document_meta_by_id(
@@ -948,14 +1090,15 @@ mod tests {
 
     use crate::commands::CommandErrorCode;
     use crate::storage::database::open_ready_connection;
-    use rusqlite::params;
+    use crate::storage::directories::document_path_layout;
     use serde_json::Map;
 
     use super::{
         create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
         list_recent_documents_from_root, list_trashed_documents_from_root,
-        move_document_to_trash_from_root, open_document_scene_from_root, rename_document_from_root,
-        restore_document_from_root, save_document_scene_from_root, read_scene_file,
+        move_document_to_trash_from_root, open_document_from_root, open_document_scene_from_root,
+        permanently_delete_document_from_root, read_scene_file, rename_document_from_root,
+        restore_document_from_root, save_document_scene_from_root,
         SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
     };
 
@@ -979,20 +1122,32 @@ mod tests {
                 .expect("按 ID 查询文档应成功");
         let listed_documents =
             list_documents_from_root(&root_directory_path).expect("读取文档列表应成功");
+        let opened_document = open_document_from_root(&root_directory_path, &created_document.id)
+            .expect("正式打开文档应成功");
         let scene_payload =
             open_document_scene_from_root(&root_directory_path, &created_document.id)
                 .expect("读取文档 scene 应成功");
         let recent_documents =
             list_recent_documents_from_root(&root_directory_path).expect("最近打开列表应成功");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
 
         assert_eq!(created_document.id, fetched_document.id);
         assert_eq!(created_document.title, "白板 A");
+        assert_eq!(opened_document.last_opened_at, recent_documents[0].last_opened_at);
         assert_eq!(listed_documents.len(), 1);
         assert_eq!(listed_documents[0].id, created_document.id);
         assert_eq!(scene_payload.document_id, created_document.id);
         assert_eq!(scene_payload.meta.title, "白板 A");
         assert!(scene_payload.scene.elements.is_empty());
-        assert!(PathBuf::from(&created_document.current_scene_path).exists());
+        assert_eq!(
+            created_document.current_scene_path,
+            PathBuf::from("documents")
+                .join(&created_document.id)
+                .join("current.scene.json")
+                .display()
+                .to_string()
+        );
+        assert!(PathBuf::from(&layout.current_scene_path).exists());
         assert_eq!(recent_documents.len(), 1);
         assert_eq!(recent_documents[0].id, created_document.id);
         assert!(recent_documents[0].last_opened_at.is_some());
@@ -1009,9 +1164,8 @@ mod tests {
         let renamed_document =
             rename_document_from_root(&root_directory_path, &created_document.id, "白板 B-重命名")
                 .expect("重命名文档应成功");
-        let _scene =
-            open_document_scene_from_root(&root_directory_path, &created_document.id)
-                .expect("打开文档应成功写入最近打开");
+        let _opened_document = open_document_from_root(&root_directory_path, &created_document.id)
+            .expect("正式打开文档应成功写入最近打开");
         let trashed_document =
             move_document_to_trash_from_root(&root_directory_path, &created_document.id)
                 .expect("删除到回收站应成功");
@@ -1155,16 +1309,11 @@ mod tests {
         let root_directory_path = unique_temp_path("save-scene-write-failure");
         let created_document = create_document_from_root(&root_directory_path, Some("白板 E"))
             .expect("创建文档应成功");
-        let connection = open_ready_connection(&root_directory_path).expect("数据库连接应成功");
-        let invalid_scene_path = root_directory_path.join("invalid-scene-target");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+        let scene_path = PathBuf::from(&layout.current_scene_path);
 
-        std::fs::create_dir_all(&invalid_scene_path).expect("目录路径应可创建");
-        connection
-            .execute(
-                "UPDATE documents SET current_scene_path = ?1 WHERE id = ?2;",
-                params![invalid_scene_path.display().to_string(), created_document.id.clone()],
-            )
-            .expect("测试前置应可改写 scene 路径");
+        std::fs::remove_file(&scene_path).expect("原始 scene 文件应可删除");
+        std::fs::create_dir_all(&scene_path).expect("scene 目录路径应可创建");
 
         let document_before_save =
             get_document_by_id_from_root(&root_directory_path, &created_document.id)
@@ -1191,13 +1340,10 @@ mod tests {
         let document_after_failure =
             get_document_by_id_from_root(&root_directory_path, &created_document.id)
                 .expect("失败后仍应可读取元数据");
-        let reopened_original_scene =
-            read_scene_file(PathBuf::from(&created_document.current_scene_path).as_path())
-                .expect("原始 scene 文件仍应可读取");
 
         assert_eq!(error.code, CommandErrorCode::IoError);
         assert_eq!(document_after_failure.updated_at, document_before_save.updated_at);
-        assert!(reopened_original_scene.scene.elements.is_empty());
+        assert!(PathBuf::from(&layout.current_scene_path).is_dir());
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
@@ -1247,9 +1393,9 @@ mod tests {
         let document_after_failure =
             get_document_by_id_from_root(&root_directory_path, &created_document.id)
                 .expect("失败后仍应可读取元数据");
-        let reopened_scene =
-            read_scene_file(PathBuf::from(&created_document.current_scene_path).as_path())
-                .expect("scene 文件应保留最新写入结果");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+        let reopened_scene = read_scene_file(PathBuf::from(&layout.current_scene_path).as_path())
+            .expect("scene 文件应保留最新写入结果");
 
         assert_eq!(error.code, CommandErrorCode::DbError);
         assert!(
@@ -1333,7 +1479,9 @@ mod tests {
         let created_document = create_document_from_root(&root_directory_path, Some("白板 I"))
             .expect("创建文档应成功");
 
-        std::fs::write(&created_document.current_scene_path, "{ broken json }")
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+
+        std::fs::write(&layout.current_scene_path, "{ broken json }")
             .expect("损坏 scene 文件应可写入");
 
         let error = open_document_scene_from_root(&root_directory_path, &created_document.id)
@@ -1349,9 +1497,10 @@ mod tests {
         let root_directory_path = unique_temp_path("open-scene-mismatch");
         let created_document = create_document_from_root(&root_directory_path, Some("白板 J"))
             .expect("创建文档应成功");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
 
         std::fs::write(
-            &created_document.current_scene_path,
+            &layout.current_scene_path,
             serde_json::json!({
                 "documentId": "doc-other",
                 "schemaVersion": 1,
@@ -1376,6 +1525,46 @@ mod tests {
 
         assert_eq!(error.code, CommandErrorCode::IoError);
         assert!(error.details.unwrap_or_default().contains("documentId mismatch"));
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn open_document_from_root_self_heals_missing_current_scene() {
+        let root_directory_path = unique_temp_path("open-scene-self-heal");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 K"))
+            .expect("创建文档应成功");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+
+        std::fs::remove_file(&layout.current_scene_path).expect("原始 scene 文件应可删除");
+
+        let opened_document = open_document_from_root(&root_directory_path, &created_document.id)
+            .expect("缺失 current.scene 时应自愈打开成功");
+        let scene = open_document_scene_from_root(&root_directory_path, &created_document.id)
+            .expect("自愈后 scene 应可读取");
+
+        assert!(opened_document.last_opened_at.is_some());
+        assert_eq!(scene.document_id, created_document.id);
+        assert!(PathBuf::from(&layout.current_scene_path).exists());
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn permanently_delete_document_removes_metadata_and_directory() {
+        let root_directory_path = unique_temp_path("permanent-delete");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 L"))
+            .expect("创建文档应成功");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+
+        permanently_delete_document_from_root(&root_directory_path, &created_document.id)
+            .expect("永久删除应成功");
+
+        let error = get_document_by_id_from_root(&root_directory_path, &created_document.id)
+            .expect_err("永久删除后文档元数据应不存在");
+
+        assert_eq!(error.code, CommandErrorCode::NotFound);
+        assert!(!PathBuf::from(&layout.document_dir).exists());
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }

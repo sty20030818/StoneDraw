@@ -14,8 +14,9 @@ export type DocumentPathLayout = {
 export type LocalDirectoriesPayload = {
 	rootDir: DirectoryHealth
 	dataDir: DirectoryHealth
-	configDir: DirectoryHealth
 	documentsDir: DirectoryHealth
 	logsDir: DirectoryHealth
-	exportsDir: DirectoryHealth
+	templatesDir: DirectoryHealth
+	assetsDir: DirectoryHealth
+	cacheDir: DirectoryHealth
 }

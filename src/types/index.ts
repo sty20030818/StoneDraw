@@ -18,11 +18,14 @@ export type { CommandSuccessPayload, TauriCommandFailure, TauriCommandResult, Ta
 export type { DatabaseHealthPayload, DatabaseSchemaVersionPayload } from './database'
 export type { DirectoryHealth, DocumentPathLayout, LocalDirectoriesPayload } from './directory'
 export type {
+	CreateDocumentSuccessPayload,
 	DocumentMeta,
 	DocumentSourceType,
+	OpenDocumentSuccessPayload,
 	SceneEnvelopePayload,
 	SceneFilePayload,
 	SceneMetaPayload,
+	WorkspaceDocumentCollections,
 } from './document'
 export type { LogEvent, LogLevel } from './logging'
 export type { SystemDemoPayload } from './system'

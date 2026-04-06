@@ -21,6 +21,7 @@ function NewDocumentDialog() {
 	const activeOverlay = useOverlayStore((state) => state.activeOverlay)
 	const closeOverlay = useOverlayStore((state) => state.closeOverlay)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
+	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
 	const [title, setTitle] = useState('未命名文档')
 	const [isCreating, setIsCreating] = useState(false)
 	const isOpen = activeOverlay === 'new-document'
@@ -28,7 +29,7 @@ function NewDocumentDialog() {
 	async function handleCreateDocument() {
 		const normalizedTitle = title.trim() || '未命名文档'
 		setIsCreating(true)
-		const result = await documentService.create(normalizedTitle)
+		const result = await documentService.createBlankDocument(normalizedTitle)
 		setIsCreating(false)
 
 		if (!result.ok) {
@@ -36,9 +37,10 @@ function NewDocumentDialog() {
 			return
 		}
 
-		setSelectedDocumentId(result.data.id)
+		syncWorkspaceCollections(result.data.collections)
+		setSelectedDocumentId(result.data.document.id)
 		closeOverlay()
-		navigate(buildWorkbenchRoute(result.data.id))
+		navigate(buildWorkbenchRoute(result.data.document.id))
 	}
 
 	return (

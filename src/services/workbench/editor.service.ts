@@ -1,6 +1,6 @@
 import { TAURI_COMMANDS } from '@/constants/index'
 import { deserializeScene, serializeScene, SceneValidationError } from '@/adapters/excalidraw/scene.adapter'
-import { editorRepository } from '@/repositories'
+import { sceneRepository } from '@/repositories'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types/index'
 import { createFailureResult, createSuccessResult } from '../tauri.service'
 
@@ -21,7 +21,7 @@ export const editorService = {
 		return createSuccessResult(createEmptyScene(documentId, title))
 	},
 	async loadScene(documentId: string): Promise<TauriCommandResult<SceneFilePayload>> {
-		const loadResult = await editorRepository.openScene(documentId)
+		const loadResult = await sceneRepository.readCurrent(documentId)
 
 		if (!loadResult.ok) {
 			return loadResult
@@ -56,7 +56,7 @@ export const editorService = {
 				fallbackTitle: payload.meta.title,
 			})
 
-			return editorRepository.saveScene(normalizedPayload)
+			return sceneRepository.saveCurrent(normalizedPayload)
 		} catch (error) {
 			const details =
 				error instanceof SceneValidationError || error instanceof Error ? error.message : 'scene 校验失败'

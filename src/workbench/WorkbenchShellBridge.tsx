@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { SaveStatus } from '@/types'
 
@@ -22,7 +23,7 @@ export function WorkbenchShellProvider({ children }: PropsWithChildren) {
 }
 
 export function useWorkbenchShell() {
-	const shellState = useWorkbenchStore((state) => ({
+	const shellState = useWorkbenchStore(useShallow((state) => ({
 		activePanel: state.activePanel,
 		documentId: state.activeDocumentId,
 		documentTitle: state.documentTitle,
@@ -35,8 +36,16 @@ export function useWorkbenchShell() {
 		onExport: state.onExport,
 		onMore: state.onMore,
 		onSearchChange: state.onSearchChange,
-	}))
+	})))
 	const setActivePanel = useWorkbenchStore((state) => state.setActivePanel)
+
+	return {
+		shellState,
+		setActivePanel,
+	}
+}
+
+export function useWorkbenchShellController() {
 	const resetShellState = useWorkbenchStore((state) => state.reset)
 	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
 	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
@@ -81,8 +90,6 @@ export function useWorkbenchShell() {
 	}
 
 	return {
-		shellState,
-		setActivePanel,
 		patchShellState,
 		resetShellState,
 	}

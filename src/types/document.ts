@@ -15,6 +15,12 @@ export type DocumentMeta = {
 	saveStatus: SaveStatus
 }
 
+export type WorkspaceDocumentCollections = {
+	documents: DocumentMeta[]
+	recentDocuments: DocumentMeta[]
+	trashedDocuments: DocumentMeta[]
+}
+
 export type SceneEnvelopePayload = {
 	elements: readonly unknown[]
 	appState: Record<string, unknown>
@@ -33,4 +39,15 @@ export type SceneFilePayload = {
 	updatedAt: number
 	scene: SceneEnvelopePayload
 	meta: SceneMetaPayload
+}
+
+export type CreateDocumentSuccessPayload = {
+	document: DocumentMeta
+	collections: WorkspaceDocumentCollections
+}
+
+export type OpenDocumentSuccessPayload = {
+	document: DocumentMeta
+	scene: SceneFilePayload
+	collections: WorkspaceDocumentCollections
 }

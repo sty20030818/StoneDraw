@@ -1,4 +1,5 @@
 import { RotateCcwIcon } from 'lucide-react'
+import { useDialogHost } from '@/components/feedback/DialogHost'
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/components/states/EmptyState'
 import { useDocumentStore } from '@/stores/document.store'
@@ -10,7 +11,8 @@ function ArchivePage() {
 	const trashedDocuments = useDocumentStore((state) => state.trashedDocuments)
 	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
 	const openOverlay = useOverlayStore((state) => state.openOverlay)
-	const { handleRestoreDocument } = useWorkspaceDocuments()
+	const { openConfirmDialog } = useDialogHost()
+	const { handleRestoreDocument, handlePermanentlyDeleteDocument } = useWorkspaceDocuments()
 
 	return (
 		<div className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
@@ -51,10 +53,22 @@ function ArchivePage() {
 									type='button'
 									variant='outline'
 									onClick={() => {
-										void handleRestoreDocument(document)
+										openConfirmDialog({
+											title: '恢复或永久删除',
+											description: `《${document.title}》当前在回收站中。你可以恢复它，或直接永久删除文档目录与元数据。`,
+											confirmLabel: '恢复文档',
+											cancelLabel: '取消',
+											secondaryActionLabel: '永久删除',
+											onConfirm: () => {
+												void handleRestoreDocument(document)
+											},
+											onSecondaryAction: () => {
+												void handlePermanentlyDeleteDocument(document)
+											},
+										})
 									}}>
 									<RotateCcwIcon data-icon='inline-start' />
-									恢复文档
+									恢复或删除
 								</Button>
 							</div>
 						</div>

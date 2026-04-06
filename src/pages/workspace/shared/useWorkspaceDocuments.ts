@@ -15,50 +15,29 @@ type WorkspaceDocumentsActions = {
 	handleRenameDocument: (documentId: string, title: string) => Promise<boolean>
 	handleMoveToTrash: (document: DocumentMeta) => void
 	handleRestoreDocument: (document: DocumentMeta) => Promise<void>
+	handlePermanentlyDeleteDocument: (document: DocumentMeta) => Promise<void>
 }
 
 export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsActions {
 	const navigate = useNavigate()
 	const { openConfirmDialog } = useDialogHost()
-	const documents = useDocumentStore((state) => state.documents)
-	const recentDocuments = useDocumentStore((state) => state.recentDocuments)
-	const trashedDocuments = useDocumentStore((state) => state.trashedDocuments)
 	const startCollectionLoading = useDocumentStore((state) => state.startCollectionLoading)
-	const completeCollectionLoading = useDocumentStore((state) => state.completeCollectionLoading)
 	const failCollectionLoading = useDocumentStore((state) => state.failCollectionLoading)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
+	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
 	const [isCreating, setIsCreating] = useState(false)
 
 	const loadWorkspaceData = useCallback(async () => {
 		startCollectionLoading()
+		const collectionsResult = await documentService.loadWorkspaceCollections()
 
-		const [documentsResult, recentDocumentsResult, trashedDocumentsResult] = await Promise.all([
-			documentService.list(),
-			documentService.listRecent(),
-			documentService.listTrashed(),
-		])
-
-		if (!documentsResult.ok) {
-			failCollectionLoading(documentsResult.error.message)
+		if (!collectionsResult.ok) {
+			failCollectionLoading(collectionsResult.error.message)
 			return
 		}
 
-		if (!recentDocumentsResult.ok) {
-			failCollectionLoading(recentDocumentsResult.error.message)
-			return
-		}
-
-		if (!trashedDocumentsResult.ok) {
-			failCollectionLoading(trashedDocumentsResult.error.message)
-			return
-		}
-
-		completeCollectionLoading({
-			documents: documentsResult.data,
-			recentDocuments: recentDocumentsResult.data,
-			trashedDocuments: trashedDocumentsResult.data,
-		})
-	}, [completeCollectionLoading, failCollectionLoading, startCollectionLoading])
+		syncWorkspaceCollections(collectionsResult.data)
+	}, [failCollectionLoading, startCollectionLoading, syncWorkspaceCollections])
 
 	useEffect(() => {
 		if (!autoLoad) {
@@ -70,7 +49,7 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 
 	const handleCreateDocument = useCallback(async () => {
 		setIsCreating(true)
-		const result = await documentService.create('未命名文档')
+		const result = await documentService.createBlankDocument('未命名文档')
 		setIsCreating(false)
 
 		if (!result.ok) {
@@ -78,26 +57,25 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 			return
 		}
 
-		completeCollectionLoading({
-			documents: [result.data, ...documents.filter((item) => item.id !== result.data.id)],
-			recentDocuments,
-			trashedDocuments,
-		})
-		setSelectedDocumentId(result.data.id)
-		navigate(buildWorkbenchRoute(result.data.id))
-	}, [completeCollectionLoading, documents, navigate, recentDocuments, setSelectedDocumentId, trashedDocuments])
+		syncWorkspaceCollections(result.data.collections)
+		setSelectedDocumentId(result.data.document.id)
+		navigate(buildWorkbenchRoute(result.data.document.id))
+	}, [navigate, setSelectedDocumentId, syncWorkspaceCollections])
 
 	const handleOpenDocument = useCallback(async (documentId: string) => {
-		const result = await documentService.open(documentId)
+		const result = await documentService.openDocument(documentId)
 
 		if (!result.ok) {
-			toast.error(result.error.message)
+			toast.error(result.error.message, {
+				description: result.error.details,
+			})
 			return
 		}
 
-		setSelectedDocumentId(result.data.id)
-		navigate(buildWorkbenchRoute(result.data.id))
-	}, [navigate, setSelectedDocumentId])
+		syncWorkspaceCollections(result.data.collections)
+		setSelectedDocumentId(result.data.document.id)
+		navigate(buildWorkbenchRoute(result.data.document.id))
+	}, [navigate, setSelectedDocumentId, syncWorkspaceCollections])
 
 	const handleRenameDocument = useCallback(async (documentId: string, title: string) => {
 		const normalizedTitle = title.trim()
@@ -107,29 +85,29 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 			return false
 		}
 
-		const result = await documentService.rename(documentId, normalizedTitle)
+		const result = await documentService.renameDocument(documentId, normalizedTitle)
 
 		if (!result.ok) {
 			toast.error(result.error.message)
 			return false
 		}
 
-		await loadWorkspaceData()
+		syncWorkspaceCollections(result.data.collections)
 		toast.success('文档标题已更新。')
 		return true
-	}, [loadWorkspaceData])
+	}, [syncWorkspaceCollections])
 
 	const executeMoveToTrash = useCallback(async (document: DocumentMeta) => {
-		const result = await documentService.moveToTrash(document.id)
+		const result = await documentService.trashDocument(document.id)
 
 		if (!result.ok) {
 			toast.error(result.error.message)
 			return
 		}
 
-		await loadWorkspaceData()
+		syncWorkspaceCollections(result.data.collections)
 		toast.success(`已将《${document.title}》移动到回收站。`)
-	}, [loadWorkspaceData])
+	}, [syncWorkspaceCollections])
 
 	const handleMoveToTrash = useCallback((document: DocumentMeta) => {
 		openConfirmDialog({
@@ -144,16 +122,30 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 	}, [executeMoveToTrash, openConfirmDialog])
 
 	const handleRestoreDocument = useCallback(async (document: DocumentMeta) => {
-		const result = await documentService.restore(document.id)
+		const result = await documentService.restoreDocument(document.id)
 
 		if (!result.ok) {
 			toast.error(result.error.message)
 			return
 		}
 
-		await loadWorkspaceData()
+		syncWorkspaceCollections(result.data.collections)
 		toast.success(`已恢复《${document.title}》。`)
-	}, [loadWorkspaceData])
+	}, [syncWorkspaceCollections])
+
+	const handlePermanentlyDeleteDocument = useCallback(async (document: DocumentMeta) => {
+		const result = await documentService.permanentlyDeleteDocument(document.id)
+
+		if (!result.ok) {
+			toast.error(result.error.message, {
+				description: result.error.details,
+			})
+			return
+		}
+
+		syncWorkspaceCollections(result.data)
+		toast.success(`已永久删除《${document.title}》。`)
+	}, [syncWorkspaceCollections])
 
 	return {
 		isCreating,
@@ -163,5 +155,6 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 		handleRenameDocument,
 		handleMoveToTrash,
 		handleRestoreDocument,
+		handlePermanentlyDeleteDocument,
 	}
 }

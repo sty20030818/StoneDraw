@@ -10,10 +10,6 @@ export function createLocalDirectoriesPayload(overrides: Partial<LocalDirectorie
 			path: '/tmp/.stonedraw/data',
 			isReady: true,
 		},
-		configDir: {
-			path: '/tmp/.stonedraw/config',
-			isReady: true,
-		},
 		documentsDir: {
 			path: '/tmp/.stonedraw/data/documents',
 			isReady: true,
@@ -22,8 +18,16 @@ export function createLocalDirectoriesPayload(overrides: Partial<LocalDirectorie
 			path: '/tmp/.stonedraw/data/logs',
 			isReady: true,
 		},
-		exportsDir: {
-			path: '/tmp/.stonedraw/data/exports',
+		templatesDir: {
+			path: '/tmp/.stonedraw/data/templates',
+			isReady: true,
+		},
+		assetsDir: {
+			path: '/tmp/.stonedraw/data/assets',
+			isReady: true,
+		},
+		cacheDir: {
+			path: '/tmp/.stonedraw/data/cache',
 			isReady: true,
 		},
 		...overrides,
@@ -38,8 +42,8 @@ export function createDatabaseHealthPayload(
 		databaseDir: '/tmp/.stonedraw/data/db',
 		databaseFileName: 'app.db',
 		isReady: true,
-		schemaVersion: 2,
-		targetSchemaVersion: 2,
+		schemaVersion: 3,
+		targetSchemaVersion: 3,
 		...overrides,
 	}
 }

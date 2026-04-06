@@ -170,10 +170,11 @@ bun run test:rust
 ## 当前边界
 
 - 已在启动阶段准备 `~/.stonedraw` 根目录，并通过 Tauri command 与前端 service 暴露目录状态。
-- `~/.stonedraw/data`：业务数据根路径（含后续文档文件、资源、快照等）；`~/.stonedraw/config`：偏好与轻量配置根路径。
-- `~/.stonedraw/data/logs`：结构化日志持久化目录，按启动会话输出 `.jsonl` 日志文件。
-- 已接入 `~/.stonedraw/data/db/app.db` 元数据数据库，启动时顺序执行 migration。
-- SQLite 当前仅承担元数据、配置与 migration 边界，**不承载 Excalidraw scene 大对象**。
+- B 组当前默认真相源目录为：`~/.stonedraw/data/db/app.db`、`~/.stonedraw/data/documents/`、`~/.stonedraw/data/templates/`、`~/.stonedraw/data/assets/`、`~/.stonedraw/data/logs/`、`~/.stonedraw/data/cache/`。`exports/` 不再属于默认启动目录。
+- 文档元数据存放在 `app.db`，当前正文固定落在 `~/.stonedraw/data/documents/<documentId>/current.scene.json`；数据库中的 `current_scene_path` 只保留为诊断字段，不再作为运行时路径真相源。
+- `documents_open` 现在是正式生命周期动作，会准备 `current.scene`、执行缺失自愈，并更新 `recent_opens`；`documents_get_by_id` 仅承担查询。
+- `recent_opens`、`workspace_states`、`workbench_sessions`、`document_search_index` 等 B 组基础表已进入 migration，服务后续连续性与上下文恢复扩展。
 - 前后端 command 错误与日志事件已统一包含 `layer / module / operation / correlationId / objectId` 等字段，用于定位启动、目录、数据库、文档与保存链路。
+- Workspace 的文档创建、打开、重命名、删除到回收站、恢复、永久删除与集合装载，现统一收口到 `DocumentService`；页面和 hook 只负责交互编排。
 - 已具备工作区、编辑器、设置占位页与 `not-found` 路由；具备 Toast、Dialog、确认框、空态与加载态等最小基础设施。
-- **尚未实现**：真实文档持久化、设置持久化、资源文件读写与完整业务表设计等（以 PRD 与个人版目标为后续方向）。
+- **尚未实现**：Version / Recovery / Template / Asset / Search 的完整业务闭环、设置持久化落地、以及多窗口/多工作区上下文恢复细节。

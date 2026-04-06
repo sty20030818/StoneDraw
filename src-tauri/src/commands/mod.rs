@@ -222,6 +222,7 @@ pub fn register(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wr
         documents::documents_rename,
         documents::documents_move_to_trash,
         documents::documents_restore,
+        documents::documents_permanently_delete,
         files::files_prepare_local_directories,
         files::files_read_local_directories,
         files::files_resolve_data_dir,

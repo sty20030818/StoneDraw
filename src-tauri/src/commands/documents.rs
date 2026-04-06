@@ -2,8 +2,9 @@ use tauri::AppHandle;
 
 use crate::storage::documents::{
     create_document, get_document_by_id, list_documents, list_recent_documents,
-    list_trashed_documents, move_document_to_trash, open_document_scene, rename_document,
-    restore_document, save_document_scene, DocumentMetaPayload, SceneFilePayload,
+    list_trashed_documents, move_document_to_trash, open_document, open_document_scene,
+    permanently_delete_document, rename_document, restore_document, save_document_scene,
+    DocumentMetaPayload, SceneFilePayload,
 };
 
 use super::{command_result, CommandError, CommandResult};
@@ -73,7 +74,7 @@ pub fn documents_open(
         "documents_open",
         "documents-command",
         "open",
-        get_document_by_id(&app, &document_id),
+        open_document(&app, &document_id),
     )
 }
 
@@ -170,6 +171,26 @@ pub fn documents_restore(
         "documents-command",
         "restore",
         restore_document(&app, &document_id),
+    )
+}
+
+#[tauri::command]
+pub fn documents_permanently_delete(
+    app: AppHandle,
+    document_id: String,
+) -> CommandResult<()> {
+    let document_id = validate_document_id(document_id).map_err(|error| {
+        error.attach_command_context(
+            "documents_permanently_delete",
+            "documents-command",
+            "permanentlyDelete",
+        )
+    })?;
+    command_result(
+        "documents_permanently_delete",
+        "documents-command",
+        "permanentlyDelete",
+        permanently_delete_document(&app, &document_id),
     )
 }
 
