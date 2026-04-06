@@ -6,11 +6,12 @@ import { toast } from 'sonner'
 import EmptyState from '@/components/states/EmptyState'
 import { APP_ROUTES } from '@/constants/routes'
 import { documentService } from '@/services/documents/document.service'
+import { versionService } from '@/services/documents/version.service'
 import { documentPersistenceSession } from '@/services/persistence'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 import { useWorkbenchStore } from '@/stores/workbench.store'
-import type { DocumentMeta, SceneFilePayload } from '@/types'
+import type { DocumentMeta, DocumentVersionMeta, SceneFilePayload, TauriCommandResult } from '@/types'
 import {
 	CanvasShell,
 	ExcalidrawHost,
@@ -70,9 +71,9 @@ function WorkbenchPage() {
 	})
 	const latestSaveErrorRef = useRef<string | null>(null)
 
-	const handleManualSave = useCallback(async () => {
+	const persistCurrentDocument = useCallback(async () => {
 		if (workbenchLoadState.status !== 'ready') {
-			return false
+			return null
 		}
 
 		const saveResult = await documentPersistenceSession.saveNow(workbenchLoadState.document)
@@ -82,7 +83,7 @@ function WorkbenchPage() {
 			toast('保存失败', {
 				description: saveResult.error.details ?? saveResult.error.message,
 			})
-			return false
+			return null
 		}
 
 		setWorkbenchLoadState({
@@ -91,8 +92,28 @@ function WorkbenchPage() {
 			scene: saveResult.data.scene,
 		})
 
-		return true
+		return saveResult.data
 	}, [workbenchLoadState])
+
+	const handleManualSave = useCallback(async () => {
+		const persistResult = await persistCurrentDocument()
+
+		return persistResult !== null
+	}, [persistCurrentDocument])
+
+	const handleCreateVersion = useCallback(async (): Promise<TauriCommandResult<DocumentVersionMeta> | null> => {
+		if (workbenchLoadState.status !== 'ready') {
+			return null
+		}
+
+		const persistResult = await persistCurrentDocument()
+
+		if (!persistResult) {
+			return null
+		}
+
+		return versionService.createManualVersion(persistResult.document.id)
+	}, [persistCurrentDocument, workbenchLoadState.status])
 
 	const tryFlushBeforeLeaving = useCallback(
 		async (options?: { timeoutMs?: number }) => {
@@ -326,6 +347,7 @@ function WorkbenchPage() {
 			onSave: () => {
 				void handleManualSave()
 			},
+			onCreateVersion: handleCreateVersion,
 			onExport: handleExportOverlay,
 			onMore: handleShareOverlay,
 			onSearchChange: setSearchDraft,
@@ -333,6 +355,7 @@ function WorkbenchPage() {
 	}, [
 		documentId,
 		handleExportOverlay,
+		handleCreateVersion,
 		handleManualSave,
 		handleShareOverlay,
 		isFlushing,

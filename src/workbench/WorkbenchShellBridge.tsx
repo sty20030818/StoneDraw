@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useWorkbenchStore } from '@/stores/workbench.store'
-import type { SaveStatus } from '@/types'
+import type { DocumentVersionMeta, SaveStatus, TauriCommandResult } from '@/types'
 
 type WorkbenchShellState = {
 	activePanel: ReturnType<typeof useWorkbenchStore.getState>['activePanel']
@@ -13,6 +13,7 @@ type WorkbenchShellState = {
 	isFlushing: boolean
 	onBack: () => void
 	onSave: () => void
+	onCreateVersion: () => Promise<TauriCommandResult<DocumentVersionMeta> | null>
 	onExport: () => void
 	onMore: () => void
 	onSearchChange: (value: string) => void
@@ -33,6 +34,7 @@ export function useWorkbenchShell() {
 		isFlushing: state.isFlushing,
 		onBack: state.onBack,
 		onSave: state.onSave,
+		onCreateVersion: state.onCreateVersion,
 		onExport: state.onExport,
 		onMore: state.onMore,
 		onSearchChange: state.onSearchChange,
@@ -83,6 +85,7 @@ export function useWorkbenchShellController() {
 		setWorkbenchActions({
 			onBack: patch.onBack,
 			onSave: patch.onSave,
+			onCreateVersion: patch.onCreateVersion,
 			onExport: patch.onExport,
 			onMore: patch.onMore,
 			onSearchChange: patch.onSearchChange,

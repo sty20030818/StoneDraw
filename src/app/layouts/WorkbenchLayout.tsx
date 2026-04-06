@@ -88,6 +88,7 @@ function WorkbenchShellContent() {
 						documentTitle={shellState.documentTitle}
 						isDocumentReady={shellState.isDocumentReady}
 						saveStatus={shellState.saveStatus}
+						onCreateVersion={shellState.onCreateVersion}
 					/>
 				)
 			case 'team':

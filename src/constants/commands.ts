@@ -13,6 +13,8 @@ export const TAURI_COMMANDS = {
 	DOCUMENTS_MOVE_TO_TRASH: 'documents_move_to_trash',
 	DOCUMENTS_RESTORE: 'documents_restore',
 	DOCUMENTS_PERMANENTLY_DELETE: 'documents_permanently_delete',
+	VERSIONS_CREATE: 'versions_create',
+	VERSIONS_LIST: 'versions_list',
 	FILES_PREPARE_LOCAL_DIRECTORIES: 'files_prepare_local_directories',
 	FILES_READ_LOCAL_DIRECTORIES: 'files_read_local_directories',
 	FILES_RESOLVE_DATA_DIR: 'files_resolve_data_dir',

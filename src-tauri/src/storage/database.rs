@@ -52,6 +52,10 @@ const DEFAULT_MIGRATIONS: &[Migration] = &[Migration {
     version: 3,
     name: "0003_document_foundation",
     sql: include_str!("../../migrations/0003_document_foundation.sql"),
+}, Migration {
+    version: 4,
+    name: "0004_version_metadata",
+    sql: include_str!("../../migrations/0004_version_metadata.sql"),
 }];
 
 pub fn initialize_database(app: &AppHandle) -> Result<DatabaseHealthPayload, CommandError> {
@@ -363,8 +367,8 @@ mod tests {
             .join("data/db/app.db")
             .exists());
         assert!(payload.is_ready);
-        assert_eq!(payload.schema_version, 3);
-        assert_eq!(payload.target_schema_version, 3);
+        assert_eq!(payload.schema_version, 4);
+        assert_eq!(payload.target_schema_version, 4);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
@@ -389,6 +393,11 @@ mod tests {
                 name: "0003_document_foundation",
                 sql: "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
             },
+            Migration {
+                version: 4,
+                name: "0004_version_metadata",
+                sql: "CREATE TABLE IF NOT EXISTS versions (id TEXT PRIMARY KEY, version_kind TEXT NOT NULL DEFAULT 'manual');",
+            },
         ];
 
         initialize_database_from_root(&root_directory_path, &first_pass)
@@ -397,8 +406,8 @@ mod tests {
             .expect("已有旧版本数据库应顺序升级到目标版本");
 
         assert!(payload.is_ready);
-        assert_eq!(payload.schema_version, 3);
-        assert_eq!(payload.target_schema_version, 3);
+        assert_eq!(payload.schema_version, 4);
+        assert_eq!(payload.target_schema_version, 4);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }
@@ -422,6 +431,11 @@ mod tests {
                 name: "0003_never_reached",
                 sql: "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
             },
+            Migration {
+                version: 4,
+                name: "0004_also_never_reached",
+                sql: "CREATE TABLE IF NOT EXISTS versions (id TEXT PRIMARY KEY, version_kind TEXT NOT NULL DEFAULT 'manual');",
+            },
         ];
 
         let error = initialize_database_from_root(&root_directory_path, &migrations)
@@ -434,7 +448,7 @@ mod tests {
 
         assert!(!health.is_ready);
         assert_eq!(health.schema_version, 1);
-        assert_eq!(health.target_schema_version, 3);
+        assert_eq!(health.target_schema_version, 4);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }

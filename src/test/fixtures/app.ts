@@ -42,8 +42,8 @@ export function createDatabaseHealthPayload(
 		databaseDir: '/tmp/.stonedraw/data/db',
 		databaseFileName: 'app.db',
 		isReady: true,
-		schemaVersion: 3,
-		targetSchemaVersion: 3,
+		schemaVersion: 4,
+		targetSchemaVersion: 4,
 		...overrides,
 	}
 }

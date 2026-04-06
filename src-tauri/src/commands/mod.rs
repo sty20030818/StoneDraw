@@ -219,6 +219,8 @@ pub fn register(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wr
         documents::documents_open,
         documents::documents_open_scene,
         documents::editor_save_scene,
+        documents::versions_create,
+        documents::versions_list,
         documents::documents_rename,
         documents::documents_move_to_trash,
         documents::documents_restore,

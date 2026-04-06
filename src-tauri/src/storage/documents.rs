@@ -16,10 +16,12 @@ use super::database::open_ready_connection;
 use super::directories::{document_path_layout, resolve_root_dir};
 
 const DOCUMENT_ID_PREFIX: &str = "doc";
+const VERSION_ID_PREFIX: &str = "ver";
 const DEFAULT_DOCUMENT_TITLE: &str = "未命名文档";
 const DEFAULT_SOURCE_TYPE: &str = "local";
 const DEFAULT_SAVE_STATUS: &str = "saved";
 const DEFAULT_SCHEMA_VERSION: i64 = 1;
+const DEFAULT_VERSION_KIND: &str = "manual";
 
 #[cfg(windows)]
 const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
@@ -80,6 +82,19 @@ pub struct SceneFilePayload {
     pub updated_at: i64,
     pub scene: SceneEnvelopePayload,
     pub meta: SceneMetaPayload,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentVersionPayload {
+    pub id: String,
+    pub document_id: String,
+    pub version_number: i64,
+    pub version_kind: String,
+    pub label: String,
+    pub snapshot_path: String,
+    pub created_at: i64,
+    pub source_updated_at: i64,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -175,6 +190,22 @@ pub fn save_document_scene(
 ) -> Result<DocumentMetaPayload, CommandError> {
     let root_dir = resolve_root_dir(app)?;
     save_document_scene_from_root(&root_dir, scene_payload)
+}
+
+pub fn create_document_version(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<DocumentVersionPayload, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    create_document_version_from_root(&root_dir, document_id)
+}
+
+pub fn list_document_versions(
+    app: &AppHandle,
+    document_id: &str,
+) -> Result<Vec<DocumentVersionPayload>, CommandError> {
+    let root_dir = resolve_root_dir(app)?;
+    list_document_versions_from_root(&root_dir, document_id)
 }
 
 pub fn create_document_from_root(
@@ -555,6 +586,104 @@ pub fn save_document_scene_from_root(
     get_document_by_id_from_root(root_dir_path, &document_id)
 }
 
+pub fn create_document_version_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<DocumentVersionPayload, CommandError> {
+    let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
+    let current_scene = open_document_scene_from_root(root_dir_path, document_id)?;
+    let layout = document_path_layout(root_dir_path, document_id);
+    let snapshot_directory = PathBuf::from(&layout.versions_dir);
+    let created_at = current_timestamp_ms()?;
+    let version_id = generate_version_id(document_id, created_at);
+    let snapshot_path = snapshot_directory.join(format!("{version_id}.scene.json"));
+    let connection = open_ready_connection(root_dir_path)?;
+    let version_number = read_next_version_number(&connection, document_id)?;
+    let version_payload = DocumentVersionPayload {
+        id: version_id,
+        document_id: document_id.to_string(),
+        version_number,
+        version_kind: DEFAULT_VERSION_KIND.into(),
+        label: format!("手动版本 {version_number}"),
+        snapshot_path: version_relative_path(document_id, snapshot_path.as_path()),
+        created_at,
+        source_updated_at: current_scene.updated_at,
+    };
+
+    fs::create_dir_all(&snapshot_directory).map_err(|error| {
+        CommandError::io(
+            "创建版本快照目录失败",
+            format!(
+                "documentId={document_id}, path={}, error={error}",
+                snapshot_directory.display()
+            ),
+        )
+    })?;
+    write_scene_file(snapshot_path.as_path(), &current_scene)?;
+
+    if let Err(error) = insert_document_version(root_dir_path, &version_payload) {
+        let cleanup_result = fs::remove_file(&snapshot_path);
+        let cleanup_suffix = match cleanup_result {
+            Ok(()) => String::new(),
+            Err(cleanup_error) => format!(", cleanupError={cleanup_error}"),
+        };
+
+        return Err(error.with_details(format!(
+            "documentId={}, snapshotPath={}, 创建版本元数据失败{cleanup_suffix}",
+            document_meta.id,
+            snapshot_path.display()
+        )));
+    }
+
+    Ok(version_payload)
+}
+
+pub fn list_document_versions_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<Vec<DocumentVersionPayload>, CommandError> {
+    let _document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
+    let connection = open_ready_connection(root_dir_path)?;
+    let mut statement = connection
+        .prepare(
+            "
+            SELECT
+                id,
+                document_id,
+                version_number,
+                version_kind,
+                label,
+                snapshot_path,
+                created_at,
+                source_updated_at
+            FROM versions
+            WHERE document_id = ?1
+            ORDER BY created_at DESC, version_number DESC;
+            ",
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "读取文档版本列表失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+    let rows = statement
+        .query_map(params![document_id], map_document_version_row)
+        .map_err(|error| {
+            CommandError::db(
+                "遍历文档版本列表失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })?;
+
+    rows.collect::<Result<Vec<_>, _>>().map_err(|error| {
+        CommandError::db(
+            "组装文档版本列表失败",
+            format!("documentId={document_id}, error={error}"),
+        )
+    })
+}
+
 fn map_document_meta_row(row: &Row<'_>) -> rusqlite::Result<DocumentMetaPayload> {
     let is_deleted: i64 = row.get(6)?;
     let document_id: String = row.get(0)?;
@@ -570,6 +699,19 @@ fn map_document_meta_row(row: &Row<'_>) -> rusqlite::Result<DocumentMetaPayload>
         deleted_at: row.get(7)?,
         source_type: row.get(8)?,
         save_status: row.get(9)?,
+    })
+}
+
+fn map_document_version_row(row: &Row<'_>) -> rusqlite::Result<DocumentVersionPayload> {
+    Ok(DocumentVersionPayload {
+        id: row.get(0)?,
+        document_id: row.get(1)?,
+        version_number: row.get(2)?,
+        version_kind: row.get(3)?,
+        label: row.get(4)?,
+        snapshot_path: row.get(5)?,
+        created_at: row.get(6)?,
+        source_updated_at: row.get(7)?,
     })
 }
 
@@ -590,6 +732,15 @@ fn scene_relative_path(layout: &super::directories::DocumentPathLayout) -> Strin
                 .unwrap_or_default(),
         )
         .join("current.scene.json")
+        .display()
+        .to_string()
+}
+
+fn version_relative_path(document_id: &str, snapshot_path: &Path) -> String {
+    PathBuf::from("documents")
+        .join(document_id)
+        .join("versions")
+        .join(snapshot_path.file_name().and_then(|value| value.to_str()).unwrap_or_default())
         .display()
         .to_string()
 }
@@ -699,6 +850,72 @@ fn fetch_document_meta_by_id(
                 format!("documentId={document_id}, error={error}"),
             )
         })
+}
+
+fn read_next_version_number(
+    connection: &Connection,
+    document_id: &str,
+) -> Result<i64, CommandError> {
+    connection
+        .query_row(
+            "
+            SELECT COALESCE(MAX(version_number), 0) + 1
+            FROM versions
+            WHERE document_id = ?1;
+            ",
+            params![document_id],
+            |row| row.get(0),
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "读取下一个版本号失败",
+                format!("documentId={document_id}, error={error}"),
+            )
+        })
+}
+
+fn insert_document_version(
+    root_dir_path: &Path,
+    version_payload: &DocumentVersionPayload,
+) -> Result<(), CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+    connection
+        .execute(
+            "
+            INSERT INTO versions (
+                id,
+                document_id,
+                version_number,
+                version_kind,
+                label,
+                snapshot_path,
+                created_at,
+                source_updated_at
+            )
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
+            ",
+            params![
+                version_payload.id,
+                version_payload.document_id,
+                version_payload.version_number,
+                version_payload.version_kind,
+                version_payload.label,
+                version_payload.snapshot_path,
+                version_payload.created_at,
+                version_payload.source_updated_at,
+            ],
+        )
+        .map_err(|error| {
+            CommandError::db(
+                "写入文档版本元数据失败",
+                format!(
+                    "documentId={}, versionId={}, error={error}",
+                    version_payload.document_id, version_payload.id
+                ),
+            )
+        })?;
+
+    Ok(())
 }
 
 fn list_document_metas(
@@ -1054,6 +1271,13 @@ fn cleanup_document_directory(document_dir: &str) {
 
 fn generate_document_id(timestamp: i64) -> String {
     format!("{DOCUMENT_ID_PREFIX}-{timestamp}-{}", std::process::id())
+}
+
+fn generate_version_id(document_id: &str, timestamp: i64) -> String {
+    format!(
+        "{VERSION_ID_PREFIX}-{document_id}-{timestamp}-{}",
+        std::process::id()
+    )
 }
 
 fn normalize_optional_document_title(title: Option<&str>) -> String {
@@ -1546,6 +1770,115 @@ mod tests {
         assert!(opened_document.last_opened_at.is_some());
         assert_eq!(scene.document_id, created_document.id);
         assert!(PathBuf::from(&layout.current_scene_path).exists());
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn create_document_version_persists_snapshot_and_metadata() {
+        let root_directory_path = unique_temp_path("create-version");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 Version"))
+            .expect("创建文档应成功");
+
+        save_document_scene_from_root(
+            &root_directory_path,
+            SceneFilePayload {
+                document_id: created_document.id.clone(),
+                schema_version: 1,
+                updated_at: 1,
+                scene: SceneEnvelopePayload {
+                    elements: vec![serde_json::json!({ "id": "version-element-1" })],
+                    app_state: Map::new(),
+                    files: Map::new(),
+                },
+                meta: SceneMetaPayload {
+                    title: "白板 Version".into(),
+                    tags: vec![],
+                    text_index: String::new(),
+                },
+            },
+        )
+        .expect("保存最新 current.scene 应成功");
+
+        let version = create_document_version_from_root(&root_directory_path, &created_document.id)
+            .expect("创建手动版本应成功");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+        let snapshot_path = PathBuf::from(&layout.versions_dir).join(format!("{}.scene.json", version.id));
+        let listed_versions =
+            list_document_versions_from_root(&root_directory_path, &created_document.id)
+                .expect("读取版本列表应成功");
+        let snapshot_scene =
+            read_scene_file(snapshot_path.as_path()).expect("版本快照文件应可读取");
+
+        assert_eq!(version.document_id, created_document.id);
+        assert_eq!(version.version_number, 1);
+        assert_eq!(version.version_kind, "manual");
+        assert_eq!(version.label, "手动版本 1");
+        assert!(snapshot_path.exists());
+        assert_eq!(snapshot_scene.scene.elements.len(), 1);
+        assert_eq!(snapshot_scene.scene.elements[0]["id"], "version-element-1");
+        assert_eq!(listed_versions.len(), 1);
+        assert_eq!(listed_versions[0].id, version.id);
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn list_document_versions_returns_newest_first() {
+        let root_directory_path = unique_temp_path("list-versions");
+        let created_document = create_document_from_root(&root_directory_path, Some("白板 Version List"))
+            .expect("创建文档应成功");
+
+        let version_one = create_document_version_from_root(&root_directory_path, &created_document.id)
+            .expect("第一次创建版本应成功");
+        let version_two = create_document_version_from_root(&root_directory_path, &created_document.id)
+            .expect("第二次创建版本应成功");
+        let listed_versions =
+            list_document_versions_from_root(&root_directory_path, &created_document.id)
+                .expect("读取版本列表应成功");
+
+        assert_eq!(version_one.version_number, 1);
+        assert_eq!(version_two.version_number, 2);
+        assert_eq!(listed_versions.len(), 2);
+        assert_eq!(listed_versions[0].id, version_two.id);
+        assert_eq!(listed_versions[0].version_number, 2);
+        assert_eq!(listed_versions[1].id, version_one.id);
+        assert_eq!(listed_versions[1].version_number, 1);
+
+        std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
+    }
+
+    #[test]
+    fn create_document_version_cleans_snapshot_when_metadata_insert_fails() {
+        let root_directory_path = unique_temp_path("create-version-db-failure");
+        let created_document =
+            create_document_from_root(&root_directory_path, Some("白板 Version Failure"))
+                .expect("创建文档应成功");
+        let layout = document_path_layout(&root_directory_path, &created_document.id);
+        let connection = open_ready_connection(&root_directory_path).expect("数据库连接应成功");
+
+        connection
+            .execute(
+                "
+                CREATE TRIGGER fail_version_insert
+                BEFORE INSERT ON versions
+                BEGIN
+                    SELECT RAISE(FAIL, 'forced-version-insert-error');
+                END;
+                ",
+                [],
+            )
+            .expect("测试前置 trigger 应可创建");
+
+        let error = create_document_version_from_root(&root_directory_path, &created_document.id)
+            .expect_err("版本元数据写入失败时不应返回成功");
+        let version_snapshot_count = std::fs::read_dir(&layout.versions_dir)
+            .expect("版本目录应可读取")
+            .count();
+
+        assert_eq!(error.code, CommandErrorCode::DbError);
+        assert!(error.details.unwrap_or_default().contains("创建版本元数据失败"));
+        assert_eq!(version_snapshot_count, 0);
 
         std::fs::remove_dir_all(&root_directory_path).expect("测试目录树应可清理");
     }

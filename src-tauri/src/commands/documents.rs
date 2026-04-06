@@ -2,9 +2,10 @@ use tauri::AppHandle;
 
 use crate::storage::documents::{
     create_document, get_document_by_id, list_documents, list_recent_documents,
-    list_trashed_documents, move_document_to_trash, open_document, open_document_scene,
-    permanently_delete_document, rename_document, restore_document, save_document_scene,
-    DocumentMetaPayload, SceneFilePayload,
+    list_document_versions, list_trashed_documents, move_document_to_trash, open_document,
+    open_document_scene, permanently_delete_document, rename_document, restore_document,
+    save_document_scene, create_document_version, DocumentMetaPayload, DocumentVersionPayload,
+    SceneFilePayload,
 };
 
 use super::{command_result, CommandError, CommandResult};
@@ -117,6 +118,38 @@ pub fn editor_save_scene(
         "documents-command",
         "saveScene",
         save_document_scene(&app, scene),
+    )
+}
+
+#[tauri::command]
+pub fn versions_create(
+    app: AppHandle,
+    document_id: String,
+) -> CommandResult<DocumentVersionPayload> {
+    let document_id = validate_document_id(document_id).map_err(|error| {
+        error.attach_command_context("versions_create", "documents-command", "createVersion")
+    })?;
+    command_result(
+        "versions_create",
+        "documents-command",
+        "createVersion",
+        create_document_version(&app, &document_id),
+    )
+}
+
+#[tauri::command]
+pub fn versions_list(
+    app: AppHandle,
+    document_id: String,
+) -> CommandResult<Vec<DocumentVersionPayload>> {
+    let document_id = validate_document_id(document_id).map_err(|error| {
+        error.attach_command_context("versions_list", "documents-command", "listVersions")
+    })?;
+    command_result(
+        "versions_list",
+        "documents-command",
+        "listVersions",
+        list_document_versions(&app, &document_id),
     )
 }
 

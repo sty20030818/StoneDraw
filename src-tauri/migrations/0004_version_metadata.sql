@@ -1,0 +1,3 @@
+ALTER TABLE versions ADD COLUMN version_kind TEXT NOT NULL DEFAULT 'manual';
+ALTER TABLE versions ADD COLUMN label TEXT NOT NULL DEFAULT '';
+ALTER TABLE versions ADD COLUMN source_updated_at INTEGER NOT NULL DEFAULT 0;

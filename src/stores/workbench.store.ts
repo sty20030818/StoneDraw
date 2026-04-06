@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { SAVE_STATUSES } from '@/constants'
-import type { SaveStatus } from '@/types'
+import type { DocumentVersionMeta, SaveStatus, TauriCommandResult } from '@/types'
 
 type WorkbenchPanelKey = 'explorer' | 'search' | 'library' | 'history' | 'team'
 
@@ -24,6 +24,7 @@ type WorkbenchStoreState = {
 	activeTabId: string | null
 	onBack: () => void
 	onSave: () => void
+	onCreateVersion: () => Promise<TauriCommandResult<DocumentVersionMeta> | null>
 	onExport: () => void
 	onMore: () => void
 	onSearchChange: (value: string) => void
@@ -40,6 +41,7 @@ type WorkbenchStoreState = {
 	setWorkbenchActions: (payload: {
 		onBack?: () => void
 		onSave?: () => void
+		onCreateVersion?: () => Promise<TauriCommandResult<DocumentVersionMeta> | null>
 		onExport?: () => void
 		onMore?: () => void
 		onSearchChange?: (value: string) => void
@@ -51,6 +53,7 @@ type WorkbenchStoreState = {
 }
 
 const noop = () => undefined
+const asyncNoop = async () => null
 
 const initialWorkbenchState = {
 	activeDocumentId: null,
@@ -67,6 +70,7 @@ const initialWorkbenchState = {
 	activeTabId: null,
 	onBack: noop,
 	onSave: noop,
+	onCreateVersion: asyncNoop,
 	onExport: noop,
 	onMore: noop,
 	onSearchChange: noop,
@@ -86,6 +90,7 @@ const initialWorkbenchState = {
 	| 'activeTabId'
 	| 'onBack'
 	| 'onSave'
+	| 'onCreateVersion'
 	| 'onExport'
 	| 'onMore'
 	| 'onSearchChange'
@@ -108,6 +113,7 @@ export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
 		set((state) => ({
 			onBack: payload.onBack ?? state.onBack,
 			onSave: payload.onSave ?? state.onSave,
+			onCreateVersion: payload.onCreateVersion ?? state.onCreateVersion,
 			onExport: payload.onExport ?? state.onExport,
 			onMore: payload.onMore ?? state.onMore,
 			onSearchChange: payload.onSearchChange ?? state.onSearchChange,

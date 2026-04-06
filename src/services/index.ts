@@ -1,6 +1,7 @@
 export { databaseService } from './database.service'
 export { directoryService } from './directory.service'
 export { documentService } from './documents/document.service'
+export { versionService } from './documents/version.service'
 export { createLocalStoragePlaceholder, localStorageService } from './local/local-storage.service'
 export {
 	createDocumentPersistenceSession,

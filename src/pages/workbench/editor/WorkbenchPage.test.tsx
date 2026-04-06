@@ -6,8 +6,10 @@ import { useWorkbenchStore } from '@/stores'
 import { createAppError } from '@/test/fixtures/error'
 import { createDocumentMeta } from '@/test/fixtures/document'
 import { createScenePayload } from '@/test/fixtures/scene'
+import { createDocumentVersionMeta } from '@/test/fixtures/version'
 import { renderRoute } from '@/test/helpers/render-route'
 import { resetTestState } from '@/test/helpers/reset-state'
+import type { DocumentVersionMeta, TauriCommandResult } from '@/types'
 import WorkbenchPage from './WorkbenchPage'
 
 const {
@@ -16,6 +18,7 @@ const {
 	onSceneChangeMock,
 	flushBeforeLeaveMock,
 	saveNowMock,
+	createManualVersionMock,
 	disposeMock,
 	toastMock,
 	tauriWindowMock,
@@ -25,6 +28,7 @@ const {
 	onSceneChangeMock: vi.fn<(...args: never[]) => unknown>(),
 	flushBeforeLeaveMock: vi.fn<(...args: never[]) => Promise<boolean>>(),
 	saveNowMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
+	createManualVersionMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
 	disposeMock: vi.fn<(...args: never[]) => void>(),
 	toastMock: vi.fn<(message?: unknown, options?: unknown) => unknown>(),
 	tauriWindowMock: (() => {
@@ -109,6 +113,12 @@ vi.mock('@/services/documents/document.service', () => ({
 	},
 }))
 
+vi.mock('@/services/documents/version.service', () => ({
+	versionService: {
+		createManualVersion: createManualVersionMock,
+	},
+}))
+
 vi.mock('@/services/persistence', () => ({
 	documentPersistenceSession: {
 		initialize: initializeMock,
@@ -148,6 +158,7 @@ describe('WorkbenchPage', () => {
 		onSceneChangeMock.mockReset()
 		flushBeforeLeaveMock.mockReset()
 		saveNowMock.mockReset()
+		createManualVersionMock.mockReset()
 		disposeMock.mockReset()
 		toastMock.mockClear()
 		tauriWindowMock.window.onCloseRequested.mockClear()
@@ -200,6 +211,12 @@ describe('WorkbenchPage', () => {
 					}),
 				},
 			}
+		})
+		createManualVersionMock.mockResolvedValue({
+			ok: true,
+			data: createDocumentVersionMeta({
+				documentId: 'doc-editor-1',
+			}),
 		})
 		disposeMock.mockImplementation(() => {
 			useWorkbenchStore.getState().setSaveStatus('idle')
@@ -270,6 +287,31 @@ describe('WorkbenchPage', () => {
 				}),
 			)
 			expect(useWorkbenchStore.getState().saveStatus).toBe('saved')
+		})
+	})
+
+	test('创建版本动作应先保存 current 再创建手动版本', async () => {
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
+
+		let createResult: TauriCommandResult<DocumentVersionMeta> | null = null
+
+		await act(async () => {
+			createResult = await useWorkbenchStore.getState().onCreateVersion()
+		})
+
+		expect(saveNowMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				id: 'doc-editor-1',
+				title: '编辑器文档',
+			}),
+		)
+		expect(createManualVersionMock).toHaveBeenCalledWith('doc-editor-1')
+		expect(createResult).toEqual({
+			ok: true,
+			data: createDocumentVersionMeta({
+				documentId: 'doc-editor-1',
+			}),
 		})
 	})
 

@@ -29,3 +29,4 @@ export type {
 } from './document'
 export type { LogEvent, LogLevel } from './logging'
 export type { SystemDemoPayload } from './system'
+export type { DocumentVersionKind, DocumentVersionMeta } from './version'
