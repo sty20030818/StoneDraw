@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { WorkspaceNav, WorkspaceTopbar } from '@/components/navigation'
+import { WorkspaceNav, WorkspaceTopbar } from '@/app/navigation'
 import { useWorkspaceStore, type WorkspaceSection } from '@/stores/workspace.store'
 
 function WorkspaceLayout() {

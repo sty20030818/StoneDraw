@@ -1,7 +1,8 @@
 import type { AppBootStage, SaveStatus } from '@/types'
 
-export const APP_BOOT_STAGES: Record<'BOOTSTRAPPING' | 'READY', AppBootStage> = {
+export const APP_BOOT_STAGES: Record<'BOOTSTRAPPING' | 'FAILED' | 'READY', AppBootStage> = {
 	BOOTSTRAPPING: 'bootstrapping',
+	FAILED: 'failed',
 	READY: 'ready',
 }
 

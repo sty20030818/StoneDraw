@@ -10,7 +10,7 @@ use crate::commands::CommandError;
 use super::directories::{data_dir_path, resolve_root_dir};
 
 const DATABASE_DIRECTORY_NAME: &str = "db";
-const DATABASE_FILE_NAME: &str = "stonedraw.sqlite";
+const DATABASE_FILE_NAME: &str = "app.db";
 const MIGRATION_TABLE_NAME: &str = "schema_migrations";
 
 #[derive(Debug, Clone, Serialize)]
@@ -18,6 +18,7 @@ const MIGRATION_TABLE_NAME: &str = "schema_migrations";
 pub struct DatabaseHealthPayload {
     pub database_path: String,
     pub database_dir: String,
+    pub database_file_name: String,
     pub is_ready: bool,
     pub schema_version: i64,
     pub target_schema_version: i64,
@@ -27,6 +28,7 @@ pub struct DatabaseHealthPayload {
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseSchemaVersionPayload {
     pub database_path: String,
+    pub database_file_name: String,
     pub schema_version: i64,
     pub target_schema_version: i64,
 }
@@ -132,6 +134,7 @@ fn read_database_schema_version_from_root(
 
     Ok(DatabaseSchemaVersionPayload {
         database_path: database_path.display().to_string(),
+        database_file_name: DATABASE_FILE_NAME.to_string(),
         schema_version: read_schema_version_from_connection(&connection)?,
         target_schema_version: latest_target_schema_version(migrations),
     })
@@ -300,6 +303,7 @@ fn build_database_health_payload(
             .unwrap_or(database_path)
             .display()
             .to_string(),
+        database_file_name: DATABASE_FILE_NAME.to_string(),
         is_ready: schema_version == target_schema_version,
         schema_version,
         target_schema_version,
@@ -352,7 +356,7 @@ mod tests {
             .expect("空数据库首次启动应完成建库与 migration");
 
         assert!(root_directory_path
-            .join("data/db/stonedraw.sqlite")
+            .join("data/db/app.db")
             .exists());
         assert!(payload.is_ready);
         assert_eq!(payload.schema_version, 2);

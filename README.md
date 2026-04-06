@@ -54,6 +54,17 @@ PRD 中的版本路线图（V0.1 → V2.2）按「小版本逐步交付」拆分
 | `src-tauri/` | Rust 侧：窗口、命令、本地目录与数据库等 |
 | `Documents/` | **产品与设计文档**（PRD、信息架构、线框、开发主线、任务拆解、历史原型） |
 
+## 目录真相源与边界
+
+- `src/app`：应用壳、bootstrap runtime、全局布局与导航接线。
+- `src/pages`：页面入口与页面级编排，只依赖 `services`、`modules`、`stores`，不直接访问 `repositories`、`infra` 或底层 adapters。
+- `src/services`：应用服务层，负责业务动作编排，不直接暴露原始 Tauri bridge。
+- `src/repositories`：对象级数据访问与 command 映射，是前端访问本地能力的正式真相源。
+- `src/infra`：Tauri command bridge、结构化日志、运行时底层能力。
+- `src/domain`：跨层共享的领域类型与基础约束。
+- `src/workbench`、`src/overlay`、`src/app/navigation`：新的壳层真相源入口。
+- `src/components/navigation`、`src/components/workbench`、`src/components/overlays`：历史过渡目录，现阶段冻结，不再继续承接新的主壳层职责与业务编排。
+
 ---
 
 ## 文档怎么读（`Documents/`）
@@ -120,12 +131,13 @@ bun tauri build
 ```bash
 bun lint
 bun run check
+bun run check:architecture
 bun format
 bun run format:check
 bun typecheck
 ```
 
-说明：`bun lint`、`bun format` 与 `bun run format:check` 基于 OXC。
+说明：`bun lint`、`bun format` 与 `bun run format:check` 基于 OXC。`bun run check` 现在会串联 `lint + typecheck + 架构边界检查 + 前端测试`，其中 `bun run check:architecture` 会检查页面层是否绕过 `service`，以及旧过渡目录是否继续承接新的底层职责。
 
 ### 测试
 
@@ -159,7 +171,9 @@ bun run test:rust
 
 - 已在启动阶段准备 `~/.stonedraw` 根目录，并通过 Tauri command 与前端 service 暴露目录状态。
 - `~/.stonedraw/data`：业务数据根路径（含后续文档文件、资源、快照等）；`~/.stonedraw/config`：偏好与轻量配置根路径。
-- 已接入 `~/.stonedraw/data/db/stonedraw.sqlite` 元数据数据库，启动时顺序执行 migration。
+- `~/.stonedraw/data/logs`：结构化日志持久化目录，按启动会话输出 `.jsonl` 日志文件。
+- 已接入 `~/.stonedraw/data/db/app.db` 元数据数据库，启动时顺序执行 migration。
 - SQLite 当前仅承担元数据、配置与 migration 边界，**不承载 Excalidraw scene 大对象**。
+- 前后端 command 错误与日志事件已统一包含 `layer / module / operation / correlationId / objectId` 等字段，用于定位启动、目录、数据库、文档与保存链路。
 - 已具备工作区、编辑器、设置占位页与 `not-found` 路由；具备 Toast、Dialog、确认框、空态与加载态等最小基础设施。
 - **尚未实现**：真实文档持久化、设置持久化、资源文件读写与完整业务表设计等（以 PRD 与个人版目标为后续方向）。

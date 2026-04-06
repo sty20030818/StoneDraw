@@ -1,54 +1,40 @@
-import { TAURI_COMMANDS } from '@/constants/index'
+import { documentRepository } from '@/repositories'
 import type { DocumentMeta, TauriCommandResult } from '@/types/index'
-import { invokeTauriCommand } from '../tauri.service'
 
 export const documentService = {
 	async create(title?: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_CREATE, {
-			title,
-		})
+		return documentRepository.create(title)
 	},
 
 	async getById(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_GET_BY_ID, {
-			documentId,
-		})
+		return documentRepository.getById(documentId)
 	},
 
 	async list(): Promise<TauriCommandResult<DocumentMeta[]>> {
-		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST)
+		return documentRepository.list()
 	},
 
 	async listRecent(): Promise<TauriCommandResult<DocumentMeta[]>> {
-		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST_RECENT)
+		return documentRepository.listRecent()
 	},
 
 	async listTrashed(): Promise<TauriCommandResult<DocumentMeta[]>> {
-		return invokeTauriCommand<DocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST_TRASHED)
+		return documentRepository.listTrashed()
 	},
 
 	async open(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_OPEN, {
-			documentId,
-		})
+		return documentRepository.open(documentId)
 	},
 
 	async rename(documentId: string, title: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_RENAME, {
-			documentId,
-			title,
-		})
+		return documentRepository.rename(documentId, title)
 	},
 
 	async moveToTrash(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_MOVE_TO_TRASH, {
-			documentId,
-		})
+		return documentRepository.moveToTrash(documentId)
 	},
 
 	async restore(documentId: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.DOCUMENTS_RESTORE, {
-			documentId,
-		})
+		return documentRepository.restore(documentId)
 	},
 }

@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { createDocumentMeta } from '@/test/fixtures/document'
+import { createAppError } from '@/test/fixtures/error'
 import { createScenePayload } from '@/test/fixtures/scene'
 import { createDeferredPromise } from '@/test/helpers/deferred'
 
@@ -175,10 +176,13 @@ describe('editor.save-coordinator', () => {
 			readScene: () => createScenePayload({ documentId: document.id, title: document.title }),
 			executeSave: async () => ({
 				ok: false,
-				error: {
+				error: createAppError({
 					code: 'UNKNOWN_ERROR',
 					message: '保存失败',
-				},
+					module: 'editor-repository',
+					operation: 'saveScene',
+					objectId: document.id,
+				}),
 			}),
 			writeUiState: uiState.write,
 		})

@@ -1,7 +1,8 @@
 import { TAURI_COMMANDS } from '@/constants/index'
 import { deserializeScene, serializeScene, SceneValidationError } from '@/adapters/excalidraw/scene.adapter'
+import { editorRepository } from '@/repositories'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/types/index'
-import { createFailureResult, createSuccessResult, invokeTauriCommand } from '../tauri.service'
+import { createFailureResult, createSuccessResult } from '../tauri.service'
 
 function createEmptyScene(documentId: string, title = '未命名文档'): SceneFilePayload {
 	return serializeScene(
@@ -20,9 +21,7 @@ export const editorService = {
 		return createSuccessResult(createEmptyScene(documentId, title))
 	},
 	async loadScene(documentId: string): Promise<TauriCommandResult<SceneFilePayload>> {
-		const loadResult = await invokeTauriCommand<SceneFilePayload>(TAURI_COMMANDS.DOCUMENTS_OPEN_SCENE, {
-			documentId,
-		})
+		const loadResult = await editorRepository.openScene(documentId)
 
 		if (!loadResult.ok) {
 			return loadResult
@@ -40,8 +39,13 @@ export const editorService = {
 			return createFailureResult({
 				code: 'INVALID_ARGUMENT',
 				message: '读取到的 scene 数据无效',
+				layer: 'service',
+				module: 'editor-service',
+				operation: 'loadScene',
+				correlationId: 'editor-load-scene-validation',
 				details,
 				command: TAURI_COMMANDS.DOCUMENTS_OPEN_SCENE,
+				objectId: documentId,
 			}) as TauriCommandResult<SceneFilePayload>
 		}
 	},
@@ -52,9 +56,7 @@ export const editorService = {
 				fallbackTitle: payload.meta.title,
 			})
 
-			return invokeTauriCommand<DocumentMeta>(TAURI_COMMANDS.EDITOR_SAVE_SCENE, {
-				scene: normalizedPayload,
-			})
+			return editorRepository.saveScene(normalizedPayload)
 		} catch (error) {
 			const details =
 				error instanceof SceneValidationError || error instanceof Error ? error.message : 'scene 校验失败'
@@ -62,8 +64,13 @@ export const editorService = {
 			return createFailureResult({
 				code: 'INVALID_ARGUMENT',
 				message: '当前 scene 数据无效，无法保存',
+				layer: 'service',
+				module: 'editor-service',
+				operation: 'saveScene',
+				correlationId: 'editor-save-scene-validation',
 				details,
 				command: TAURI_COMMANDS.EDITOR_SAVE_SCENE,
+				objectId: payload.documentId,
 			}) as TauriCommandResult<DocumentMeta>
 		}
 	},

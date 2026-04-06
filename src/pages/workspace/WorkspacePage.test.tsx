@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { APP_ROUTES } from '@/constants/routes'
 import { createDocumentMeta } from '@/test/fixtures/document'
+import { createAppError } from '@/test/fixtures/error'
 import { renderRoute } from '@/test/helpers/render-route'
 import WorkspacePage from './WorkspacePage'
 
@@ -151,10 +152,12 @@ describe('WorkspacePage', () => {
 	test('文档列表加载失败时应显示错误空态', async () => {
 		listMock.mockResolvedValueOnce({
 			ok: false,
-			error: {
+			error: createAppError({
 				code: 'UNKNOWN_ERROR',
 				message: '读取失败',
-			},
+				module: 'document-repository',
+				operation: 'list',
+			}),
 		})
 
 		renderWorkspacePage()
@@ -167,10 +170,13 @@ describe('WorkspacePage', () => {
 		const user = userEvent.setup()
 		openMock.mockResolvedValueOnce({
 			ok: false,
-			error: {
+			error: createAppError({
 				code: 'UNKNOWN_ERROR',
 				message: '打开失败',
-			},
+				module: 'document-repository',
+				operation: 'open',
+				objectId: 'doc-workspace-1',
+			}),
 		})
 
 		renderWorkspacePage()

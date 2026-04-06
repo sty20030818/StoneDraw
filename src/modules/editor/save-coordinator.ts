@@ -280,7 +280,12 @@ export function createEditorSaveSession(dependencies: SaveSessionDependencies): 
 				return createFailureResult({
 					code: 'INVALID_ARGUMENT',
 					message: '当前文档没有待保存内容',
+					layer: 'service',
+					module: 'editor-save-session',
+					operation: 'runSaveLoop',
+					correlationId: `editor-save-loop-${document.id}`,
 					details: `documentId=${document.id}`,
+					objectId: document.id,
 				}) as TauriCommandResult<SaveSceneSuccessPayload>
 			}
 
@@ -353,7 +358,12 @@ export function createEditorSaveSession(dependencies: SaveSessionDependencies): 
 										createFailureResult({
 											code: 'UNKNOWN_ERROR',
 											message: '关闭窗口前保存超时',
+											layer: 'service',
+											module: 'editor-save-session',
+											operation: 'flushBeforeLeave',
+											correlationId: `editor-flush-timeout-${document.id}`,
 											details: `documentId=${document.id}`,
+											objectId: document.id,
 										}) as TauriCommandResult<SaveSceneSuccessPayload>,
 									)
 								}, options.timeoutMs ?? DEFAULT_WINDOW_CLOSE_FLUSH_TIMEOUT_MS)

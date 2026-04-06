@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::{success, CommandResult};
+use super::{command_result, CommandResult};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,10 +20,15 @@ pub fn system_demo() -> CommandResult<SystemDemoPayload> {
         .map(|duration| duration.as_secs().to_string())
         .unwrap_or_else(|_| "0".to_string());
 
-    success(SystemDemoPayload {
-        command_name: "system_demo".into(),
-        runtime: "tauri".into(),
-        bridge_ready: true,
-        responded_at,
-    })
+    command_result(
+        "system_demo",
+        "system-command",
+        "demo",
+        Ok(SystemDemoPayload {
+            command_name: "system_demo".into(),
+            runtime: "tauri".into(),
+            bridge_ready: true,
+            responded_at,
+        }),
+    )
 }

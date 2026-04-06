@@ -3,21 +3,36 @@ use crate::storage::database::{
     DatabaseSchemaVersionPayload,
 };
 
-use super::{success, CommandResult};
+use super::{command_result, CommandResult};
 
 #[tauri::command]
 pub fn database_initialize(app: tauri::AppHandle) -> CommandResult<DatabaseHealthPayload> {
-    success(initialize_database(&app)?)
+    command_result(
+        "database_initialize",
+        "database-command",
+        "initialize",
+        initialize_database(&app),
+    )
 }
 
 #[tauri::command]
 pub fn database_check_health(app: tauri::AppHandle) -> CommandResult<DatabaseHealthPayload> {
-    success(read_database_health(&app)?)
+    command_result(
+        "database_check_health",
+        "database-command",
+        "checkHealth",
+        read_database_health(&app),
+    )
 }
 
 #[tauri::command]
 pub fn database_read_schema_version(
     app: tauri::AppHandle,
 ) -> CommandResult<DatabaseSchemaVersionPayload> {
-    success(read_database_schema_version(&app)?)
+    command_result(
+        "database_read_schema_version",
+        "database-command",
+        "readSchemaVersion",
+        read_database_schema_version(&app),
+    )
 }

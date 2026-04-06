@@ -29,7 +29,12 @@ export async function saveActiveDocumentScene(
 		return createFailureResult({
 			code: 'INVALID_ARGUMENT',
 			message: '当前编辑器尚未准备好，无法执行保存',
+			layer: 'service',
+			module: 'editor-save',
+			operation: 'saveActiveDocumentScene',
+			correlationId: `save-active-scene-${document.id}`,
 			details: `documentId=${document.id}`,
+			objectId: document.id,
 		}) as TauriCommandResult<SaveSceneSuccessPayload>
 	}
 

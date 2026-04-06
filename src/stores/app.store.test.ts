@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { APP_BOOT_STAGES } from '@/constants'
 import { createDatabaseHealthPayload, createLocalDirectoriesPayload } from '@/test/fixtures/app'
+import { createAppError } from '@/test/fixtures/error'
 import { useAppStore } from './app.store'
 
 describe('app.store', () => {
@@ -37,12 +38,16 @@ describe('app.store', () => {
 		})
 
 		appStore.reportCommandError('documents_open', {
-			code: 'IO_ERROR',
-			message: '打开失败',
+			...createAppError({
+				code: 'IO_ERROR',
+				message: '打开失败',
+				module: 'document-repository',
+				operation: 'open',
+			}),
 		})
 
 		expect(useAppStore.getState()).toMatchObject({
-			commandBridgeStatus: 'ready',
+			commandBridgeStatus: 'error',
 			lastError: {
 				code: 'IO_ERROR',
 				message: '打开失败',
@@ -56,8 +61,12 @@ describe('app.store', () => {
 		const appStore = useAppStore.getState()
 
 		appStore.reportCommandError('documents_open', {
-			code: 'NOT_FOUND',
-			message: '文档不存在',
+			...createAppError({
+				code: 'NOT_FOUND',
+				message: '文档不存在',
+				module: 'document-repository',
+				operation: 'open',
+			}),
 		})
 
 		expect(useAppStore.getState()).toMatchObject({

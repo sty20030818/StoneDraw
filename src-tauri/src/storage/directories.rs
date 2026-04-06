@@ -138,7 +138,7 @@ pub(crate) fn documents_dir_path(root_dir_path: &Path) -> PathBuf {
     data_dir_path(root_dir_path).join(DOCUMENTS_DIRECTORY_NAME)
 }
 
-fn logs_dir_path(root_dir_path: &Path) -> PathBuf {
+pub(crate) fn logs_dir_path(root_dir_path: &Path) -> PathBuf {
     data_dir_path(root_dir_path).join(LOGS_DIRECTORY_NAME)
 }
 

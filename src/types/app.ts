@@ -7,14 +7,21 @@ export type AppErrorCode =
 	| 'UNIMPLEMENTED_COMMAND'
 	| 'UNKNOWN_ERROR'
 
+export type AppLayer = 'ui' | 'bootstrap' | 'service' | 'repository' | 'infra' | 'native-command' | 'storage'
+
 export type AppError = {
 	code: AppErrorCode
 	message: string
+	layer: AppLayer
+	module: string
+	operation: string
+	correlationId: string
 	details?: string
 	command?: string
+	objectId?: string
 }
 
-export type AppBootStage = 'bootstrapping' | 'ready'
+export type AppBootStage = 'bootstrapping' | 'failed' | 'ready'
 
 export type CommandBridgeStatus = 'idle' | 'ready' | 'error'
 

@@ -7,17 +7,16 @@ import '@excalidraw/excalidraw/index.css'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { FileSearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { createInitialSceneData } from '@/adapters/excalidraw'
-import { CanvasShell, useWorkbenchShell } from '@/components/workbench'
 import EmptyState from '@/components/states/EmptyState'
 import { APP_ROUTES } from '@/constants/routes'
-import { clearEditorApi, editorSaveSession, setEditorApi } from '@/modules/editor'
+import { clearEditorApi, createEditorInitialData, editorSaveSession, setEditorApi } from '@/modules/editor'
 import { documentService } from '@/services/documents/document.service'
 import { editorService } from '@/services/workbench/editor.service'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { DocumentMeta, SceneFilePayload } from '@/types'
+import { CanvasShell, useWorkbenchShell } from '@/workbench'
 
 type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
 type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>
@@ -222,7 +221,7 @@ function WorkbenchPage() {
 			return null
 		}
 
-		return createInitialSceneData(workbenchLoadState.scene)
+		return createEditorInitialData(workbenchLoadState.scene)
 	}, [workbenchLoadState])
 
 	const handleSceneChange = useCallback(

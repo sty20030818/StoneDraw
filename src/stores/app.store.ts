@@ -5,6 +5,7 @@ import { toIsoString } from '@/utils'
 import type {
 	AppBootStage,
 	AppError,
+	BootstrapHealthSnapshot,
 	CommandBridgeStatus,
 	DatabaseHealthPayload,
 	DatabaseStatus,
@@ -16,6 +17,8 @@ type AppStoreState = {
 	bootStage: AppBootStage
 	isAppReady: boolean
 	lastError: AppError | null
+	bootstrapError: AppError | null
+	bootstrapSnapshot: BootstrapHealthSnapshot | null
 	commandBridgeStatus: CommandBridgeStatus
 	localDirectoryStatus: LocalDirectoryStatus
 	localDirectories: LocalDirectoriesPayload | null
@@ -31,6 +34,8 @@ type AppStoreState = {
 	setAppReady: (isReady: boolean) => void
 	setActiveScene: (sceneKey: AppSceneKey, pathname: string) => void
 	setLastError: (error: AppError | null) => void
+	setBootstrapFailure: (payload: { error: AppError; snapshot: BootstrapHealthSnapshot }) => void
+	setBootstrapReady: (snapshot: BootstrapHealthSnapshot) => void
 	setLocalDirectoryStatus: (status: LocalDirectoryStatus) => void
 	setLocalDirectories: (directories: LocalDirectoriesPayload) => void
 	clearLocalDirectories: () => void
@@ -47,6 +52,8 @@ const initialAppState = {
 	bootStage: APP_BOOT_STAGES.BOOTSTRAPPING,
 	isAppReady: false,
 	lastError: null,
+	bootstrapError: null,
+	bootstrapSnapshot: null,
 	commandBridgeStatus: 'idle' as CommandBridgeStatus,
 	localDirectoryStatus: 'idle' as LocalDirectoryStatus,
 	localDirectories: null,
@@ -63,6 +70,8 @@ const initialAppState = {
 	| 'bootStage'
 	| 'isAppReady'
 	| 'lastError'
+	| 'bootstrapError'
+	| 'bootstrapSnapshot'
 	| 'commandBridgeStatus'
 	| 'localDirectoryStatus'
 	| 'localDirectories'
@@ -83,6 +92,21 @@ export const useAppStore = create<AppStoreState>((set) => ({
 	setAppReady: (isAppReady) => set({ isAppReady }),
 	setActiveScene: (activeSceneKey, activeRoutePath) => set({ activeSceneKey, activeRoutePath }),
 	setLastError: (lastError) => set({ lastError }),
+	setBootstrapFailure: ({ error, snapshot }) =>
+		set({
+			bootStage: APP_BOOT_STAGES.FAILED,
+			isAppReady: false,
+			bootstrapError: error,
+			bootstrapSnapshot: snapshot,
+			lastError: error,
+		}),
+	setBootstrapReady: (bootstrapSnapshot) =>
+		set({
+			bootStage: APP_BOOT_STAGES.READY,
+			isAppReady: true,
+			bootstrapError: null,
+			bootstrapSnapshot,
+		}),
 	setLocalDirectoryStatus: (localDirectoryStatus) => set({ localDirectoryStatus }),
 	setLocalDirectories: (localDirectories) =>
 		set({
@@ -118,7 +142,7 @@ export const useAppStore = create<AppStoreState>((set) => ({
 		}),
 	reportCommandError: (commandName, error) =>
 		set((state) => ({
-			commandBridgeStatus: state.lastCommandName ? state.commandBridgeStatus : 'error',
+			commandBridgeStatus: 'error',
 			lastCommandAt: toIsoString(),
 			lastError: {
 				...error,

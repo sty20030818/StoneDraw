@@ -1,9 +1,12 @@
-export { default as ActivityBar } from './ActivityBar'
-export { default as CanvasShell } from './CanvasShell'
-export { default as RightPanel } from './RightPanel'
-export { default as StatusBar } from './StatusBar'
-export { default as WorkbenchTabs } from './WorkbenchTabs'
-export { default as WorkbenchTitleBar } from './WorkbenchTitleBar'
-export { WorkbenchShellProvider, useWorkbenchShell } from './WorkbenchShellBridge'
-export type { WorkbenchShellState } from './WorkbenchShellBridge'
+export {
+	ActivityBar,
+	CanvasShell,
+	RightPanel,
+	StatusBar,
+	WorkbenchShellProvider,
+	WorkbenchTabs,
+	WorkbenchTitleBar,
+	useWorkbenchShell,
+} from '@/workbench'
+export type { WorkbenchShellState } from '@/workbench'
 export type { WorkbenchPanelKey } from '@/stores/workbench.store'

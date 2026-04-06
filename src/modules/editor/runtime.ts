@@ -1,6 +1,6 @@
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { applySceneToApi, readSceneFromApi } from '@/adapters/excalidraw'
-import { logger } from '@/utils/logger'
+import { applySceneToApi, createInitialSceneData, readSceneFromApi } from '@/adapters/excalidraw'
+import { logger } from '@/infra/logging'
 import type { SceneFilePayload } from '@/types'
 
 let currentEditorApi: ExcalidrawImperativeAPI | null = null
@@ -11,8 +11,15 @@ export function setEditorApi(api: ExcalidrawImperativeAPI) {
 	}
 
 	currentEditorApi = api
-	logger.info('editor.runtime', 'Excalidraw API 已就绪。', {
-		apiId: api.id,
+	logger.info({
+		layer: 'service',
+		module: 'editor-runtime',
+		operation: 'setEditorApi',
+		correlationId: `editor-api-${api.id}`,
+		message: 'Excalidraw API 已就绪。',
+		context: {
+			apiId: api.id,
+		},
 	})
 
 	return true
@@ -41,4 +48,8 @@ export function applyScene(scene: SceneFilePayload): boolean {
 
 	applySceneToApi(currentEditorApi, scene)
 	return true
+}
+
+export function createEditorInitialData(scene: SceneFilePayload) {
+	return createInitialSceneData(scene)
 }

@@ -1,6 +1,5 @@
-import { TAURI_COMMANDS } from '@/constants'
+import { settingsRepository } from '@/repositories'
 import type { TauriCommandResult } from '@/types'
-import { invokeTauriCommand } from './tauri.service'
 
 export type AppSettings = {
 	language: 'zh-CN'
@@ -17,12 +16,9 @@ export const settingsService = {
 		return defaultSettings
 	},
 	async read(): Promise<TauriCommandResult<AppSettings>> {
-		return invokeTauriCommand<AppSettings>(TAURI_COMMANDS.SETTINGS_READ)
+		return settingsRepository.read()
 	},
 	async save(settings: AppSettings): Promise<TauriCommandResult<AppSettings>> {
-		return invokeTauriCommand<AppSettings>(TAURI_COMMANDS.SETTINGS_SAVE, {
-			language: settings.language,
-			theme: settings.theme,
-		})
+		return settingsRepository.save(settings)
 	},
 }

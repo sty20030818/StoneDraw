@@ -2,20 +2,18 @@ import { Outlet } from 'react-router-dom'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import {
 	ActivityBar,
+	ExplorerPanel,
+	HistoryPanel,
+	LibraryPanel,
 	RightPanel,
+	SearchPanel,
 	StatusBar,
+	TeamPanel,
 	WorkbenchShellProvider,
 	WorkbenchTabs,
 	WorkbenchTitleBar,
 	useWorkbenchShell,
-} from '@/components/workbench'
-import {
-	ExplorerPanel,
-	HistoryPanel,
-	LibraryPanel,
-	SearchPanel,
-	TeamPanel,
-} from '@/components/panels'
+} from '@/workbench'
 import { useWorkbenchStore } from '@/stores/workbench.store'
 
 function WorkbenchShellContent() {

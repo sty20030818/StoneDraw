@@ -5,7 +5,7 @@ import {
 	NewDocumentDialog,
 	RecoveryDialog,
 	ShareDialog,
-} from '@/components/overlays'
+} from '@/overlay'
 import { useOverlayStore } from '@/stores/overlay.store'
 
 function OverlayRoot() {

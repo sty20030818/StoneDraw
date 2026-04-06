@@ -34,8 +34,9 @@ export function createDatabaseHealthPayload(
 	overrides: Partial<DatabaseHealthPayload> = {},
 ): DatabaseHealthPayload {
 	return {
-		databasePath: '/tmp/.stonedraw/data/db/stonedraw.sqlite',
+		databasePath: '/tmp/.stonedraw/data/db/app.db',
 		databaseDir: '/tmp/.stonedraw/data/db',
+		databaseFileName: 'app.db',
 		isReady: true,
 		schemaVersion: 2,
 		targetSchemaVersion: 2,

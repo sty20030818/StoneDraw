@@ -1,67 +1,127 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { TAURI_COMMANDS } from '@/constants'
+import { createAppError } from '@/test/fixtures/error'
 
-const invokeTauriCommandMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const createMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const getByIdMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const listMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const listRecentMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const listTrashedMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const openMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const renameMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const moveToTrashMock = vi.fn<(...args: never[]) => Promise<unknown>>()
+const restoreMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 
-vi.mock('../tauri.service', () => ({
-	invokeTauriCommand: invokeTauriCommandMock,
+vi.mock('@/repositories', () => ({
+	documentRepository: {
+		create: createMock,
+		getById: getByIdMock,
+		list: listMock,
+		listRecent: listRecentMock,
+		listTrashed: listTrashedMock,
+		open: openMock,
+		rename: renameMock,
+		moveToTrash: moveToTrashMock,
+		restore: restoreMock,
+	},
 }))
 
 describe('document.service', () => {
 	beforeEach(() => {
-		invokeTauriCommandMock.mockReset()
-		invokeTauriCommandMock.mockResolvedValue({
+		createMock.mockReset()
+		getByIdMock.mockReset()
+		listMock.mockReset()
+		listRecentMock.mockReset()
+		listTrashedMock.mockReset()
+		openMock.mockReset()
+		renameMock.mockReset()
+		moveToTrashMock.mockReset()
+		restoreMock.mockReset()
+
+		createMock.mockResolvedValue({
+			ok: true,
+			data: { id: 'doc-1' },
+		})
+		getByIdMock.mockResolvedValue({
+			ok: true,
+			data: { id: 'doc-1' },
+		})
+		listMock.mockResolvedValue({
+			ok: true,
+			data: [],
+		})
+		listRecentMock.mockResolvedValue({
+			ok: true,
+			data: [],
+		})
+		listTrashedMock.mockResolvedValue({
+			ok: true,
+			data: [],
+		})
+		openMock.mockResolvedValue({
+			ok: true,
+			data: { id: 'doc-1' },
+		})
+		renameMock.mockResolvedValue({
+			ok: true,
+			data: { id: 'doc-1' },
+		})
+		moveToTrashMock.mockResolvedValue({
+			ok: true,
+			data: { id: 'doc-1' },
+		})
+		restoreMock.mockResolvedValue({
 			ok: true,
 			data: { id: 'doc-1' },
 		})
 	})
 
-	test('create 应映射创建命令和标题 payload', async () => {
+	test('create 应委托到 documentRepository.create', async () => {
 		const { documentService } = await import('./document.service')
 
 		await documentService.create('新文档')
 
-		expect(invokeTauriCommandMock).toHaveBeenCalledWith(TAURI_COMMANDS.DOCUMENTS_CREATE, {
-			title: '新文档',
-		})
+		expect(createMock).toHaveBeenCalledWith('新文档')
 	})
 
-	test('getById 应映射文档查询命令', async () => {
+	test('getById 应委托到 documentRepository.getById', async () => {
 		const { documentService } = await import('./document.service')
 
 		await documentService.getById('doc-1')
 
-		expect(invokeTauriCommandMock).toHaveBeenCalledWith(TAURI_COMMANDS.DOCUMENTS_GET_BY_ID, {
-			documentId: 'doc-1',
-		})
+		expect(getByIdMock).toHaveBeenCalledWith('doc-1')
 	})
 
-	test('list/listRecent/listTrashed 应映射对应列表命令', async () => {
+	test('list/listRecent/listTrashed 应委托到列表 repository', async () => {
 		const { documentService } = await import('./document.service')
 
 		await documentService.list()
 		await documentService.listRecent()
 		await documentService.listTrashed()
 
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(1, TAURI_COMMANDS.DOCUMENTS_LIST)
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(2, TAURI_COMMANDS.DOCUMENTS_LIST_RECENT)
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(3, TAURI_COMMANDS.DOCUMENTS_LIST_TRASHED)
+		expect(listMock).toHaveBeenCalledTimes(1)
+		expect(listRecentMock).toHaveBeenCalledTimes(1)
+		expect(listTrashedMock).toHaveBeenCalledTimes(1)
 	})
 
-	test('open/rename/moveToTrash/restore 应透传 payload 与失败结果', async () => {
+	test('open/rename/moveToTrash/restore 应透传 repository 返回值', async () => {
 		const { documentService } = await import('./document.service')
 		const failureResult = {
 			ok: false,
-			error: {
+			error: createAppError({
 				code: 'IO_ERROR',
 				message: '失败',
-			},
+				module: 'document-repository',
+				operation: 'open',
+			}),
 		}
 
-		invokeTauriCommandMock
+		openMock
 			.mockResolvedValueOnce(failureResult)
+		renameMock
 			.mockResolvedValueOnce(failureResult)
+		moveToTrashMock
 			.mockResolvedValueOnce(failureResult)
+		restoreMock
 			.mockResolvedValueOnce(failureResult)
 
 		expect(await documentService.open('doc-open')).toBe(failureResult)
@@ -69,18 +129,9 @@ describe('document.service', () => {
 		expect(await documentService.moveToTrash('doc-trash')).toBe(failureResult)
 		expect(await documentService.restore('doc-restore')).toBe(failureResult)
 
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(1, TAURI_COMMANDS.DOCUMENTS_OPEN, {
-			documentId: 'doc-open',
-		})
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(2, TAURI_COMMANDS.DOCUMENTS_RENAME, {
-			documentId: 'doc-rename',
-			title: '标题',
-		})
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(3, TAURI_COMMANDS.DOCUMENTS_MOVE_TO_TRASH, {
-			documentId: 'doc-trash',
-		})
-		expect(invokeTauriCommandMock).toHaveBeenNthCalledWith(4, TAURI_COMMANDS.DOCUMENTS_RESTORE, {
-			documentId: 'doc-restore',
-		})
+		expect(openMock).toHaveBeenCalledWith('doc-open')
+		expect(renameMock).toHaveBeenCalledWith('doc-rename', '标题')
+		expect(moveToTrashMock).toHaveBeenCalledWith('doc-trash')
+		expect(restoreMock).toHaveBeenCalledWith('doc-restore')
 	})
 })

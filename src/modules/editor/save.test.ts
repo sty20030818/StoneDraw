@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { createAppError } from '@/test/fixtures/error'
 import type { DocumentMeta } from '@/types'
 import { createDocumentMeta } from '@/test/fixtures/document'
 import { createScenePayload } from '@/test/fixtures/scene'
@@ -92,11 +93,14 @@ describe('saveActiveDocumentScene', () => {
 		readActiveSceneMock.mockReturnValueOnce(scene)
 		saveSceneMock.mockResolvedValueOnce({
 			ok: false,
-			error: {
+			error: createAppError({
 				code: 'IO_ERROR',
 				message: '写入失败',
 				details: 'disk-full',
-			},
+				module: 'editor-repository',
+				operation: 'saveScene',
+				objectId: document.id,
+			}),
 		})
 
 		const result = await saveActiveDocumentScene(document)

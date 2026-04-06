@@ -4,30 +4,50 @@ use crate::storage::directories::{
     LocalDirectoriesPayload,
 };
 
-use super::{success, CommandError, CommandResult};
+use super::{command_result, CommandError, CommandResult};
 
 #[tauri::command]
 pub fn files_prepare_local_directories(
     app: tauri::AppHandle,
 ) -> CommandResult<LocalDirectoriesPayload> {
-    success(prepare_local_directories(&app)?)
+    command_result(
+        "files_prepare_local_directories",
+        "files-command",
+        "prepareLocalDirectories",
+        prepare_local_directories(&app),
+    )
 }
 
 #[tauri::command]
 pub fn files_read_local_directories(
     app: tauri::AppHandle,
 ) -> CommandResult<LocalDirectoriesPayload> {
-    success(read_local_directories(&app)?)
+    command_result(
+        "files_read_local_directories",
+        "files-command",
+        "readLocalDirectories",
+        read_local_directories(&app),
+    )
 }
 
 #[tauri::command]
 pub fn files_resolve_data_dir(app: tauri::AppHandle) -> CommandResult<String> {
-    success(resolve_data_dir_string(&app)?)
+    command_result(
+        "files_resolve_data_dir",
+        "files-command",
+        "resolveDataDir",
+        resolve_data_dir_string(&app),
+    )
 }
 
 #[tauri::command]
 pub fn files_resolve_config_dir(app: tauri::AppHandle) -> CommandResult<String> {
-    success(resolve_config_dir_string(&app)?)
+    command_result(
+        "files_resolve_config_dir",
+        "files-command",
+        "resolveConfigDir",
+        resolve_config_dir_string(&app),
+    )
 }
 
 #[tauri::command]
@@ -36,8 +56,20 @@ pub fn files_resolve_document_layout(
     document_id: String,
 ) -> CommandResult<DocumentPathLayout> {
     if document_id.trim().is_empty() {
-        return Err(CommandError::invalid_argument("document_id 不能为空"));
+        return Err(
+            CommandError::invalid_argument("document_id 不能为空")
+                .attach_command_context(
+                    "files_resolve_document_layout",
+                    "files-command",
+                    "resolveDocumentLayout",
+                ),
+        );
     }
 
-    success(resolve_document_path_layout(&app, &document_id)?)
+    command_result(
+        "files_resolve_document_layout",
+        "files-command",
+        "resolveDocumentLayout",
+        resolve_document_path_layout(&app, &document_id),
+    )
 }

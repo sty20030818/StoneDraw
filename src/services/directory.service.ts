@@ -1,27 +1,24 @@
-import { TAURI_COMMANDS } from '@/constants'
+import { directoryRepository } from '@/repositories'
 import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/types'
-import { invokeTauriCommand } from './tauri.service'
 
 export const directoryService = {
 	async prepareLocalDirectories(): Promise<TauriCommandResult<LocalDirectoriesPayload>> {
-		return invokeTauriCommand<LocalDirectoriesPayload>(TAURI_COMMANDS.FILES_PREPARE_LOCAL_DIRECTORIES)
+		return directoryRepository.prepareLocalDirectories()
 	},
 
 	async readLocalDirectories(): Promise<TauriCommandResult<LocalDirectoriesPayload>> {
-		return invokeTauriCommand<LocalDirectoriesPayload>(TAURI_COMMANDS.FILES_READ_LOCAL_DIRECTORIES)
+		return directoryRepository.readLocalDirectories()
 	},
 
 	async resolveDataDirectory(): Promise<TauriCommandResult<string>> {
-		return invokeTauriCommand<string>(TAURI_COMMANDS.FILES_RESOLVE_DATA_DIR)
+		return directoryRepository.resolveDataDirectory()
 	},
 
 	async resolveConfigDirectory(): Promise<TauriCommandResult<string>> {
-		return invokeTauriCommand<string>(TAURI_COMMANDS.FILES_RESOLVE_CONFIG_DIR)
+		return directoryRepository.resolveConfigDirectory()
 	},
 
 	async resolveDocumentLayout(documentId: string): Promise<TauriCommandResult<DocumentPathLayout>> {
-		return invokeTauriCommand<DocumentPathLayout>(TAURI_COMMANDS.FILES_RESOLVE_DOCUMENT_LAYOUT, {
-			documentId,
-		})
+		return directoryRepository.resolveDocumentLayout(documentId)
 	},
 }

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { createAppError } from '@/test/fixtures/error'
 import { useAppStore } from '@/stores/app.store'
 
 const invokeMock = vi.fn<(...args: never[]) => Promise<unknown>>()
@@ -9,7 +10,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 	invoke: invokeMock,
 }))
 
-vi.mock('@/utils/logger', () => ({
+vi.mock('@/infra/logging', () => ({
 	logger: {
 		info: loggerInfoMock,
 		error: loggerErrorMock,
@@ -33,9 +34,18 @@ describe('tauri.service', () => {
 			},
 		})
 
-		const result = await invokeTauriCommand<{ value: number }>('demo_command', {
-			id: 1,
-		})
+		const result = await invokeTauriCommand<{ value: number }>(
+			'demo_command',
+			{
+				id: 1,
+			},
+			{
+				layer: 'repository',
+				module: 'test-repository',
+				operation: 'demo',
+				correlationId: 'corr-demo-success',
+			},
+		)
 
 		expect(result).toEqual({
 			ok: true,
@@ -54,13 +64,24 @@ describe('tauri.service', () => {
 	test('结构化错误对象应保留原始错误码并写入 store', async () => {
 		const { invokeTauriCommand } = await import('./tauri.service')
 
-		invokeMock.mockRejectedValueOnce({
-			code: 'NOT_FOUND',
-			message: '未找到',
-			details: 'missing',
-		})
+		invokeMock.mockRejectedValueOnce(
+			createAppError({
+				code: 'NOT_FOUND',
+				message: '未找到',
+				details: 'missing',
+				layer: 'native-command',
+				module: 'documents-command',
+				operation: 'open',
+				correlationId: 'corr-structured-error',
+			}),
+		)
 
-		const result = await invokeTauriCommand('demo_command')
+		const result = await invokeTauriCommand('demo_command', undefined, {
+			layer: 'repository',
+			module: 'test-repository',
+			operation: 'demo',
+			correlationId: 'corr-demo-structured',
+		})
 
 		expect(result.ok).toBe(false)
 		if (result.ok) {
@@ -71,6 +92,10 @@ describe('tauri.service', () => {
 			message: '未找到',
 			details: 'missing',
 			command: 'demo_command',
+			layer: 'native-command',
+			module: 'documents-command',
+			operation: 'open',
+			correlationId: 'corr-structured-error',
 		})
 		expect(useAppStore.getState().lastError).toMatchObject({
 			code: 'NOT_FOUND',
@@ -87,10 +112,19 @@ describe('tauri.service', () => {
 				code: 'INVALID_ARGUMENT',
 				message: '参数错误',
 				details: 'bad-request',
+				layer: 'native-command',
+				module: 'documents-command',
+				operation: 'create',
+				correlationId: 'corr-demo-json',
 			}),
 		)
 
-		const result = await invokeTauriCommand('demo_command')
+		const result = await invokeTauriCommand('demo_command', undefined, {
+			layer: 'repository',
+			module: 'test-repository',
+			operation: 'demo',
+			correlationId: 'corr-demo-json-fallback',
+		})
 
 		expect(result.ok).toBe(false)
 		if (result.ok) {
@@ -101,6 +135,10 @@ describe('tauri.service', () => {
 			message: '参数错误',
 			details: 'bad-request',
 			command: 'demo_command',
+			layer: 'native-command',
+			module: 'documents-command',
+			operation: 'create',
+			correlationId: 'corr-demo-json',
 		})
 	})
 
@@ -109,7 +147,12 @@ describe('tauri.service', () => {
 
 		invokeMock.mockRejectedValueOnce('plain failure')
 
-		const result = await invokeTauriCommand('demo_command')
+		const result = await invokeTauriCommand('demo_command', undefined, {
+			layer: 'repository',
+			module: 'test-repository',
+			operation: 'demo',
+			correlationId: 'corr-demo-string',
+		})
 
 		expect(result.ok).toBe(false)
 		if (result.ok) {
@@ -119,6 +162,10 @@ describe('tauri.service', () => {
 			code: 'UNKNOWN_ERROR',
 			message: 'plain failure',
 			command: 'demo_command',
+			layer: 'repository',
+			module: 'test-repository',
+			operation: 'demo',
+			correlationId: 'corr-demo-string',
 		})
 	})
 
@@ -127,7 +174,12 @@ describe('tauri.service', () => {
 
 		invokeMock.mockRejectedValueOnce(new Error('boom'))
 
-		const result = await invokeTauriCommand('demo_command')
+		const result = await invokeTauriCommand('demo_command', undefined, {
+			layer: 'repository',
+			module: 'test-repository',
+			operation: 'demo',
+			correlationId: 'corr-demo-unknown',
+		})
 
 		expect(result.ok).toBe(false)
 		if (result.ok) {
@@ -138,6 +190,10 @@ describe('tauri.service', () => {
 			message: '命令 demo_command 调用失败',
 			details: '未能解析 Tauri 返回的错误对象。',
 			command: 'demo_command',
+			layer: 'repository',
+			module: 'test-repository',
+			operation: 'demo',
+			correlationId: 'corr-demo-unknown',
 		})
 	})
 })

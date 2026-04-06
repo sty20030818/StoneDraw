@@ -449,21 +449,21 @@ pub fn save_document_scene_from_root(
     write_scene_file(Path::new(&existing_document.current_scene_path), &scene_payload)?;
 
     if let Err(error) = update_document_after_scene_save(root_dir_path, &document_id, saved_at) {
-        let details = error.details.unwrap_or_default();
+        let details = error.details.as_deref().unwrap_or_default();
         let details_suffix = if details.is_empty() {
             String::new()
         } else {
             format!(", cause={details}")
         };
 
-        return Err(CommandError {
-            code: error.code,
-            message: error.message,
-            details: Some(format!(
-                "documentId={document_id}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
-                existing_document.current_scene_path
-            )),
-        });
+        return Err(
+            error
+                .with_object_id(document_id.clone())
+                .with_details(format!(
+                    "documentId={document_id}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
+                    existing_document.current_scene_path
+                )),
+        );
     }
 
     get_document_by_id_from_root(root_dir_path, &document_id)
