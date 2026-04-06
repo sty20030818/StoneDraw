@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { createScenePayload } from '@/test/fixtures/scene'
-import { applyScene, clearEditorApi, readActiveScene, setEditorApi } from './runtime'
+import { applyScene, clearEditorApi, readActiveScene, setEditorApi } from './editor-runtime'
 
 function createFakeApi(snapshot: {
 	elements: unknown[]
@@ -22,7 +22,7 @@ function createFakeApi(snapshot: {
 	}
 }
 
-describe('editor.runtime', () => {
+describe('editor-runtime', () => {
 	beforeEach(() => {
 		clearEditorApi()
 	})

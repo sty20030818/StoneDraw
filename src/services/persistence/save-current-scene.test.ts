@@ -19,11 +19,11 @@ async function importSaveModule() {
 			saveScene: saveSceneMock,
 		},
 	}))
-	vi.doMock('./runtime', () => ({
+	vi.doMock('@/workbench/editor-runtime', () => ({
 		readActiveScene: readActiveSceneMock,
 	}))
 
-	const module = await import('./save')
+	const module = await import('./save-current-scene')
 
 	return {
 		...module,
@@ -32,17 +32,17 @@ async function importSaveModule() {
 	}
 }
 
-describe('saveActiveDocumentScene', () => {
+describe('saveCurrentDocumentScene', () => {
 	beforeEach(() => {
 		vi.resetModules()
 		vi.clearAllMocks()
 	})
 
 	test('编辑器未准备好时应直接返回失败', async () => {
-		const { saveActiveDocumentScene, readActiveSceneMock, saveSceneMock } = await importSaveModule()
+		const { saveCurrentDocumentScene, readActiveSceneMock, saveSceneMock } = await importSaveModule()
 		readActiveSceneMock.mockReturnValueOnce(null)
 
-		const result = await saveActiveDocumentScene(document)
+		const result = await saveCurrentDocumentScene(document)
 
 		expect(result.ok).toBe(false)
 		expect(saveSceneMock).not.toHaveBeenCalled()
@@ -53,7 +53,7 @@ describe('saveActiveDocumentScene', () => {
 	})
 
 	test('保存成功时应返回最新文档与 scene', async () => {
-		const { saveActiveDocumentScene, readActiveSceneMock, saveSceneMock } = await importSaveModule()
+		const { saveCurrentDocumentScene, readActiveSceneMock, saveSceneMock } = await importSaveModule()
 		const scene = createScenePayload({
 			documentId: document.id,
 			title: document.title,
@@ -71,7 +71,7 @@ describe('saveActiveDocumentScene', () => {
 			data: savedDocument,
 		})
 
-		const result = await saveActiveDocumentScene(document)
+		const result = await saveCurrentDocumentScene(document)
 
 		expect(readActiveSceneMock).toHaveBeenCalledWith(document.id, document.title)
 		expect(saveSceneMock).toHaveBeenCalledWith(scene)
@@ -84,7 +84,7 @@ describe('saveActiveDocumentScene', () => {
 	})
 
 	test('保存失败时应透传错误', async () => {
-		const { saveActiveDocumentScene, readActiveSceneMock, saveSceneMock } = await importSaveModule()
+		const { saveCurrentDocumentScene, readActiveSceneMock, saveSceneMock } = await importSaveModule()
 		const scene = createScenePayload({
 			documentId: document.id,
 			title: document.title,
@@ -97,13 +97,13 @@ describe('saveActiveDocumentScene', () => {
 				code: 'IO_ERROR',
 				message: '写入失败',
 				details: 'disk-full',
-				module: 'editor-repository',
+				module: 'document-repository',
 				operation: 'saveScene',
 				objectId: document.id,
 			}),
 		})
 
-		const result = await saveActiveDocumentScene(document)
+		const result = await saveCurrentDocumentScene(document)
 
 		expect(saveSceneMock).toHaveBeenCalledWith(scene)
 		expect(result.ok).toBe(false)

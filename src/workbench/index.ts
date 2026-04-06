@@ -7,6 +7,7 @@ export { default as WorkbenchTabs } from './WorkbenchTabs'
 export { default as WorkbenchTitleBar } from './WorkbenchTitleBar'
 export { WorkbenchShellProvider, useWorkbenchShell, useWorkbenchShellController } from './WorkbenchShellBridge'
 export type { WorkbenchShellState } from './WorkbenchShellBridge'
+export { applyScene, clearEditorApi, createEditorInitialData, getEditorApi, readActiveScene, setEditorApi } from './editor-runtime'
 export { normalizeWorkbenchScene } from './scene-restore-bridge'
 export {
 	ExplorerPanel,

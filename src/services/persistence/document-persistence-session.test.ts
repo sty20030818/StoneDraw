@@ -19,7 +19,7 @@ function createUiStateTracker() {
 	}
 }
 
-describe('editor.save-coordinator', () => {
+describe('document-persistence-session', () => {
 	test('onSceneChange 应基于 API 权威快照而不是临时回调数据判定状态', async () => {
 		const uiState = createUiStateTracker()
 		const document = createDocumentMeta({
@@ -34,8 +34,8 @@ describe('editor.save-coordinator', () => {
 			documentId: document.id,
 			title: document.title,
 		})
-		const { createEditorSaveSession } = await import('./save-coordinator')
-		const session = createEditorSaveSession({
+		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
+		const session = createDocumentPersistenceSession({
 			readScene: () => authoritativeScene,
 			executeSave: vi.fn<() => Promise<never>>(),
 			writeUiState: uiState.write,
@@ -55,8 +55,8 @@ describe('editor.save-coordinator', () => {
 			title: '显式保存文档',
 		})
 		let saveCount = 0
-		const { createEditorSaveSession } = await import('./save-coordinator')
-		const session = createEditorSaveSession({
+		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
+		const session = createDocumentPersistenceSession({
 			readScene: () => createScenePayload({ documentId: document.id, title: document.title }),
 			executeSave: async () => {
 				saveCount += 1
@@ -115,8 +115,8 @@ describe('editor.save-coordinator', () => {
 				scene: typeof firstDirtyScene
 			}
 		}>()
-		const { createEditorSaveSession } = await import('./save-coordinator')
-		const session = createEditorSaveSession({
+		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
+		const session = createDocumentPersistenceSession({
 			readScene: () => latestScene,
 			executeSave: () => {
 				saveCount += 1
@@ -171,15 +171,15 @@ describe('editor.save-coordinator', () => {
 			id: 'doc-4',
 			title: 'flush 文档',
 		})
-		const { createEditorSaveSession } = await import('./save-coordinator')
-		const session = createEditorSaveSession({
+		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
+		const session = createDocumentPersistenceSession({
 			readScene: () => createScenePayload({ documentId: document.id, title: document.title }),
 			executeSave: async () => ({
 				ok: false,
 				error: createAppError({
 					code: 'UNKNOWN_ERROR',
 					message: '保存失败',
-					module: 'editor-repository',
+					module: 'document-repository',
 					operation: 'saveScene',
 					objectId: document.id,
 				}),
@@ -203,8 +203,8 @@ describe('editor.save-coordinator', () => {
 			id: 'doc-5',
 			title: '窗口关闭超时文档',
 		})
-		const { createEditorSaveSession } = await import('./save-coordinator')
-		const session = createEditorSaveSession({
+		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
+		const session = createDocumentPersistenceSession({
 			readScene: () => createScenePayload({ documentId: document.id, title: document.title }),
 			executeSave: async () => new Promise(() => undefined),
 			writeUiState: uiState.write,
@@ -220,5 +220,6 @@ describe('editor.save-coordinator', () => {
 
 		expect(await flushPromise).toBe(false)
 		expect(uiState.state.isFlushing).toBe(false)
+		vi.useRealTimers()
 	})
 })

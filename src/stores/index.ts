@@ -1,6 +1,5 @@
 export { useAppStore } from './app.store'
 export { useDocumentStore } from './document.store'
-export { useEditorStore } from './editor.store'
 export { useOverlayStore } from './overlay.store'
 export { useWorkbenchStore } from './workbench.store'
 export { useWorkspaceStore } from './workspace.store'

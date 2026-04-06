@@ -3,9 +3,9 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { clearEditorApi, setEditorApi } from '@/modules/editor'
 import type { SceneFilePayload } from '@/types'
 import { createEditorEventBridge, type EditorContentChangePayload } from './editor-event-bridge'
+import { clearEditorApi, setEditorApi } from './editor-runtime'
 import { createWorkbenchInitialSceneData, restoreSceneToWorkbench } from './scene-restore-bridge'
 
 type ExcalidrawHostProps = {

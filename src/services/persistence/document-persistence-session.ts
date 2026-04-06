@@ -1,10 +1,10 @@
 import type { AppState, BinaryFiles, ExcalidrawInitialDataState } from '@excalidraw/excalidraw/types'
 import { createSceneFingerprint, serializeScene } from '@/adapters/excalidraw'
 import { createFailureResult } from '@/services/tauri.service'
-import { useEditorStore } from '@/stores/editor.store'
+import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { DocumentMeta, SaveStatus, SceneFilePayload, TauriCommandResult } from '@/types'
-import { saveActiveDocumentScene, type SaveSceneSuccessPayload } from './save'
-import { readActiveScene } from './runtime'
+import { readActiveScene } from '@/workbench/editor-runtime'
+import { saveCurrentDocumentScene, type SaveCurrentSceneSuccessPayload } from './save-current-scene'
 
 const DEFAULT_AUTO_SAVE_DEBOUNCE_MS = 1000
 const DEFAULT_WINDOW_CLOSE_FLUSH_TIMEOUT_MS = 2000
@@ -15,18 +15,18 @@ export type FlushBeforeLeaveOptions = {
 	timeoutMs?: number
 }
 
-type SaveSessionUiState = {
+export type DocumentPersistenceUiState = {
 	saveStatus: SaveStatus
 	lastSaveError: string | null
 	isFlushing: boolean
 }
 
 type SaveExecutionOutcome = {
-	result: TauriCommandResult<SaveSceneSuccessPayload>
+	result: TauriCommandResult<SaveCurrentSceneSuccessPayload>
 	stale: boolean
 }
 
-type SaveSessionState = SaveSessionUiState & {
+type DocumentPersistenceSessionState = DocumentPersistenceUiState & {
 	savedSceneFingerprint: string | null
 	currentSceneFingerprint: string | null
 	hasPendingCompensationSave: boolean
@@ -35,14 +35,14 @@ type SaveSessionState = SaveSessionUiState & {
 	lifecycleToken: number
 }
 
-type SaveSessionDependencies = {
+type DocumentPersistenceDependencies = {
 	debounceMs?: number
 	readScene: (documentId: string, title?: string) => SceneFilePayload | null
-	executeSave: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveSceneSuccessPayload>>
-	writeUiState: (patch: Partial<SaveSessionUiState>) => void
+	executeSave: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveCurrentSceneSuccessPayload>>
+	writeUiState: (patch: Partial<DocumentPersistenceUiState>) => void
 }
 
-export type EditorSaveSession = {
+export type DocumentPersistenceSession = {
 	initialize: (scene: SceneFilePayload) => void
 	onSceneChange: (
 		document: SaveDocumentRef,
@@ -50,12 +50,12 @@ export type EditorSaveSession = {
 		appState: AppState,
 		files: BinaryFiles,
 	) => SceneFilePayload
-	saveNow: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveSceneSuccessPayload>>
+	saveNow: (document: SaveDocumentRef) => Promise<TauriCommandResult<SaveCurrentSceneSuccessPayload>>
 	flushBeforeLeave: (document: SaveDocumentRef, options?: FlushBeforeLeaveOptions) => Promise<boolean>
 	dispose: () => void
 }
 
-function createInitialSessionState(): SaveSessionState {
+function createInitialSessionState(): DocumentPersistenceSessionState {
 	return {
 		saveStatus: 'idle',
 		lastSaveError: null,
@@ -69,27 +69,29 @@ function createInitialSessionState(): SaveSessionState {
 	}
 }
 
-function writeStoreUiState(patch: Partial<SaveSessionUiState>) {
-	const editorStore = useEditorStore.getState()
+function writeWorkbenchPersistenceUiState(patch: Partial<DocumentPersistenceUiState>) {
+	const workbenchStore = useWorkbenchStore.getState()
 
 	if (patch.saveStatus !== undefined) {
-		editorStore.setSaveStatus(patch.saveStatus)
+		workbenchStore.setSaveStatus(patch.saveStatus)
 	}
 
 	if (patch.lastSaveError !== undefined) {
-		editorStore.setLastSaveError(patch.lastSaveError)
+		workbenchStore.setLastSaveError(patch.lastSaveError)
 	}
 
 	if (patch.isFlushing !== undefined) {
-		editorStore.setIsFlushing(patch.isFlushing)
+		workbenchStore.setIsFlushing(patch.isFlushing)
 	}
 }
 
-export function createEditorSaveSession(dependencies: SaveSessionDependencies): EditorSaveSession {
+export function createDocumentPersistenceSession(
+	dependencies: DocumentPersistenceDependencies,
+): DocumentPersistenceSession {
 	const debounceMs = dependencies.debounceMs ?? DEFAULT_AUTO_SAVE_DEBOUNCE_MS
 	const state = createInitialSessionState()
 
-	function updateUiState(patch: Partial<SaveSessionUiState>) {
+	function updateUiState(patch: Partial<DocumentPersistenceUiState>) {
 		if (patch.saveStatus !== undefined) {
 			state.saveStatus = patch.saveStatus
 		}
@@ -244,8 +246,8 @@ export function createEditorSaveSession(dependencies: SaveSessionDependencies): 
 		options?: {
 			forceInitialSave?: boolean
 		},
-	): Promise<TauriCommandResult<SaveSceneSuccessPayload>> {
-		let latestResult: TauriCommandResult<SaveSceneSuccessPayload> | null = null
+	): Promise<TauriCommandResult<SaveCurrentSceneSuccessPayload>> {
+		let latestResult: TauriCommandResult<SaveCurrentSceneSuccessPayload> | null = null
 		let hasForcedInitialSave = false
 
 		while (true) {
@@ -281,12 +283,12 @@ export function createEditorSaveSession(dependencies: SaveSessionDependencies): 
 					code: 'INVALID_ARGUMENT',
 					message: '当前文档没有待保存内容',
 					layer: 'service',
-					module: 'editor-save-session',
+					module: 'document-persistence-session',
 					operation: 'runSaveLoop',
-					correlationId: `editor-save-loop-${document.id}`,
+					correlationId: `document-save-loop-${document.id}`,
 					details: `documentId=${document.id}`,
 					objectId: document.id,
-				}) as TauriCommandResult<SaveSceneSuccessPayload>
+				}) as TauriCommandResult<SaveCurrentSceneSuccessPayload>
 			}
 
 			state.hasPendingCompensationSave = false
@@ -352,19 +354,19 @@ export function createEditorSaveSession(dependencies: SaveSessionDependencies): 
 					? await flushPromise
 					: await Promise.race([
 							flushPromise,
-							new Promise<TauriCommandResult<SaveSceneSuccessPayload>>((resolve) => {
+							new Promise<TauriCommandResult<SaveCurrentSceneSuccessPayload>>((resolve) => {
 								setTimeout(() => {
 									resolve(
 										createFailureResult({
 											code: 'UNKNOWN_ERROR',
 											message: '关闭窗口前保存超时',
 											layer: 'service',
-											module: 'editor-save-session',
+											module: 'document-persistence-session',
 											operation: 'flushBeforeLeave',
-											correlationId: `editor-flush-timeout-${document.id}`,
+											correlationId: `document-flush-timeout-${document.id}`,
 											details: `documentId=${document.id}`,
 											objectId: document.id,
-										}) as TauriCommandResult<SaveSceneSuccessPayload>,
+										}) as TauriCommandResult<SaveCurrentSceneSuccessPayload>,
 									)
 								}, options.timeoutMs ?? DEFAULT_WINDOW_CLOSE_FLUSH_TIMEOUT_MS)
 							}),
@@ -401,8 +403,8 @@ export function createEditorSaveSession(dependencies: SaveSessionDependencies): 
 	}
 }
 
-export const editorSaveSession = createEditorSaveSession({
+export const documentPersistenceSession = createDocumentPersistenceSession({
 	readScene: readActiveScene,
-	executeSave: saveActiveDocumentScene,
-	writeUiState: writeStoreUiState,
+	executeSave: saveCurrentDocumentScene,
+	writeUiState: writeWorkbenchPersistenceUiState,
 })

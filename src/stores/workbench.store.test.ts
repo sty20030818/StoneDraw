@@ -1,61 +1,39 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { useWorkbenchStore } from './workbench.store'
 
 describe('workbench.store', () => {
-	beforeEach(() => {
-		useWorkbenchStore.getState().reset()
+	test('setSaveStatus 应支持 saved dirty saving error 四态切换', () => {
+		const workbenchStore = useWorkbenchStore.getState()
+
+		workbenchStore.setSaveStatus('saved')
+		expect(useWorkbenchStore.getState().saveStatus).toBe('saved')
+
+		workbenchStore.setSaveStatus('dirty')
+		expect(useWorkbenchStore.getState().saveStatus).toBe('dirty')
+
+		workbenchStore.setSaveStatus('saving')
+		expect(useWorkbenchStore.getState().saveStatus).toBe('saving')
+
+		workbenchStore.setSaveStatus('error')
+		expect(useWorkbenchStore.getState().saveStatus).toBe('error')
 	})
 
-	test('syncDocumentTab 应写入 tab 并同步 activeDocumentId', () => {
-		useWorkbenchStore.getState().syncDocumentTab({
-			id: 'doc-tab-1',
-			title: '文档一',
+	test('reset 应恢复工作台运行态初始值', () => {
+		const workbenchStore = useWorkbenchStore.getState()
+
+		workbenchStore.setActiveDocumentId('doc-store-1')
+		workbenchStore.setWorkbenchReady(true)
+		workbenchStore.setSaveStatus('dirty')
+		workbenchStore.setLastSaveError('保存失败')
+		workbenchStore.setIsFlushing(true)
+		workbenchStore.reset()
+
+		expect(useWorkbenchStore.getState()).toMatchObject({
+			activeDocumentId: null,
+			isWorkbenchReady: false,
+			saveStatus: 'idle',
+			lastSaveError: null,
+			isFlushing: false,
 		})
-
-		const state = useWorkbenchStore.getState()
-
-		expect(state.tabs).toEqual([{ id: 'doc-tab-1', title: '文档一' }])
-		expect(state.activeDocumentId).toBe('doc-tab-1')
-		expect(state.activeTabId).toBe('doc-tab-1')
-	})
-
-	test('closeDocumentTab 关闭当前 tab 时应切到邻近 tab', () => {
-		const store = useWorkbenchStore.getState()
-
-		store.syncDocumentTab({
-			id: 'doc-tab-1',
-			title: '文档一',
-		})
-		useWorkbenchStore.getState().syncDocumentTab({
-			id: 'doc-tab-2',
-			title: '文档二',
-		})
-
-		const nextDocumentId = useWorkbenchStore.getState().closeDocumentTab('doc-tab-2')
-		const state = useWorkbenchStore.getState()
-
-		expect(nextDocumentId).toBe('doc-tab-1')
-		expect(state.tabs).toEqual([{ id: 'doc-tab-1', title: '文档一' }])
-		expect(state.activeDocumentId).toBe('doc-tab-1')
-		expect(state.activeTabId).toBe('doc-tab-1')
-	})
-
-	test('activateDocumentTab 激活已打开文档时应同步 activeTabId', () => {
-		const store = useWorkbenchStore.getState()
-
-		store.syncDocumentTab({
-			id: 'doc-tab-1',
-			title: '文档一',
-		})
-		useWorkbenchStore.getState().syncDocumentTab({
-			id: 'doc-tab-2',
-			title: '文档二',
-		})
-
-		useWorkbenchStore.getState().activateDocumentTab('doc-tab-1')
-		const state = useWorkbenchStore.getState()
-
-		expect(state.activeDocumentId).toBe('doc-tab-1')
-		expect(state.activeTabId).toBe('doc-tab-1')
 	})
 })

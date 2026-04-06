@@ -5,8 +5,8 @@ import { FileSearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import EmptyState from '@/components/states/EmptyState'
 import { APP_ROUTES } from '@/constants/routes'
-import { clearEditorApi, editorSaveSession } from '@/modules/editor'
 import { documentService } from '@/services/documents/document.service'
+import { documentPersistenceSession } from '@/services/persistence'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 import { useWorkbenchStore } from '@/stores/workbench.store'
@@ -15,6 +15,7 @@ import {
 	CanvasShell,
 	ExcalidrawHost,
 	normalizeWorkbenchScene,
+	clearEditorApi,
 	useWorkbenchShellController,
 } from '@/workbench'
 import type { EditorContentChangePayload } from '@/workbench/editor-event-bridge'
@@ -74,7 +75,7 @@ function WorkbenchPage() {
 			return false
 		}
 
-		const saveResult = await editorSaveSession.saveNow(workbenchLoadState.document)
+		const saveResult = await documentPersistenceSession.saveNow(workbenchLoadState.document)
 
 		if (!saveResult.ok) {
 			latestSaveErrorRef.current = saveResult.error.details ?? saveResult.error.message
@@ -102,7 +103,10 @@ function WorkbenchPage() {
 				return true
 			}
 
-			const isFlushed = await editorSaveSession.flushBeforeLeave(workbenchLoadState.document, options)
+			const isFlushed = await documentPersistenceSession.flushBeforeLeave(
+				workbenchLoadState.document,
+				options,
+			)
 
 			if (!isFlushed && options?.timeoutMs === undefined) {
 				toast('自动保存未完成', {
@@ -178,7 +182,7 @@ function WorkbenchPage() {
 
 		return () => {
 			isMounted = false
-			editorSaveSession.dispose()
+			documentPersistenceSession.dispose()
 			clearEditorApi()
 			setWorkbenchReady(false)
 			setActiveDocumentId(null)
@@ -199,7 +203,7 @@ function WorkbenchPage() {
 			id: workbenchLoadState.document.id,
 			title: workbenchLoadState.document.title,
 		})
-		editorSaveSession.initialize(workbenchLoadState.scene)
+		documentPersistenceSession.initialize(workbenchLoadState.scene)
 	}, [setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady, syncDocumentTab, workbenchLoadState])
 
 	const handleContentChange = useCallback(
@@ -208,7 +212,7 @@ function WorkbenchPage() {
 				return
 			}
 
-			editorSaveSession.onSceneChange(
+			documentPersistenceSession.onSceneChange(
 				workbenchLoadState.document,
 				payload.elements,
 				payload.appState,

@@ -2,34 +2,30 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { APP_ROUTES } from '@/constants/routes'
-import { useEditorStore } from '@/stores'
+import { useWorkbenchStore } from '@/stores'
+import { createAppError } from '@/test/fixtures/error'
 import { createDocumentMeta } from '@/test/fixtures/document'
 import { createScenePayload } from '@/test/fixtures/scene'
 import { renderRoute } from '@/test/helpers/render-route'
-import EditorPage from './EditorPage'
+import { resetTestState } from '@/test/helpers/reset-state'
+import WorkbenchPage from './WorkbenchPage'
 
 const {
-	documentGetByIdMock,
-	editorLoadSceneMock,
+	openDocumentMock,
 	initializeMock,
 	onSceneChangeMock,
 	flushBeforeLeaveMock,
 	saveNowMock,
 	disposeMock,
-	setEditorApiMock,
-	clearEditorApiMock,
 	toastMock,
 	tauriWindowMock,
 } = vi.hoisted(() => ({
-	documentGetByIdMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
-	editorLoadSceneMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
+	openDocumentMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
 	initializeMock: vi.fn<(...args: never[]) => void>(),
 	onSceneChangeMock: vi.fn<(...args: never[]) => unknown>(),
 	flushBeforeLeaveMock: vi.fn<(...args: never[]) => Promise<boolean>>(),
 	saveNowMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
 	disposeMock: vi.fn<(...args: never[]) => void>(),
-	setEditorApiMock: vi.fn<(...args: never[]) => boolean>(() => true),
-	clearEditorApiMock: vi.fn<(...args: never[]) => void>(),
 	toastMock: vi.fn<(message?: unknown, options?: unknown) => unknown>(),
 	tauriWindowMock: (() => {
 		let closeHandler: ((event: { preventDefault: () => void }) => void | Promise<void>) | null = null
@@ -76,6 +72,8 @@ vi.mock('@excalidraw/excalidraw', async () => {
 					getSceneElements: () => currentSnapshot.elements,
 					getAppState: () => currentSnapshot.appState,
 					getFiles: () => currentSnapshot.files,
+					updateScene: () => undefined,
+					addFiles: () => undefined,
 				})
 			}, [excalidrawAPI])
 
@@ -107,84 +105,78 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/services/documents/document.service', () => ({
 	documentService: {
-		getById: documentGetByIdMock,
+		openDocument: openDocumentMock,
 	},
 }))
 
-vi.mock('@/services/workbench/editor.service', () => ({
-	editorService: {
-		loadScene: editorLoadSceneMock,
-	},
-}))
-
-vi.mock('@/modules/editor/index', () => ({
-	clearEditorApi: clearEditorApiMock,
-	editorSaveSession: {
+vi.mock('@/services/persistence', () => ({
+	documentPersistenceSession: {
 		initialize: initializeMock,
 		onSceneChange: onSceneChangeMock,
 		saveNow: saveNowMock,
 		flushBeforeLeave: flushBeforeLeaveMock,
 		dispose: disposeMock,
 	},
-	setEditorApi: setEditorApiMock,
 }))
 
-function renderEditorPage(initialEntry = `${APP_ROUTES.WORKBENCH}?documentId=doc-editor-1`) {
+function renderWorkbenchPage(initialEntry = `${APP_ROUTES.WORKBENCH}?documentId=doc-editor-1`) {
 	return renderRoute({
 		initialEntry,
 		routes: [
 			{
 				path: APP_ROUTES.WORKBENCH,
-				element: <EditorPage />,
+				element: <WorkbenchPage />,
 			},
 			{
-				path: APP_ROUTES.WORKSPACE,
-				element: <div>工作区占位</div>,
+				path: APP_ROUTES.WORKSPACE_HOME,
+				element: <div>工作区首页占位</div>,
 			},
 		],
 	})
 }
 
-describe('EditorPage', () => {
+describe('WorkbenchPage', () => {
 	beforeEach(() => {
 		currentSnapshot = {
 			elements: [],
 			appState: {},
 			files: {},
 		}
-		documentGetByIdMock.mockReset()
-		editorLoadSceneMock.mockReset()
+		resetTestState()
+		openDocumentMock.mockReset()
 		initializeMock.mockReset()
 		onSceneChangeMock.mockReset()
 		flushBeforeLeaveMock.mockReset()
 		saveNowMock.mockReset()
 		disposeMock.mockReset()
-		setEditorApiMock.mockClear()
-		clearEditorApiMock.mockClear()
 		toastMock.mockClear()
 		tauriWindowMock.window.onCloseRequested.mockClear()
 		tauriWindowMock.window.destroy.mockClear()
 
-		documentGetByIdMock.mockResolvedValue({
+		openDocumentMock.mockResolvedValue({
 			ok: true,
-			data: createDocumentMeta({
-				id: 'doc-editor-1',
-				title: '编辑器文档',
-			}),
-		})
-		editorLoadSceneMock.mockResolvedValue({
-			ok: true,
-			data: createScenePayload({
-				documentId: 'doc-editor-1',
-				title: '编辑器文档',
-			}),
+			data: {
+				document: createDocumentMeta({
+					id: 'doc-editor-1',
+					title: '编辑器文档',
+				}),
+				scene: createScenePayload({
+					documentId: 'doc-editor-1',
+					title: '编辑器文档',
+				}),
+				collections: {
+					documents: [],
+					recentDocuments: [],
+					trashedDocuments: [],
+				},
+			},
 		})
 		initializeMock.mockImplementation(() => {
-			useEditorStore.getState().setSaveStatus('saved')
-			useEditorStore.getState().setLastSaveError(null)
+			useWorkbenchStore.getState().setSaveStatus('saved')
+			useWorkbenchStore.getState().setLastSaveError(null)
 		})
 		onSceneChangeMock.mockImplementation(() => {
-			useEditorStore.getState().setSaveStatus('dirty')
+			useWorkbenchStore.getState().setSaveStatus('dirty')
 			return createScenePayload({
 				documentId: 'doc-editor-1',
 				title: '编辑器文档',
@@ -192,7 +184,7 @@ describe('EditorPage', () => {
 			})
 		})
 		saveNowMock.mockImplementation(async () => {
-			useEditorStore.getState().setSaveStatus('saved')
+			useWorkbenchStore.getState().setSaveStatus('saved')
 			return {
 				ok: true,
 				data: {
@@ -210,30 +202,31 @@ describe('EditorPage', () => {
 			}
 		})
 		disposeMock.mockImplementation(() => {
-			useEditorStore.getState().setSaveStatus('idle')
-			useEditorStore.getState().setLastSaveError(null)
-			useEditorStore.getState().setIsFlushing(false)
+			useWorkbenchStore.getState().setSaveStatus('idle')
+			useWorkbenchStore.getState().setLastSaveError(null)
+			useWorkbenchStore.getState().setIsFlushing(false)
 		})
 	})
 
-	test('加载完成后应初始化保存会话', async () => {
-		renderEditorPage()
+	test('加载完成后应初始化 persistence session', async () => {
+		renderWorkbenchPage()
 
-		await screen.findByText('编辑器文档')
+		await screen.findByRole('button', { name: '触发画布变化' })
 
-		expect(initializeMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				documentId: 'doc-editor-1',
-			}),
-		)
+		await waitFor(() => {
+			expect(initializeMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					documentId: 'doc-editor-1',
+				}),
+			)
+		})
 	})
 
-	test('画布变化后应调用保存会话 onSceneChange', async () => {
+	test('画布变化后应调用 persistence session onSceneChange', async () => {
 		const user = userEvent.setup()
 
-		renderEditorPage()
-
-		await screen.findByText('编辑器文档')
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
 		currentSnapshot = {
 			elements: [{ id: 'element-1' }],
 			appState: {},
@@ -251,53 +244,58 @@ describe('EditorPage', () => {
 			{},
 			{},
 		)
-		expect(await screen.findByText('未保存')).toBeInTheDocument()
+		expect(useWorkbenchStore.getState().saveStatus).toBe('dirty')
 	})
 
-	test('手动保存成功后应保持在编辑器并回到已保存状态', async () => {
-		const user = userEvent.setup()
-
-		renderEditorPage()
-		await screen.findByText('编辑器文档')
-
-		act(() => {
-			useEditorStore.getState().setSaveStatus('error')
+	test('标题栏保存动作应触发手动保存并回到已保存状态', async () => {
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
+		await waitFor(() => {
+			expect(useWorkbenchStore.getState().activeDocumentId).toBe('doc-editor-1')
 		})
 
-		await user.click(screen.getByRole('button', { name: '重试保存' }))
+		act(() => {
+			useWorkbenchStore.getState().setSaveStatus('error')
+		})
 
-		expect(saveNowMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				id: 'doc-editor-1',
-				title: '编辑器文档',
-			}),
-		)
-		expect(await screen.findByText('已保存')).toBeInTheDocument()
-		expect(screen.queryByText('工作区占位')).not.toBeInTheDocument()
+		act(() => {
+			useWorkbenchStore.getState().onSave()
+		})
+
+		await waitFor(() => {
+			expect(saveNowMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 'doc-editor-1',
+					title: '编辑器文档',
+				}),
+			)
+			expect(useWorkbenchStore.getState().saveStatus).toBe('saved')
+		})
 	})
 
 	test('返回工作区前 flush 失败时应直接离开，并提示最近修改可能未保存', async () => {
-		const user = userEvent.setup()
 		flushBeforeLeaveMock.mockResolvedValue(false)
 
-		renderEditorPage()
-		await screen.findByText('编辑器文档')
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
 
 		act(() => {
-			useEditorStore.getState().setSaveStatus('dirty')
+			useWorkbenchStore.getState().setSaveStatus('dirty')
 		})
 
-		await user.click(screen.getByRole('button', { name: '返回' }))
+		act(() => {
+			useWorkbenchStore.getState().onBack()
+		})
 
-		expect(flushBeforeLeaveMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				id: 'doc-editor-1',
-				title: '编辑器文档',
-			}),
-			undefined,
-		)
 		await waitFor(() => {
-			expect(screen.getByText('工作区占位')).toBeInTheDocument()
+			expect(flushBeforeLeaveMock).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: 'doc-editor-1',
+					title: '编辑器文档',
+				}),
+				undefined,
+			)
+			expect(screen.getByText('工作区首页占位')).toBeInTheDocument()
 		})
 		expect(toastMock).toHaveBeenCalledWith('自动保存未完成', {
 			description: '系统已继续离开当前页面，最近修改可能未保存。',
@@ -305,20 +303,21 @@ describe('EditorPage', () => {
 	})
 
 	test('窗口关闭前应先 flush，成功后销毁窗口', async () => {
-		renderEditorPage()
-		await screen.findByText('编辑器文档')
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
 
 		flushBeforeLeaveMock.mockResolvedValue(true)
 
 		act(() => {
-			useEditorStore.getState().setSaveStatus('dirty')
+			useWorkbenchStore.getState().setSaveStatus('dirty')
 		})
 
-		const closeHandler = tauriWindowMock.getCloseHandler()
-		expect(closeHandler).toBeTypeOf('function')
+		await waitFor(() => {
+			expect(tauriWindowMock.getCloseHandler()).toBeTypeOf('function')
+		})
 
 		const preventDefault = vi.fn<() => void>()
-		await closeHandler?.({ preventDefault })
+		await tauriWindowMock.getCloseHandler()?.({ preventDefault })
 
 		expect(preventDefault).toHaveBeenCalled()
 		expect(flushBeforeLeaveMock).toHaveBeenCalledWith(
@@ -336,18 +335,19 @@ describe('EditorPage', () => {
 	test('窗口关闭 flush 失败时应直接销毁窗口', async () => {
 		flushBeforeLeaveMock.mockResolvedValue(false)
 
-		renderEditorPage()
-		await screen.findByText('编辑器文档')
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
 
 		act(() => {
-			useEditorStore.getState().setSaveStatus('dirty')
+			useWorkbenchStore.getState().setSaveStatus('dirty')
 		})
 
-		const closeHandler = tauriWindowMock.getCloseHandler()
-		expect(closeHandler).toBeTypeOf('function')
+		await waitFor(() => {
+			expect(tauriWindowMock.getCloseHandler()).toBeTypeOf('function')
+		})
 
 		const preventDefault = vi.fn<() => void>()
-		await closeHandler?.({ preventDefault })
+		await tauriWindowMock.getCloseHandler()?.({ preventDefault })
 
 		await waitFor(() => {
 			expect(tauriWindowMock.window.destroy).toHaveBeenCalledTimes(1)
@@ -365,11 +365,11 @@ describe('EditorPage', () => {
 	})
 
 	test('保存失败错误变化时应提示自动保存失败', async () => {
-		renderEditorPage()
-		await screen.findByText('编辑器文档')
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
 
 		act(() => {
-			useEditorStore.getState().setLastSaveError('磁盘不可写')
+			useWorkbenchStore.getState().setLastSaveError('磁盘不可写')
 		})
 
 		await waitFor(() => {
@@ -380,8 +380,8 @@ describe('EditorPage', () => {
 	})
 
 	test('Ctrl+S 快捷键应触发手动保存', async () => {
-		renderEditorPage()
-		await screen.findByText('编辑器文档')
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
 
 		fireEvent.keyDown(window, {
 			key: 's',
@@ -391,5 +391,23 @@ describe('EditorPage', () => {
 		await waitFor(() => {
 			expect(saveNowMock).toHaveBeenCalledTimes(1)
 		})
+	})
+
+	test('打开文档失败时应展示错误空状态', async () => {
+		openDocumentMock.mockResolvedValueOnce({
+			ok: false,
+			error: createAppError({
+				code: 'NOT_FOUND',
+				message: '文档不存在',
+				details: 'doc-editor-404',
+				module: 'document-service',
+				operation: 'openDocument',
+			}),
+		})
+
+		renderWorkbenchPage(`${APP_ROUTES.WORKBENCH}?documentId=doc-editor-404`)
+
+		expect(await screen.findByText('文档不存在')).toBeInTheDocument()
+		expect(screen.getByText('doc-editor-404')).toBeInTheDocument()
 	})
 })

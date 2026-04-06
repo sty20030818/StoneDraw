@@ -91,7 +91,7 @@ const initialWorkbenchState = {
 	| 'onSearchChange'
 >
 
-// 工作台 store 统一承接创作态 UI、保存态和标题栏动作，不再分散在 editor store 与组件局部状态里。
+// 工作台 store 统一承接创作态 UI、持久化状态和标题栏动作，不再分散在过渡壳层与组件局部状态里。
 export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
 	...initialWorkbenchState,
 	setActiveDocumentId: (activeDocumentId) => set({ activeDocumentId }),
