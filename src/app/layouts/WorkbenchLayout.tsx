@@ -1,6 +1,9 @@
-import { Outlet } from 'react-router-dom'
+import { useCallback } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { WindowChrome } from '@/app/chrome'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
+import { APP_ROUTES, buildWorkbenchRoute } from '@/constants/routes'
+import { useDocumentStore } from '@/stores/document.store'
 import {
 	ActivityBar,
 	ExplorerPanel,
@@ -18,11 +21,16 @@ import {
 import { useWorkbenchStore } from '@/stores/workbench.store'
 
 function WorkbenchShellContent() {
+	const navigate = useNavigate()
 	const { shellState, setActivePanel } = useWorkbenchShell()
+	const documents = useDocumentStore((state) => state.documents)
+	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
 	const tabs = useWorkbenchStore((state) => state.tabs)
 	const activeTabId = useWorkbenchStore((state) => state.activeTabId)
 	const isSidePanelOpen = useWorkbenchStore((state) => state.isSidePanelOpen)
 	const isRightPanelOpen = useWorkbenchStore((state) => state.isRightPanelOpen)
+	const activateDocumentTab = useWorkbenchStore((state) => state.activateDocumentTab)
+	const closeDocumentTab = useWorkbenchStore((state) => state.closeDocumentTab)
 	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === shellState.activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
 	const shellGridClass = isSidePanelOpen
 		? isRightPanelOpen
@@ -32,22 +40,67 @@ function WorkbenchShellContent() {
 			? 'grid-cols-[3.5rem_0rem_minmax(0,1fr)_18rem]'
 			: 'grid-cols-[3.5rem_0rem_minmax(0,1fr)_0rem]'
 
+	const openDocumentInWorkbench = useCallback(
+		(documentId: string) => {
+			activateDocumentTab(documentId)
+			setSelectedDocumentId(documentId)
+			navigate(buildWorkbenchRoute(documentId))
+		},
+		[activateDocumentTab, navigate, setSelectedDocumentId],
+	)
+
+	const handleCloseTab = useCallback(
+		(documentId: string) => {
+			const nextDocumentId = closeDocumentTab(documentId)
+
+			if (shellState.documentId !== documentId) {
+				return
+			}
+
+			setSelectedDocumentId(nextDocumentId)
+
+			if (nextDocumentId) {
+				navigate(buildWorkbenchRoute(nextDocumentId))
+				return
+			}
+
+			navigate(APP_ROUTES.WORKSPACE_HOME)
+		},
+		[closeDocumentTab, navigate, setSelectedDocumentId, shellState.documentId],
+	)
+
 	function renderSidePanel() {
 		switch (shellState.activePanel) {
 			case 'search':
 				return <SearchPanel searchDraft={shellState.searchDraft} />
 			case 'library':
-				return <LibraryPanel />
+				return (
+					<LibraryPanel
+						documentId={shellState.documentId}
+						documentTitle={shellState.documentTitle}
+						isDocumentReady={shellState.isDocumentReady}
+					/>
+				)
 			case 'history':
-				return <HistoryPanel saveStatus={shellState.saveStatus} />
+				return (
+					<HistoryPanel
+						documentId={shellState.documentId}
+						documentTitle={shellState.documentTitle}
+						isDocumentReady={shellState.isDocumentReady}
+						saveStatus={shellState.saveStatus}
+					/>
+				)
 			case 'team':
 				return <TeamPanel />
 			case 'explorer':
 			default:
 				return (
 					<ExplorerPanel
+						documents={documents}
+						activeDocumentId={shellState.documentId}
 						documentId={shellState.documentId}
 						documentTitle={shellState.documentTitle}
+						onSelectDocument={openDocumentInWorkbench}
 					/>
 				)
 		}
@@ -90,6 +143,8 @@ function WorkbenchShellContent() {
 					fallbackDocumentId={shellState.documentId}
 					fallbackDocumentTitle={shellState.documentTitle}
 					isDocumentReady={shellState.isDocumentReady}
+					onSelectTab={openDocumentInWorkbench}
+					onCloseTab={handleCloseTab}
 				/>
 			</div>
 			<div className='col-start-3 col-span-2 row-start-3 min-w-0'>

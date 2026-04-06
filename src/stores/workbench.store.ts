@@ -45,6 +45,8 @@ type WorkbenchStoreState = {
 		onSearchChange?: (value: string) => void
 	}) => void
 	syncDocumentTab: (payload: { id: string; title: string }) => void
+	activateDocumentTab: (documentId: string) => void
+	closeDocumentTab: (documentId: string) => string | null
 	reset: () => void
 }
 
@@ -90,7 +92,7 @@ const initialWorkbenchState = {
 >
 
 // 工作台 store 统一承接创作态 UI、保存态和标题栏动作，不再分散在 editor store 与组件局部状态里。
-export const useWorkbenchStore = create<WorkbenchStoreState>((set) => ({
+export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
 	...initialWorkbenchState,
 	setActiveDocumentId: (activeDocumentId) => set({ activeDocumentId }),
 	setDocumentTitle: (documentTitle) => set({ documentTitle }),
@@ -119,9 +121,43 @@ export const useWorkbenchStore = create<WorkbenchStoreState>((set) => ({
 
 			return {
 				tabs,
+				activeDocumentId: id,
 				activeTabId: id,
 			}
 		}),
+	activateDocumentTab: (documentId) =>
+		set((state) => {
+			if (!state.tabs.some((tab) => tab.id === documentId)) {
+				return {
+					activeDocumentId: documentId,
+				}
+			}
+
+			return {
+				activeDocumentId: documentId,
+				activeTabId: documentId,
+			}
+		}),
+	closeDocumentTab: (documentId) => {
+		const { tabs, activeTabId } = get()
+		const tabIndex = tabs.findIndex((tab) => tab.id === documentId)
+
+		if (tabIndex === -1) {
+			return activeTabId
+		}
+
+		const nextTabs = tabs.filter((tab) => tab.id !== documentId)
+		const fallbackTab = nextTabs[Math.max(0, tabIndex - 1)] ?? nextTabs[tabIndex] ?? null
+		const nextActiveDocumentId = activeTabId === documentId ? fallbackTab?.id ?? null : activeTabId
+
+		set({
+			tabs: nextTabs,
+			activeTabId: nextActiveDocumentId,
+			activeDocumentId: nextActiveDocumentId,
+		})
+
+		return nextActiveDocumentId
+	},
 	reset: () => set(initialWorkbenchState),
 }))
 

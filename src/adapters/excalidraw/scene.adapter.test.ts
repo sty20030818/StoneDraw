@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	SceneValidationError,
+	applySceneToApi,
 	createInitialSceneData,
 	createSceneFingerprint,
 	deserializeScene,
@@ -175,5 +176,41 @@ describe('scene.adapter', () => {
 			gridSize: 16,
 		})
 		expect(initialData.files).toEqual({ fileB: { id: 'fileB' } })
+	})
+
+	test('恢复 scene 到 API 时应先补 files 再更新 scene', () => {
+		const payload = serializeScene(
+			'doc-7',
+			{
+				elements: [{ id: 'element-7' }] as never,
+				appState: {
+					viewBackgroundColor: '#fff',
+				} as never,
+				files: {
+					fileC: { id: 'fileC' },
+				} as never,
+			},
+			{ title: '恢复文档' },
+		)
+		const addFiles = vi.fn()
+		const updateScene = vi.fn()
+
+		applySceneToApi(
+			{
+				addFiles,
+				updateScene,
+			} as unknown as import('@excalidraw/excalidraw/types').ExcalidrawImperativeAPI,
+			payload,
+		)
+
+		expect(addFiles).toHaveBeenCalledWith([{ id: 'fileC' }])
+		expect(updateScene).toHaveBeenCalledTimes(1)
+		expect(updateScene).toHaveBeenCalledWith({
+			elements: [{ id: 'element-7' }],
+			appState: {
+				viewBackgroundColor: '#fff',
+			},
+			captureUpdate: 0,
+		})
 	})
 })

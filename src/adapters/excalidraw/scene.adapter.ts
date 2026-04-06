@@ -234,6 +234,14 @@ export function readSceneFromApi(api: ExcalidrawImperativeAPI, documentId: strin
 
 export function applySceneToApi(api: ExcalidrawImperativeAPI, scene: SceneFilePayload) {
 	const normalizedScene = deserializeScene(scene)
+	const files = Object.values(
+		normalizedScene.scene.files,
+	) as Parameters<ExcalidrawImperativeAPI['addFiles']>[0]
+
+	// Excalidraw 0.18 的 updateScene 不再接受 files，需要通过 addFiles 单独补齐二进制资源。
+	if (files.length > 0) {
+		api.addFiles(files)
+	}
 
 	api.updateScene({
 		elements: normalizedScene.scene.elements as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['elements'],

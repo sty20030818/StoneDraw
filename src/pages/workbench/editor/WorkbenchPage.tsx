@@ -1,24 +1,23 @@
-import type { ComponentProps } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { Excalidraw } from '@excalidraw/excalidraw'
-import '@excalidraw/excalidraw/index.css'
-import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import { FileSearchIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import EmptyState from '@/components/states/EmptyState'
 import { APP_ROUTES } from '@/constants/routes'
-import { clearEditorApi, createEditorInitialData, editorSaveSession, setEditorApi } from '@/modules/editor'
+import { clearEditorApi, editorSaveSession } from '@/modules/editor'
 import { documentService } from '@/services/documents/document.service'
 import { useDocumentStore } from '@/stores/document.store'
 import { useOverlayStore } from '@/stores/overlay.store'
 import { useWorkbenchStore } from '@/stores/workbench.store'
 import type { DocumentMeta, SceneFilePayload } from '@/types'
-import { CanvasShell, useWorkbenchShellController } from '@/workbench'
-
-type ExcalidrawOnChange = NonNullable<ComponentProps<typeof Excalidraw>['onChange']>
-type ExcalidrawChangeArgs = Parameters<ExcalidrawOnChange>
+import {
+	CanvasShell,
+	ExcalidrawHost,
+	normalizeWorkbenchScene,
+	useWorkbenchShellController,
+} from '@/workbench'
+import type { EditorContentChangePayload } from '@/workbench/editor-event-bridge'
 
 type WorkbenchLoadState =
 	| {
@@ -34,18 +33,6 @@ type WorkbenchLoadState =
 			document: DocumentMeta
 			scene: SceneFilePayload
 	  }
-
-const EXCALIDRAW_UI_OPTIONS = {
-	canvasActions: {
-		changeViewBackgroundColor: false,
-		clearCanvas: false,
-		export: false,
-		loadScene: false,
-		saveAsImage: false,
-		saveToActiveFile: false,
-		toggleTheme: false,
-	},
-} satisfies NonNullable<ComponentProps<typeof Excalidraw>['UIOptions']>
 
 const CANVAS_CARD_CLASS =
 	'flex h-full min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/82 shadow-sm backdrop-blur'
@@ -72,6 +59,7 @@ function WorkbenchPage() {
 	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
 	const lastSaveError = useWorkbenchStore((state) => state.lastSaveError)
 	const isFlushing = useWorkbenchStore((state) => state.isFlushing)
+	const isWorkbenchReady = useWorkbenchStore((state) => state.isWorkbenchReady)
 	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
 	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
 	const setSearchDraft = useWorkbenchStore((state) => state.setSearchDraft)
@@ -79,7 +67,6 @@ function WorkbenchPage() {
 	const [workbenchLoadState, setWorkbenchLoadState] = useState<WorkbenchLoadState>({
 		status: 'loading',
 	})
-	const latestApiIdRef = useRef<string | null>(null)
 	const latestSaveErrorRef = useRef<string | null>(null)
 
 	const handleManualSave = useCallback(async () => {
@@ -166,13 +153,24 @@ function WorkbenchPage() {
 				return
 			}
 
+			const normalizedScene = normalizeWorkbenchScene(openResult.data.scene, {
+				documentId: openResult.data.document.id,
+				title: openResult.data.document.title,
+			})
+
+			if (normalizedScene.recoveredFromFallback) {
+				toast('文档场景已回退为空白内容', {
+					description: '检测到损坏或不匹配的 current.scene，系统已自动切换为空白场景。',
+				})
+			}
+
 			// 工作台进入文档时同步刷新 Workspace 集合，保证最近打开与回退视图是最新状态。
 			syncWorkspaceCollections(openResult.data.collections)
 
 			setWorkbenchLoadState({
 				status: 'ready',
 				document: openResult.data.document,
-				scene: openResult.data.scene,
+				scene: normalizedScene.scene,
 			})
 		}
 
@@ -194,9 +192,9 @@ function WorkbenchPage() {
 			return
 		}
 
+		setWorkbenchReady(false)
 		setActiveDocumentId(workbenchLoadState.document.id)
 		setSelectedDocumentId(workbenchLoadState.document.id)
-		setWorkbenchReady(true)
 		syncDocumentTab({
 			id: workbenchLoadState.document.id,
 			title: workbenchLoadState.document.title,
@@ -204,41 +202,20 @@ function WorkbenchPage() {
 		editorSaveSession.initialize(workbenchLoadState.scene)
 	}, [setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady, syncDocumentTab, workbenchLoadState])
 
-	const initialData = useMemo(() => {
-		if (workbenchLoadState.status !== 'ready') {
-			return null
-		}
-
-		return createEditorInitialData(workbenchLoadState.scene)
-	}, [workbenchLoadState])
-
-	const handleSceneChange = useCallback(
-		(...args: ExcalidrawChangeArgs) => {
+	const handleContentChange = useCallback(
+		(payload: EditorContentChangePayload) => {
 			if (workbenchLoadState.status !== 'ready') {
 				return
 			}
 
-			const [elements, appState, files] = args
-			editorSaveSession.onSceneChange(workbenchLoadState.document, elements, appState, files)
+			editorSaveSession.onSceneChange(
+				workbenchLoadState.document,
+				payload.elements,
+				payload.appState,
+				payload.files,
+			)
 		},
 		[workbenchLoadState],
-	)
-
-	const handleApiReady = useCallback(
-		(api: ExcalidrawImperativeAPI) => {
-			if (!setEditorApi(api)) {
-				return
-			}
-
-			latestApiIdRef.current = api.id
-
-			queueMicrotask(() => {
-				if (latestApiIdRef.current === api.id) {
-					setWorkbenchReady(true)
-				}
-			})
-		},
-		[setWorkbenchReady],
 	)
 
 	useEffect(() => {
@@ -336,7 +313,7 @@ function WorkbenchPage() {
 						? workbenchLoadState.title
 						: '工作台正在准备文档',
 			searchDraft,
-			isDocumentReady: workbenchLoadState.status === 'ready',
+			isDocumentReady: isWorkbenchReady,
 			saveStatus,
 			isFlushing,
 			onBack: () => {
@@ -355,6 +332,7 @@ function WorkbenchPage() {
 		handleManualSave,
 		handleShareOverlay,
 		isFlushing,
+		isWorkbenchReady,
 		navigateToWorkspace,
 		patchShellState,
 		saveStatus,
@@ -383,17 +361,11 @@ function WorkbenchPage() {
 
 	return (
 		<CanvasShell className={CANVAS_CARD_CLASS}>
-			<div className='h-full min-h-0 w-full [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
-				<Excalidraw
-					UIOptions={EXCALIDRAW_UI_OPTIONS}
-					excalidrawAPI={handleApiReady}
-					initialData={initialData ?? undefined}
-					langCode='zh-CN'
-					onChange={handleSceneChange}
-					renderTopRightUI={() => null}
-					theme='light'
-				/>
-			</div>
+			<ExcalidrawHost
+				scene={workbenchLoadState.scene}
+				onContentChange={handleContentChange}
+				onReadyChange={setWorkbenchReady}
+			/>
 		</CanvasShell>
 	)
 }
