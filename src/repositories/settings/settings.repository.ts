@@ -1,6 +1,6 @@
-import { TAURI_COMMANDS } from '@/constants'
-import { invokeTauriCommand } from '@/infra/tauri'
-import type { TauriCommandResult } from '@/types'
+import { TAURI_COMMANDS } from '@/shared/constants'
+import { invokeTauriCommand } from '@/platform/tauri'
+import type { TauriCommandResult } from '@/shared/types'
 import type { AppSettings } from '@/services/settings.service'
 
 export const settingsRepository = {

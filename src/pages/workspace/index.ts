@@ -1,7 +1,0 @@
-export { default as ArchivePage } from './archive/ArchivePage'
-export { default as DocumentsPage } from './documents/DocumentsPage'
-export { default as HomePage } from './home/HomePage'
-export { default as SettingsPage } from './settings/SettingsPage'
-export { default as SearchCenterPage } from './search/SearchCenterPage'
-export { default as TeamPage } from './team/TeamPage'
-export { default as TemplatesPage } from './templates/TemplatesPage'

@@ -1,6 +1,6 @@
-import { TAURI_COMMANDS } from '@/constants'
-import { invokeTauriCommand } from '@/infra/tauri'
-import type { DatabaseHealthPayload, DatabaseSchemaVersionPayload, TauriCommandResult } from '@/types'
+import { TAURI_COMMANDS } from '@/shared/constants'
+import { invokeTauriCommand } from '@/platform/tauri'
+import type { DatabaseHealthPayload, DatabaseSchemaVersionPayload, TauriCommandResult } from '@/shared/types'
 
 export const databaseRepository = {
 	async initialize(correlationId?: string): Promise<TauriCommandResult<DatabaseHealthPayload>> {

@@ -1,5 +1,5 @@
 import { settingsRepository } from '@/repositories'
-import type { TauriCommandResult } from '@/types'
+import type { TauriCommandResult } from '@/shared/types'
 
 export type AppSettings = {
 	language: 'zh-CN'

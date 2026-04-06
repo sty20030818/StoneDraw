@@ -1,11 +1,6 @@
 import { useEffect } from 'react'
-import {
-	CommandPalette,
-	ExportDialog,
-	NewDocumentDialog,
-	RecoveryDialog,
-	ShareDialog,
-} from '@/overlay'
+import { RecoveryDialog, ShareDialog } from '@/features'
+import { CommandPalette, ExportDialog, NewDocumentDialog } from '@/overlay'
 import { useOverlayStore } from '@/stores/overlay.store'
 
 function OverlayRoot() {

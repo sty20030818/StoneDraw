@@ -1,4 +1,4 @@
-import type { DocumentMeta } from '@/types'
+import type { DocumentMeta } from '@/shared/types'
 
 export function createDocumentMeta(overrides: Partial<DocumentMeta> = {}): DocumentMeta {
 	return {

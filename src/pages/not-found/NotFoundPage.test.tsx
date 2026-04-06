@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, test } from 'vitest'
-import { APP_ROUTES } from '@/constants/routes'
+import { APP_ROUTES } from '@/shared/constants/routes'
 import { renderRoute } from '@/test/helpers/render-route'
 import NotFoundPage from './NotFoundPage'
 

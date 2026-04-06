@@ -1,5 +1,5 @@
 import { directoryRepository } from '@/repositories'
-import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/types'
+import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/shared/types'
 
 export const directoryService = {
 	async prepareLocalDirectories(): Promise<TauriCommandResult<LocalDirectoriesPayload>> {

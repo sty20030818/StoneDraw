@@ -50,20 +50,42 @@ PRD 中的版本路线图（V0.1 → V2.2）按「小版本逐步交付」拆分
 
 | 路径 | 说明 |
 | --- | --- |
-| `src/` | 前端应用：路由、页面、工作台/工作区布局、状态、Tauri 调用封装等 |
+| `src/app/` | 应用壳、路由、布局、启动编排与全局接线 |
+| `src/features/` | 按业务领域组织的正式真相源，例如 `documents / workspace / workbench / settings / search` |
+| `src/shared/` | 真正跨 feature 共享的 UI、hooks、constants、types、lib |
+| `src/platform/` | 平台接入层，当前统一承接 Tauri command client 与 logging |
+| `src/test/` | 测试辅助、fixtures、render helpers |
 | `src-tauri/` | Rust 侧：窗口、命令、本地目录与数据库等 |
 | `Documents/` | **产品与设计文档**（PRD、信息架构、线框、开发主线、任务拆解、历史原型） |
 
 ## 目录真相源与边界
 
-- `src/app`：应用壳、bootstrap runtime、全局布局与导航接线。
-- `src/pages`：页面入口与页面级编排，只依赖 `services`、`modules`、`stores`，不直接访问 `repositories`、`infra` 或底层 adapters。
-- `src/services`：应用服务层，负责业务动作编排，不直接暴露原始 Tauri bridge。
-- `src/repositories`：对象级数据访问与 command 映射，是前端访问本地能力的正式真相源。
-- `src/infra`：Tauri command bridge、结构化日志、运行时底层能力。
-- `src/domain`：跨层共享的领域类型与基础约束。
-- `src/workbench`、`src/overlay`、`src/app/navigation`：新的壳层真相源入口。
-- `src/components/navigation`、`src/components/workbench`、`src/components/overlays`：历史过渡目录，现阶段冻结，不再继续承接新的主壳层职责与业务编排。
+- `src/app`：只负责应用级装配，不承载具体业务实现。
+- `src/features`：业务功能的正式真相源。页面、服务、状态、面板、弹层优先收口到对应 feature。
+- `src/shared`：只放跨 feature 可复用能力，不承载单一业务规则。
+- `src/platform`：统一封装平台能力，避免业务层直接接触底层 bridge 与 logging 细节。
+- `src/test`：测试基础设施与共享测试数据。
+
+以下目录已进入 **legacy 冻结态**，仅允许保留兼容壳或历史过渡文件，不允许继续新增业务真相源：
+
+- `src/pages`
+- `src/services`
+- `src/repositories`
+- `src/stores`
+- `src/workbench`
+- `src/overlay`
+
+以下目录已在本轮重构中删除，后续不得重新引入：
+
+- `src/components/navigation`
+- `src/components/workbench`
+- `src/components/overlays`
+- `src/pages/editor`
+- `src/pages/settings`
+- `src/domain`
+- `src/modules`
+- `src/services/local/local-storage.service.ts`
+- `src/services/system.service.ts`
 
 ---
 
@@ -137,7 +159,7 @@ bun run format:check
 bun typecheck
 ```
 
-说明：`bun lint`、`bun format` 与 `bun run format:check` 基于 OXC。`bun run check` 现在会串联 `lint + typecheck + 架构边界检查 + 前端测试`，其中 `bun run check:architecture` 会检查页面层是否绕过 `service`，以及旧过渡目录是否继续承接新的底层职责。
+说明：`bun lint`、`bun format` 与 `bun run format:check` 基于 OXC。`bun run check` 现在会串联 `lint + typecheck + 架构边界检查 + 前端测试`，其中 `bun run check:architecture` 会检查三类问题：已删除 legacy 目录是否重新出现源码、legacy 冻结目录是否偷偷新增文件、`app / features / shared / platform` 是否重新依赖已废弃入口。
 
 ### 测试
 

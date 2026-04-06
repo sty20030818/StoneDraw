@@ -1,4 +1,4 @@
-import type { SceneFilePayload } from '@/types'
+import type { SceneFilePayload } from '@/shared/types'
 
 export type ExportPlaceholderResult = {
 	supported: false

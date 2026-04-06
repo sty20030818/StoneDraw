@@ -1,19 +1,19 @@
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { OverlayRoot, WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
-import { resolveSceneByPathname, APP_ROUTES } from '@/constants/routes'
-import { useAppStore } from '@/stores/app.store'
+import { resolveSceneByPathname, APP_ROUTES } from '@/shared/constants/routes'
 import {
 	ArchivePage,
 	DocumentsPage,
 	HomePage,
-	NotFoundPage,
 	SearchCenterPage,
 	SettingsPage,
 	TeamPage,
 	TemplatesPage,
 	WorkbenchPage,
-} from '@/pages'
+} from '@/features'
+import { useAppStore } from '@/stores/app.store'
+import { NotFoundPage } from '@/pages'
 
 function RouteStateSync() {
 	const location = useLocation()

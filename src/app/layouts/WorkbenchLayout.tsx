@@ -2,8 +2,8 @@ import { useCallback } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { WindowChrome } from '@/app/chrome'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
-import { APP_ROUTES, buildWorkbenchRoute } from '@/constants/routes'
-import { useDocumentStore } from '@/stores/document.store'
+import { APP_ROUTES, buildWorkbenchRoute } from '@/shared/constants/routes'
+import { useDocumentStore } from '@/features/documents'
 import {
 	ActivityBar,
 	ExplorerPanel,
@@ -17,8 +17,8 @@ import {
 	WorkbenchTabs,
 	WorkbenchTitleBar,
 	useWorkbenchShell,
-} from '@/workbench'
-import { useWorkbenchStore } from '@/stores/workbench.store'
+	useWorkbenchStore,
+} from '@/features/workbench'
 
 function WorkbenchShellContent() {
 	const navigate = useNavigate()

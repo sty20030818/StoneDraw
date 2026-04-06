@@ -1,4 +1,4 @@
-import type { DocumentVersionMeta } from '@/types'
+import type { DocumentVersionMeta } from '@/shared/types'
 
 export function createDocumentVersionMeta(overrides: Partial<DocumentVersionMeta> = {}): DocumentVersionMeta {
 	return {

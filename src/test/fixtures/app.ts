@@ -1,4 +1,4 @@
-import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/types'
+import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/shared/types'
 
 export function createLocalDirectoriesPayload(overrides: Partial<LocalDirectoriesPayload> = {}): LocalDirectoriesPayload {
 	return {

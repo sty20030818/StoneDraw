@@ -1,6 +1,6 @@
-import { TAURI_COMMANDS } from '@/constants'
-import { invokeTauriCommand } from '@/infra/tauri'
-import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/types'
+import { TAURI_COMMANDS } from '@/shared/constants'
+import { invokeTauriCommand } from '@/platform/tauri'
+import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/shared/types'
 
 export const directoryRepository = {
 	async prepareLocalDirectories(correlationId?: string): Promise<TauriCommandResult<LocalDirectoriesPayload>> {

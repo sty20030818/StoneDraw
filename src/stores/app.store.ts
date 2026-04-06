@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { APP_BOOT_STAGES } from '@/constants'
-import type { AppSceneKey } from '@/constants/routes'
-import { toIsoString } from '@/utils'
+import { APP_BOOT_STAGES } from '@/shared/constants'
+import type { AppSceneKey } from '@/shared/constants/routes'
+import { toIsoString } from '@/shared/lib'
 import type {
 	AppBootStage,
 	AppError,
@@ -11,7 +11,7 @@ import type {
 	DatabaseStatus,
 	LocalDirectoriesPayload,
 	LocalDirectoryStatus,
-} from '@/types'
+} from '@/shared/types'
 
 type AppStoreState = {
 	bootStage: AppBootStage

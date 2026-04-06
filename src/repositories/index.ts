@@ -1,6 +1,4 @@
-export { documentRepository } from './documents/document.repository'
-export { sceneRepository } from './documents/scene.repository'
-export { versionRepository } from './documents/version.repository'
+export { documentRepository, sceneRepository, versionRepository } from '@/features/documents'
 export { settingsRepository } from './settings/settings.repository'
 export { databaseRepository } from './system/database.repository'
 export { directoryRepository } from './system/directory.repository'

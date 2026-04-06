@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { CompassIcon } from 'lucide-react'
-import EmptyState from '@/components/states/EmptyState'
-import { APP_ROUTES } from '@/constants/routes'
+import EmptyState from '@/shared/components/EmptyState'
+import { APP_ROUTES } from '@/shared/constants/routes'
 
 function NotFoundPage() {
 	const navigate = useNavigate()

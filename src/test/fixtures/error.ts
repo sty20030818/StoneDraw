@@ -1,4 +1,4 @@
-import type { AppError } from '@/types'
+import type { AppError } from '@/shared/types'
 
 type CreateAppErrorInput = Partial<AppError> & Pick<AppError, 'code' | 'message'>
 

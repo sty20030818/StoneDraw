@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/ui/button'
 import {
 	Dialog,
 	DialogContent,
@@ -7,8 +7,8 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from '@/components/ui/dialog'
-import { APP_ROUTES } from '@/constants/routes'
+} from '@/shared/ui/dialog'
+import { APP_ROUTES } from '@/shared/constants/routes'
 import { useOverlayStore } from '@/stores/overlay.store'
 
 function CommandPalette() {

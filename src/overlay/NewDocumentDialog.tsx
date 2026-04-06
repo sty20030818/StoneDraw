@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
 import {
 	Dialog,
 	DialogContent,
@@ -10,10 +10,9 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from '@/components/ui/dialog'
-import { buildWorkbenchRoute } from '@/constants/routes'
-import { documentService } from '@/services/documents/document.service'
-import { useDocumentStore } from '@/stores/document.store'
+} from '@/shared/ui/dialog'
+import { buildWorkbenchRoute } from '@/shared/constants/routes'
+import { documentService, useDocumentStore } from '@/features/documents'
 import { useOverlayStore } from '@/stores/overlay.store'
 
 function NewDocumentDialog() {

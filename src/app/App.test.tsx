@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { APP_BOOT_STAGES } from '@/constants'
+import { APP_BOOT_STAGES } from '@/shared/constants'
 import { createDatabaseHealthPayload, createLocalDirectoriesPayload } from '@/test/fixtures/app'
 import { createAppError } from '@/test/fixtures/error'
 import { createDeferredPromise } from '@/test/helpers/deferred'
 import { useAppStore } from '@/stores/app.store'
-import type { BootstrapRuntimeResult } from '@/types'
+import type { BootstrapRuntimeResult } from '@/shared/types'
 
 const {
 	runBootstrapRuntimeMock,
@@ -21,7 +21,7 @@ vi.mock('@/app/AppRouter', () => ({
 	default: () => <div>应用路由已就绪</div>,
 }))
 
-vi.mock('@/components/feedback/AppToaster', () => ({
+vi.mock('@/shared/components/AppToaster', () => ({
 	default: () => <div>Toast 容器</div>,
 }))
 

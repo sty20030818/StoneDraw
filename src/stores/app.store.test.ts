@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { APP_BOOT_STAGES } from '@/constants'
+import { APP_BOOT_STAGES } from '@/shared/constants'
 import { createDatabaseHealthPayload, createLocalDirectoriesPayload } from '@/test/fixtures/app'
 import { createAppError } from '@/test/fixtures/error'
 import { useAppStore } from './app.store'

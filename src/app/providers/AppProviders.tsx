@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { DialogHostProvider } from '@/components/feedback/DialogHost'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { DialogHostProvider } from '@/shared/components/DialogHost'
+import { TooltipProvider } from '@/shared/ui/tooltip'
 
 type AppProvidersProps = {
 	children: ReactNode

@@ -1,0 +1,128 @@
+import { useDeferredValue, useMemo, useState } from 'react'
+import { FileStackIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
+import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
+import EmptyState from '@/shared/components/EmptyState'
+import {
+	useDocumentStore,
+	useWorkspaceDocuments,
+	WorkspaceDocumentCards,
+} from '@/features/documents'
+
+function DocumentsPage() {
+	const documents = useDocumentStore((state) => state.documents)
+	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
+	const collectionErrorMessage = useDocumentStore((state) => state.collectionErrorMessage)
+	const [searchDraft, setSearchDraft] = useState('')
+	const deferredSearchDraft = useDeferredValue(searchDraft)
+	const normalizedSearchDraft = useMemo(() => deferredSearchDraft.trim().toLowerCase(), [deferredSearchDraft])
+	const {
+		isCreating,
+		loadWorkspaceData,
+		handleCreateDocument,
+		handleOpenDocument,
+		handleRenameDocument,
+		handleMoveToTrash,
+	} = useWorkspaceDocuments()
+
+	const filteredDocuments = useMemo(() => {
+		if (!normalizedSearchDraft) {
+			return documents
+		}
+
+		return documents.filter((document) => {
+			const title = document.title.toLowerCase()
+			const scenePath = document.currentScenePath.toLowerCase()
+			return title.includes(normalizedSearchDraft) || scenePath.includes(normalizedSearchDraft)
+		})
+	}, [documents, normalizedSearchDraft])
+
+	const hasSearchQuery = normalizedSearchDraft.length > 0
+
+	return (
+		<div className='grid gap-5'>
+			<section className='rounded-[1.75rem] border border-border/70 bg-card/78 p-5'>
+				<div className='flex flex-wrap items-center justify-between gap-3'>
+					<div className='relative min-w-64 flex-1'>
+						<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+						<Input
+							type='search'
+							className='pl-9'
+							value={searchDraft}
+							onChange={(event) => {
+								setSearchDraft(event.target.value)
+							}}
+							placeholder='搜索文档标题或路径'
+						/>
+					</div>
+					<div className='flex flex-wrap items-center gap-2'>
+						<Button
+							type='button'
+							variant='outline'
+							onClick={() => {
+								void loadWorkspaceData()
+							}}>
+							<RefreshCwIcon data-icon='inline-start' />
+							刷新列表
+						</Button>
+						<Button
+							type='button'
+							disabled={isCreating}
+							onClick={() => {
+								void handleCreateDocument()
+							}}>
+							{isCreating ? '正在创建' : '新建文档'}
+						</Button>
+					</div>
+				</div>
+			</section>
+
+			{collectionStatus === 'loading' ? (
+				<div className='rounded-[1.75rem] border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
+					正在读取 Documents 页面文档列表...
+				</div>
+			) : null}
+
+			{collectionStatus === 'error' ? (
+				<EmptyState
+					title='文档列表读取失败'
+					description={collectionErrorMessage ?? '文档列表读取失败，请重新加载。'}
+					icon={FileStackIcon}
+					actionLabel='重新加载'
+					onAction={() => {
+						void loadWorkspaceData()
+					}}
+				/>
+			) : null}
+
+			{collectionStatus === 'ready' && filteredDocuments.length === 0 ? (
+				<EmptyState
+					title={hasSearchQuery ? '没有搜索结果' : '还没有文档'}
+					description={
+						hasSearchQuery
+							? '当前搜索条件下没有匹配文档，试试更短的关键词或路径片段。'
+							: 'Documents 页面现在已经成为正式文档主库入口，可以直接从这里创建第一份文档。'
+					}
+					icon={FileStackIcon}
+					actionLabel='新建第一份文档'
+					onAction={() => {
+						void handleCreateDocument()
+					}}
+				/>
+			) : null}
+
+			{collectionStatus === 'ready' && filteredDocuments.length > 0 ? (
+				<WorkspaceDocumentCards
+					documents={filteredDocuments}
+					onOpen={(documentId) => {
+						void handleOpenDocument(documentId)
+					}}
+					onRename={handleRenameDocument}
+					onMoveToTrash={handleMoveToTrash}
+				/>
+			) : null}
+		</div>
+	)
+}
+
+export default DocumentsPage

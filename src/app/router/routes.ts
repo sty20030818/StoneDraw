@@ -1,7 +1,7 @@
 import {
 	APP_ROUTES,
 	type AppRoutePath,
-} from '@/constants/routes'
+} from '@/shared/constants/routes'
 
 export type WorkspaceNavItem = {
 	key: 'home' | 'documents' | 'templates' | 'search' | 'archive' | 'team' | 'settings'

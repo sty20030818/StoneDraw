@@ -10,7 +10,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 	invoke: invokeMock,
 }))
 
-vi.mock('@/infra/logging', () => ({
+vi.mock('@/platform/logging', () => ({
 	logger: {
 		info: loggerInfoMock,
 		error: loggerErrorMock,

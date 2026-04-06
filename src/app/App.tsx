@@ -4,9 +4,9 @@ import AppRouter from '@/app/AppRouter'
 import { runBootstrapRuntime } from '@/app/bootstrap'
 import { WindowChrome } from '@/app/chrome'
 import { AppShell } from '@/app/layouts'
-import { APP_BOOT_STAGES } from '@/constants'
-import EmptyState from '@/components/states/EmptyState'
-import LoadingState from '@/components/states/LoadingState'
+import { APP_BOOT_STAGES } from '@/shared/constants'
+import EmptyState from '@/shared/components/EmptyState'
+import LoadingState from '@/shared/components/LoadingState'
 import { useAppStore } from '@/stores'
 
 function App() {

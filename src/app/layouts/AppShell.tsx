@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import AppProviders from '@/app/providers/AppProviders'
-import AppToaster from '@/components/feedback/AppToaster'
+import AppToaster from '@/shared/components/AppToaster'
 
 type AppShellProps = {
 	children: ReactNode

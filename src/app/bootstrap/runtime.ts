@@ -1,7 +1,7 @@
 import { databaseRepository, directoryRepository } from '@/repositories'
-import { logger } from '@/infra/logging'
-import { createId, toIsoString } from '@/utils'
-import type { BootstrapHealthSnapshot, BootstrapRuntimeResult } from '@/types'
+import { logger } from '@/platform/logging'
+import { createId, toIsoString } from '@/shared/lib'
+import type { BootstrapHealthSnapshot, BootstrapRuntimeResult } from '@/shared/types'
 
 const DATABASE_FILE_NAME = 'app.db'
 

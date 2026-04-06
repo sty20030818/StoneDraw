@@ -4,8 +4,8 @@ import type {
 	ExcalidrawImperativeAPI,
 	ExcalidrawInitialDataState,
 } from '@excalidraw/excalidraw/types'
-import { toTimestamp } from '@/utils'
-import type { SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload } from '@/types'
+import { toTimestamp } from '@/shared/lib'
+import type { SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload } from '@/shared/types'
 
 const CAPTURE_UPDATE_NEVER = 0 as unknown as Parameters<ExcalidrawImperativeAPI['updateScene']>[0]['captureUpdate']
 const DEFAULT_SCHEMA_VERSION = 1

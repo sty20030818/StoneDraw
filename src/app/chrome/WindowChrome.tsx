@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { MinusIcon, SearchIcon, SquareIcon, XIcon } from 'lucide-react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { Input } from '@/components/ui/input'
-import { APP_ROUTES } from '@/constants/routes'
+import { Input } from '@/shared/ui/input'
+import { APP_ROUTES } from '@/shared/constants/routes'
 import { useAppStore } from '@/stores/app.store'
 import { useOverlayStore } from '@/stores/overlay.store'
-import { useWorkbenchStore } from '@/stores/workbench.store'
+import { useWorkbenchStore } from '@/features/workbench'
 
 async function runWindowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
 	try {
@@ -86,19 +86,19 @@ function WindowChrome() {
 	}
 
 	return (
-		<header className='grid h-11 shrink-0 grid-cols-[minmax(0,1fr)_8.5rem] border-b border-border/60 bg-[linear-gradient(180deg,rgba(249,251,255,0.96),rgba(244,247,253,0.9))] backdrop-blur supports-[backdrop-filter]:bg-[linear-gradient(180deg,rgba(249,251,255,0.88),rgba(244,247,253,0.78))]'>
+		<header className='grid h-11 shrink-0 grid-cols-[minmax(0,1fr)_8.5rem] border-b border-border/60 bg-[linear-gradient(180deg,rgba(249,251,255,0.96),rgba(244,247,253,0.9))] backdrop-blur supports-backdrop-filter:bg-[linear-gradient(180deg,rgba(249,251,255,0.88),rgba(244,247,253,0.78))]'>
 			<div className='flex h-full items-center gap-3 px-5'>
 				<div
 					data-tauri-drag-region
 					className='h-full min-w-8 flex-1'
 				/>
 				<form
-					className='window-chrome-no-drag flex w-full max-w-[28rem] shrink-0 items-center'
+					className='window-chrome-no-drag flex w-full max-w-md shrink-0 items-center'
 					onSubmit={(event) => {
 						event.preventDefault()
 						submitChromeSearch()
 					}}>
-					<div className='relative w-full max-w-[28rem]'>
+					<div className='relative w-full max-w-md'>
 						<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
 						<Input
 							type='search'
