@@ -40,37 +40,36 @@ function WorkbenchTitleBar({
 	const isSavePending = saveStatus === 'saving' || isFlushing
 
 	return (
-		<header className='flex shrink-0 flex-wrap items-center justify-between gap-4 bg-background/86 px-5 py-4'>
+		<header className='flex shrink-0 items-center justify-between gap-4 border-b border-border/60 bg-white/92 px-5 py-3'>
 			<div className='flex min-w-0 items-center gap-4'>
 				<Button
 					type='button'
-					size='lg'
 					variant='outline'
-					className='rounded-2xl bg-white/80 px-4'
+					className='h-9 rounded-xl bg-white px-3 shadow-sm'
 					onClick={onBack}>
 					<ArrowLeftIcon data-icon='inline-start' />
-					返回工作区
+					工作区
 				</Button>
 				<div className='min-w-0'>
-					<p className='text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground'>Workbench</p>
-					<div className='mt-2 flex min-w-0 items-center gap-3'>
-						<h2 className='truncate text-lg font-semibold tracking-tight'>
+					<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>Workbench</p>
+					<div className='mt-1.5 flex min-w-0 items-center gap-3'>
+						<h2 className='truncate font-[Bahnschrift,"Microsoft_YaHei_UI",sans-serif] text-[1.1rem] leading-none font-bold tracking-[0.02em]'>
 							{isDocumentReady ? documentTitle : '工作台正在准备文档'}
 						</h2>
 						<span
-							className={`inline-flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-xs font-medium ${statusMeta.className}`}>
+							className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full px-3 text-[11px] font-medium ${statusMeta.className}`}>
 							{statusMeta.label}
 						</span>
 					</div>
 				</div>
 			</div>
 
-			<div className='flex min-w-[20rem] flex-1 items-center justify-end gap-3'>
-				<div className='relative w-full max-w-xl'>
+			<div className='flex min-w-[20rem] flex-1 items-center justify-end gap-2.5'>
+				<div className='relative w-full max-w-[28rem]'>
 					<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
 					<Input
 						type='search'
-						className='pl-9'
+						className='h-9 rounded-full border-border/70 bg-[#f6f8fc] pl-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]'
 						value={searchDraft}
 						disabled={!isDocumentReady}
 						onChange={(event) => {
@@ -81,27 +80,29 @@ function WorkbenchTitleBar({
 				</div>
 				<Button
 					type='button'
-					size='icon-lg'
 					variant='outline'
-					className='rounded-2xl bg-white/80'
+					className='size-9 rounded-xl bg-white shadow-sm'
 					title='导出'
 					onClick={onExport}>
 					<DownloadIcon />
 				</Button>
 				<Button
 					type='button'
-					size='icon-lg'
 					variant='outline'
-					className='rounded-2xl bg-white/80'
+					className='size-9 rounded-xl bg-white shadow-sm'
 					title='更多'
 					onClick={onMore}>
 					<MoreHorizontalIcon />
 				</Button>
 				<Button
 					type='button'
-					size='lg'
 					variant={saveStatus === 'error' ? 'default' : 'outline'}
-					className='rounded-2xl px-4'
+					className={[
+						'h-9 rounded-xl px-4 shadow-sm',
+						saveStatus === 'error'
+							? 'bg-[linear-gradient(135deg,#8f1d1d,#d92d20)] text-white'
+							: 'bg-[linear-gradient(135deg,#1234a8,#1b4dff)] text-white hover:brightness-105',
+					].join(' ')}
 					title='保存'
 					disabled={!isDocumentReady || isSavePending}
 					onClick={onSave}>

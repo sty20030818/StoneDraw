@@ -9,10 +9,8 @@ type AppShellProps = {
 function AppShell({ children }: AppShellProps) {
 	return (
 		<AppProviders>
-			<div className='h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.98))] px-3 py-3 md:px-4 md:py-4'>
-				<div className='mx-auto flex h-full min-h-0 max-w-400 flex-col overflow-hidden'>
-					{children}
-				</div>
+			<div className='flex h-screen min-h-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(27,77,255,0.09),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.08),transparent_22%),linear-gradient(180deg,#f7f9fd_0%,#ebf0f7_100%)]'>
+				<div className='flex min-h-0 flex-1 flex-col overflow-hidden'>{children}</div>
 			</div>
 			<AppToaster />
 		</AppProviders>

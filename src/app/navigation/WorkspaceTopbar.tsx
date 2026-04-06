@@ -13,15 +13,19 @@ function WorkspaceTopbar() {
 		WORKSPACE_NAV_ITEMS.find((item) => item.path === location.pathname) ?? WORKSPACE_NAV_ITEMS[0]
 
 	return (
-		<header className='flex shrink-0 items-center justify-between gap-4 border-b border-border/70 bg-background/86 px-5 py-4'>
-			<div>
-				<p className='text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground'>当前页面</p>
-				<h2 className='mt-2 text-lg font-semibold tracking-tight'>{activeItem.label}</h2>
+		<header className='flex shrink-0 items-center justify-between gap-4 border-b border-border/60 bg-white/90 px-6 py-4'>
+			<div className='min-w-0'>
+				<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>Shell Direction</p>
+				<h2 className='mt-2 truncate font-[Bahnschrift,"Microsoft_YaHei_UI",sans-serif] text-[1.35rem] leading-none font-bold tracking-[0.02em]'>
+					{activeItem.label}
+				</h2>
+				<p className='mt-2 text-sm text-muted-foreground'>{activeItem.description}</p>
 			</div>
-			<div className='flex items-center gap-2'>
+			<div className='flex items-center gap-2.5'>
 				<Button
 					type='button'
 					variant='outline'
+					className='h-9 rounded-xl bg-white px-4 shadow-sm'
 					onClick={() => {
 						navigate(APP_ROUTES.WORKSPACE_SEARCH)
 					}}>
@@ -30,6 +34,7 @@ function WorkspaceTopbar() {
 				</Button>
 				<Button
 					type='button'
+					className='h-9 rounded-xl bg-[linear-gradient(135deg,#1234a8,#1b4dff)] px-4 text-white shadow-[0_10px_24px_rgba(27,77,255,0.22)] hover:brightness-105'
 					onClick={() => {
 						openOverlay('new-document', {
 							source: 'workspace-topbar',
@@ -41,6 +46,7 @@ function WorkspaceTopbar() {
 				<Button
 					type='button'
 					variant='outline'
+					className='h-9 rounded-xl bg-white px-4 shadow-sm'
 					onClick={() => {
 						navigate(APP_ROUTES.WORKSPACE_SETTINGS)
 					}}>

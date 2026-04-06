@@ -63,8 +63,9 @@
 	body {
 		@apply min-w-80 antialiased bg-background text-foreground overflow-hidden select-none;
 		background-image:
-			radial-gradient(circle at top, rgb(92 128 255 / 0.18), transparent 40%),
-			linear-gradient(180deg, #f5f7fb 0%, #edf2f7 100%);
+			radial-gradient(circle at top left, rgb(27 77 255 / 0.12), transparent 28%),
+			radial-gradient(circle at bottom right, rgb(34 197 94 / 0.08), transparent 24%),
+			linear-gradient(180deg, #f7f9fd 0%, #ebf0f7 100%);
 		font-family: var(--font-sans);
 		font-synthesis: none;
 		text-rendering: optimizeLegibility;
@@ -96,6 +97,16 @@
 
 	.scrollbar-hidden::-webkit-scrollbar {
 		display: none;
+	}
+
+	.window-chrome-no-drag {
+		-webkit-app-region: no-drag;
+		app-region: no-drag;
+	}
+
+	.tauri-no-drag {
+		-webkit-app-region: no-drag;
+		app-region: no-drag;
 	}
 }
 

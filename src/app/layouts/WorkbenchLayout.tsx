@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { WindowChrome } from '@/app/chrome'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import {
 	ActivityBar,
@@ -23,6 +24,13 @@ function WorkbenchShellContent() {
 	const isSidePanelOpen = useWorkbenchStore((state) => state.isSidePanelOpen)
 	const isRightPanelOpen = useWorkbenchStore((state) => state.isRightPanelOpen)
 	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === shellState.activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
+	const shellGridClass = isSidePanelOpen
+		? isRightPanelOpen
+			? 'grid-cols-[3.5rem_17rem_minmax(0,1fr)_18rem]'
+			: 'grid-cols-[3.5rem_17rem_minmax(0,1fr)_0rem]'
+		: isRightPanelOpen
+			? 'grid-cols-[3.5rem_0rem_minmax(0,1fr)_18rem]'
+			: 'grid-cols-[3.5rem_0rem_minmax(0,1fr)_0rem]'
 
 	function renderSidePanel() {
 		switch (shellState.activePanel) {
@@ -46,22 +54,36 @@ function WorkbenchShellContent() {
 	}
 
 	return (
-		<section className='flex h-full min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/82 shadow-sm backdrop-blur'>
-			<ActivityBar
-				activePanel={shellState.activePanel}
-				onPanelChange={setActivePanel}
-			/>
+		<section
+			className={[
+				'grid h-full min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,rgba(244,247,252,0.72),rgba(233,239,248,0.9))]',
+				shellGridClass,
+				'grid-rows-[2.75rem_2.625rem_4rem_minmax(0,1fr)_2rem]',
+			].join(' ')}>
+			<div className='row-span-5'>
+				<ActivityBar
+					activePanel={shellState.activePanel}
+					onPanelChange={setActivePanel}
+				/>
+			</div>
 
 			{isSidePanelOpen ? (
-				<aside className='flex w-72 shrink-0 flex-col border-r border-border/70 bg-card/72 p-4'>
-					<p className='text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground'>Side Panel</p>
-					<h2 className='mt-2 text-base font-semibold tracking-tight'>{activeItem.label}</h2>
-					<p className='mt-2 text-sm leading-6 text-muted-foreground'>{activeItem.description}</p>
-					<div className='mt-4 min-h-0 flex-1 overflow-auto'>{renderSidePanel()}</div>
+				<aside className='row-span-5 flex min-h-0 flex-col border-r border-border/60 bg-[rgba(250,251,255,0.9)]'>
+					<div
+						data-tauri-drag-region
+						className='flex h-[42px] items-center justify-between border-b border-border/60 px-4'>
+						<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>{activeItem.label}</p>
+						<span className='tauri-no-drag text-sm text-muted-foreground'>＋</span>
+					</div>
+					<div className='px-4 pt-3 text-sm text-muted-foreground'>{activeItem.description}</div>
+					<div className='min-h-0 flex-1 overflow-auto px-3 py-3'>{renderSidePanel()}</div>
 				</aside>
 			) : null}
 
-			<div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+			<div className='col-start-3 col-span-2 row-start-1 min-w-0'>
+				<WindowChrome />
+			</div>
+			<div className='col-start-3 col-span-2 row-start-2 min-w-0'>
 				<WorkbenchTabs
 					tabs={tabs}
 					activeTabId={activeTabId}
@@ -69,6 +91,8 @@ function WorkbenchShellContent() {
 					fallbackDocumentTitle={shellState.documentTitle}
 					isDocumentReady={shellState.isDocumentReady}
 				/>
+			</div>
+			<div className='col-start-3 col-span-2 row-start-3 min-w-0'>
 				<WorkbenchTitleBar
 					documentTitle={shellState.documentTitle}
 					searchDraft={shellState.searchDraft}
@@ -81,11 +105,14 @@ function WorkbenchShellContent() {
 					onMore={shellState.onMore}
 					onSearchChange={shellState.onSearchChange}
 				/>
+			</div>
 
-				<div className='min-h-0 flex-1 overflow-auto bg-background/58 p-5'>
+			<div className='col-start-3 row-start-4 min-h-0 overflow-auto bg-[radial-gradient(circle_at_center,rgba(27,77,255,0.08),transparent_34%)]'>
+				<div className='min-h-0 h-full overflow-auto bg-[radial-gradient(rgba(80,101,141,0.14)_1px,transparent_1px)] [background-size:22px_22px]'>
 					<Outlet />
 				</div>
-
+			</div>
+			<div className='col-start-3 col-span-2 row-start-5 min-w-0'>
 				<StatusBar
 					activePanel={shellState.activePanel}
 					documentId={shellState.documentId}
@@ -95,12 +122,14 @@ function WorkbenchShellContent() {
 			</div>
 
 			{isRightPanelOpen ? (
-				<RightPanel
-					documentId={shellState.documentId}
-					documentTitle={shellState.documentTitle}
-					isDocumentReady={shellState.isDocumentReady}
-					saveStatus={shellState.saveStatus}
-				/>
+				<div className='col-start-4 row-start-3 row-span-2 min-h-0'>
+					<RightPanel
+						documentId={shellState.documentId}
+						documentTitle={shellState.documentTitle}
+						isDocumentReady={shellState.isDocumentReady}
+						saveStatus={shellState.saveStatus}
+					/>
+				</div>
 			) : null}
 		</section>
 	)

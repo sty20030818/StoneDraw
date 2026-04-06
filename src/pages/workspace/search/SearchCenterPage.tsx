@@ -1,7 +1,16 @@
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { SearchIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 function SearchCenterPage() {
+	const [searchParams] = useSearchParams()
+	const [searchDraft, setSearchDraft] = useState(searchParams.get('q') ?? '')
+
+	useEffect(() => {
+		setSearchDraft(searchParams.get('q') ?? '')
+	}, [searchParams])
+
 	return (
 		<div className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
 			<h3 className='text-lg font-semibold tracking-tight'>SearchCenter 页面容器</h3>
@@ -12,7 +21,11 @@ function SearchCenterPage() {
 				<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
 				<Input
 					type='search'
+					value={searchDraft}
 					className='pl-9'
+					onChange={(event) => {
+						setSearchDraft(event.target.value)
+					}}
 					placeholder='搜索中心占位：后续接入真实检索能力'
 				/>
 			</div>

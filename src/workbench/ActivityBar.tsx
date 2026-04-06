@@ -24,7 +24,11 @@ type ActivityBarProps = {
 
 function ActivityBar({ activePanel, onPanelChange }: ActivityBarProps) {
 	return (
-		<aside className='flex w-18 shrink-0 flex-col items-center gap-3 border-r border-border/70 bg-card/78 px-3 py-4'>
+		<aside className='flex h-full w-full shrink-0 flex-col items-center gap-2 border-r border-border/60 bg-[rgba(246,248,252,0.92)] px-2 py-3'>
+			<div
+				data-tauri-drag-region
+				className='h-8 w-full shrink-0 rounded-[12px]'
+			/>
 			{WORKBENCH_ACTIVITY_ITEMS.map((item) => {
 				const Icon = panelIcons[item.key]
 				const isActive = item.key === activePanel
