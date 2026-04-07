@@ -8,5 +8,5 @@ export {
 } from '@/features/workbench'
 export type { AppSettings } from './settings.service'
 export { settingsService } from './settings.service'
-export { createFailureResult, createSuccessResult, invokeTauriCommand } from './tauri.service'
+export { createFailureResult, createSuccessResult, invokeTauriCommand } from '@/platform/tauri'
 export { editorService } from '@/features/workbench'

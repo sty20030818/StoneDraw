@@ -13,7 +13,7 @@ import {
 	WorkbenchPage,
 } from '@/features'
 import { useAppStore } from '@/stores/app.store'
-import { NotFoundPage } from '@/pages'
+import NotFoundPage from '@/pages/not-found/NotFoundPage'
 
 function RouteStateSync() {
 	const location = useLocation()
