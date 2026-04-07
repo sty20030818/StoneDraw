@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/shared/ui/button'
@@ -6,17 +6,28 @@ import { Input } from '@/shared/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { buildWorkbenchRoute } from '@/shared/constants/routes'
 import { documentService, useDocumentStore } from '@/features/documents'
+import { workspaceCollectionsService } from '@/features/workspace/services'
+import { useWorkspaceStore } from '@/features/workspace/state'
 import { useOverlayStore } from '../state'
 
 function NewDocumentDialog() {
 	const navigate = useNavigate()
-	const activeOverlay = useOverlayStore((state) => state.activeOverlay)
-	const closeOverlay = useOverlayStore((state) => state.closeOverlay)
+	const activeDialog = useOverlayStore((state) => state.activeDialog)
+	const closeDialog = useOverlayStore((state) => state.closeDialog)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
-	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
+	const syncWorkspaceCollections = useWorkspaceStore((state) => state.syncWorkspaceCollections)
 	const [title, setTitle] = useState('未命名文档')
 	const [isCreating, setIsCreating] = useState(false)
-	const isOpen = activeOverlay === 'new-document'
+	const isOpen = activeDialog?.kind === 'new-document'
+
+	useEffect(() => {
+		if (!isOpen) {
+			setTitle('未命名文档')
+			return
+		}
+
+		setTitle(activeDialog.defaultTitle ?? '未命名文档')
+	}, [activeDialog, isOpen])
 
 	async function handleCreateDocument() {
 		const normalizedTitle = title.trim() || '未命名文档'
@@ -29,9 +40,14 @@ function NewDocumentDialog() {
 			return
 		}
 
-		syncWorkspaceCollections(result.data.collections)
+		const collectionsResult = await workspaceCollectionsService.loadCollections()
+
+		if (collectionsResult.ok) {
+			syncWorkspaceCollections(collectionsResult.data)
+		}
+
 		setSelectedDocumentId(result.data.document.id)
-		closeOverlay()
+		closeDialog()
 		navigate(buildWorkbenchRoute(result.data.document.id))
 	}
 
@@ -40,13 +56,13 @@ function NewDocumentDialog() {
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open) {
-					closeOverlay()
+					closeDialog()
 				}
 			}}>
 			<DialogContent className='sm:max-w-lg'>
 				<DialogHeader>
 					<DialogTitle>新建文档</DialogTitle>
-					<DialogDescription>这里开始收口统一的新建入口，后续可继续扩展模板、来源和预设。</DialogDescription>
+					<DialogDescription>正式主链只保留一个新建入口，创建后直接进入工作台继续编辑。</DialogDescription>
 				</DialogHeader>
 				<div className='grid gap-3'>
 					<label className='grid gap-2'>
@@ -64,7 +80,7 @@ function NewDocumentDialog() {
 					<Button
 						type='button'
 						variant='outline'
-						onClick={closeOverlay}>
+						onClick={closeDialog}>
 						取消
 					</Button>
 					<Button

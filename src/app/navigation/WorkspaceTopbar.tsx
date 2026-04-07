@@ -8,7 +8,7 @@ import { APP_ROUTES } from '@/shared/constants/routes'
 function WorkspaceTopbar() {
 	const location = useLocation()
 	const navigate = useNavigate()
-	const openOverlay = useOverlayStore((state) => state.openOverlay)
+	const openNewDocumentDialog = useOverlayStore((state) => state.openNewDocumentDialog)
 	const activeItem = WORKSPACE_NAV_ITEMS.find((item) => item.path === location.pathname) ?? WORKSPACE_NAV_ITEMS[0]
 
 	return (
@@ -35,7 +35,7 @@ function WorkspaceTopbar() {
 					type='button'
 					className='h-9 rounded-xl bg-[linear-gradient(135deg,#1234a8,#1b4dff)] px-4 text-white shadow-[0_10px_24px_rgba(27,77,255,0.22)] hover:brightness-105'
 					onClick={() => {
-						openOverlay('new-document', {
+						openNewDocumentDialog({
 							source: 'workspace-topbar',
 						})
 					}}>

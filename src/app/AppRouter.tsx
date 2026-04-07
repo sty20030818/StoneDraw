@@ -3,14 +3,10 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import { OverlayRoot, WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
 import { NotFoundPage } from '@/app/router'
 import { resolveSceneByPathname, APP_ROUTES } from '@/shared/constants/routes'
-import {
-	ArchivePage,
-	DocumentsPage,
-	HomePage,
-	SettingsPage,
-	WorkbenchPage,
-} from '@/features'
 import { useAppStore } from '@/app/state'
+import { SettingsPage } from '@/features/settings'
+import { WorkbenchPage } from '@/features/workbench'
+import { ArchivePage, DocumentsPage, HomePage } from '@/features/workspace'
 
 function RouteStateSync() {
 	const location = useLocation()

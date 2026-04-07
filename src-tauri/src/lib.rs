@@ -1,5 +1,6 @@
-pub mod commands;
-pub mod storage;
+mod application;
+mod commands;
+mod storage;
 
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 

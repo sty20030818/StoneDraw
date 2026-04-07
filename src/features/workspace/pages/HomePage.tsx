@@ -1,23 +1,29 @@
 import { FolderOpenIcon } from 'lucide-react'
 import EmptyState from '@/shared/components/EmptyState'
-import { HomeQuickActions, RecentDocumentList, useDocumentStore, useWorkspaceDocuments } from '@/features/documents'
+import { HomeQuickActions, RecentDocumentList } from '@/features/documents'
+import { useOverlayStore } from '@/features/overlays'
+import { useWorkspaceDocuments } from '@/features/workspace/hooks'
+import { useWorkspaceStore } from '@/features/workspace/state'
 
 function HomePage() {
-	const recentDocuments = useDocumentStore((state) => state.recentDocuments)
-	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
-	const { handleCreateDocument, handleOpenDocument } = useWorkspaceDocuments()
+	const recentDocuments = useWorkspaceStore((state) => state.recentDocuments)
+	const collectionStatus = useWorkspaceStore((state) => state.collectionStatus)
+	const openNewDocumentDialog = useOverlayStore((state) => state.openNewDocumentDialog)
+	const { handleOpenDocument } = useWorkspaceDocuments()
 
 	return (
 		<div className='grid gap-5'>
 			<section className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
 				<h3 className='text-lg font-semibold tracking-tight'>继续工作页</h3>
 				<p className='mt-3 text-sm leading-6 text-muted-foreground'>
-					Home 现在正式承担继续工作与快速开始的入口，不再只是临时占位页。
+					Home 正式承担继续工作与快速开始的入口，直接承接最近文档与新建动作。
 				</p>
 				<HomeQuickActions
 					recentDocuments={recentDocuments}
 					onCreate={() => {
-						void handleCreateDocument()
+						openNewDocumentDialog({
+							source: 'home-page',
+						})
 					}}
 					onContinue={() => {
 						const firstDocument = recentDocuments[0]

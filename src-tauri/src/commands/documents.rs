@@ -1,12 +1,12 @@
 use tauri::AppHandle;
 
-use crate::storage::documents::{
+use crate::application::documents::{
     create_document, get_document_by_id, list_documents, list_recent_documents,
     list_document_versions, list_trashed_documents, move_document_to_trash, open_document,
     open_document_scene, permanently_delete_document, rename_document, restore_document,
-    save_document_scene, create_document_version, DocumentMetaPayload, DocumentVersionPayload,
-    SceneFilePayload,
+    save_document_scene, create_document_version,
 };
+use crate::storage::documents::{DocumentMetaPayload, DocumentVersionPayload, SceneFilePayload};
 
 use super::{command_result, CommandError, CommandResult};
 

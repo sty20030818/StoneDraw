@@ -122,7 +122,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 					<div className='min-w-0'>
 						<p className='text-sm font-medium'>History</p>
 						<p className='mt-2 text-xs leading-5 text-muted-foreground'>
-							当前只接入手动版本创建与版本列表，回滚与 Recovery 仍留在后续阶段。
+							当前面板只提供手动版本创建与版本列表，聚焦正式主链已经交付的版本能力。
 						</p>
 					</div>
 					<button

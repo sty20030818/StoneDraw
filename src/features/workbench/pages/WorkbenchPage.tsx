@@ -1,8 +1,7 @@
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { FileSearchIcon } from 'lucide-react'
 import EmptyState from '@/shared/components/EmptyState'
-import { useOverlayStore } from '@/features/overlays'
 import { ExcalidrawHost } from '@/features/workbench/editor'
 import { useWorkbenchStore } from '@/features/workbench/state'
 import { CanvasShell, useWorkbenchShellController } from '@/features/workbench/ui'
@@ -28,7 +27,6 @@ function WorkbenchPage() {
 	const [searchParams] = useSearchParams()
 	const documentId = searchParams.get('documentId')
 	const { patchShellActions, resetShellActions } = useWorkbenchShellController()
-	const openOverlay = useOverlayStore((state) => state.openOverlay)
 	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
 	const lastSaveError = useWorkbenchStore((state) => state.lastSaveError)
 	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
@@ -48,22 +46,6 @@ function WorkbenchPage() {
 
 	useWorkbenchSaveFeedback(lastSaveError)
 
-	const handleExportOverlay = useCallback(() => {
-		openOverlay('export', {
-			documentId,
-			documentTitle: workbenchLoadState.status === 'ready' ? workbenchLoadState.document.title : undefined,
-			source: 'workbench-titlebar',
-		})
-	}, [documentId, openOverlay, workbenchLoadState])
-
-	const handleShareOverlay = useCallback(() => {
-		openOverlay('share', {
-			documentId,
-			documentTitle: workbenchLoadState.status === 'ready' ? workbenchLoadState.document.title : undefined,
-			source: 'workbench-titlebar',
-		})
-	}, [documentId, openOverlay, workbenchLoadState])
-
 	useEffect(() => {
 		patchShellActions({
 			onBack: () => {
@@ -73,17 +55,8 @@ function WorkbenchPage() {
 				void handleManualSave()
 			},
 			onCreateVersion: handleCreateVersion,
-			onExport: handleExportOverlay,
-			onMore: handleShareOverlay,
 		})
-	}, [
-		handleExportOverlay,
-		handleCreateVersion,
-		handleManualSave,
-		handleShareOverlay,
-		navigateToWorkspace,
-		patchShellActions,
-	])
+	}, [handleCreateVersion, handleManualSave, navigateToWorkspace, patchShellActions])
 
 	if (workbenchLoadState.status === 'error') {
 		return (

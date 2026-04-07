@@ -5,9 +5,6 @@ import { createScenePayload } from '@/test/fixtures/scene'
 
 const createMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 const getByIdMock = vi.fn<(...args: never[]) => Promise<unknown>>()
-const listMock = vi.fn<(...args: never[]) => Promise<unknown>>()
-const listRecentMock = vi.fn<(...args: never[]) => Promise<unknown>>()
-const listTrashedMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 const openMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 const renameMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 const moveToTrashMock = vi.fn<(...args: never[]) => Promise<unknown>>()
@@ -19,9 +16,6 @@ vi.mock('@/features/documents/api', () => ({
 	documentRepository: {
 		create: createMock,
 		getById: getByIdMock,
-		list: listMock,
-		listRecent: listRecentMock,
-		listTrashed: listTrashedMock,
 		open: openMock,
 		rename: renameMock,
 		moveToTrash: moveToTrashMock,
@@ -37,9 +31,6 @@ describe('document.service', () => {
 	beforeEach(() => {
 		createMock.mockReset()
 		getByIdMock.mockReset()
-		listMock.mockReset()
-		listRecentMock.mockReset()
-		listTrashedMock.mockReset()
 		openMock.mockReset()
 		renameMock.mockReset()
 		moveToTrashMock.mockReset()
@@ -56,18 +47,6 @@ describe('document.service', () => {
 		getByIdMock.mockResolvedValue({
 			ok: true,
 			data: document,
-		})
-		listMock.mockResolvedValue({
-			ok: true,
-			data: [document],
-		})
-		listRecentMock.mockResolvedValue({
-			ok: true,
-			data: [document],
-		})
-		listTrashedMock.mockResolvedValue({
-			ok: true,
-			data: [],
 		})
 		openMock.mockResolvedValue({
 			ok: true,
@@ -104,24 +83,7 @@ describe('document.service', () => {
 		})
 	})
 
-	test('loadWorkspaceCollections 应统一装载三组集合', async () => {
-		const { documentService } = await import('./document.service')
-
-		const result = await documentService.loadWorkspaceCollections()
-
-		expect(result.ok).toBe(true)
-		if (!result.ok) {
-			throw new Error('集合装载应成功')
-		}
-		expect(result.data.documents).toHaveLength(1)
-		expect(result.data.recentDocuments).toHaveLength(1)
-		expect(result.data.trashedDocuments).toHaveLength(0)
-		expect(listMock).toHaveBeenCalledTimes(1)
-		expect(listRecentMock).toHaveBeenCalledTimes(1)
-		expect(listTrashedMock).toHaveBeenCalledTimes(1)
-	})
-
-	test('createBlankDocument 应返回文档与最新集合', async () => {
+	test('createBlankDocument 应只返回创建后的文档', async () => {
 		const { documentService } = await import('./document.service')
 
 		const result = await documentService.createBlankDocument('新文档')
@@ -132,10 +94,9 @@ describe('document.service', () => {
 			throw new Error('createBlankDocument 应成功')
 		}
 		expect(result.data.document.id).toBe('doc-test-1')
-		expect(result.data.collections.documents).toHaveLength(1)
 	})
 
-	test('openDocument 应执行正式打开动作并返回 scene 与集合', async () => {
+	test('openDocument 应执行正式打开动作并返回 scene', async () => {
 		const { documentService } = await import('./document.service')
 
 		const result = await documentService.openDocument('doc-test-1')
@@ -148,7 +109,6 @@ describe('document.service', () => {
 		}
 		expect(result.data.document.id).toBe('doc-test-1')
 		expect(result.data.scene.documentId).toBe('doc-test-1')
-		expect(result.data.collections.recentDocuments).toHaveLength(1)
 	})
 
 	test('openDocument 在 scene 读取失败时应返回失败', async () => {
@@ -168,7 +128,7 @@ describe('document.service', () => {
 		expect(await documentService.openDocument('doc-open')).toEqual(failureResult)
 	})
 
-	test('renameDocument、trashDocument、restoreDocument 应返回带集合的结果', async () => {
+	test('renameDocument、trashDocument、restoreDocument 应返回文档结果', async () => {
 		const { documentService } = await import('./document.service')
 
 		const renameResult = await documentService.renameDocument('doc-rename', '标题')
@@ -183,7 +143,7 @@ describe('document.service', () => {
 		expect(restoreResult.ok).toBe(true)
 	})
 
-	test('permanentlyDeleteDocument 成功后应重新装载集合', async () => {
+	test('permanentlyDeleteDocument 成功后应返回原始删除结果', async () => {
 		const { documentService } = await import('./document.service')
 
 		const result = await documentService.permanentlyDeleteDocument('doc-delete')
@@ -193,6 +153,6 @@ describe('document.service', () => {
 		if (!result.ok) {
 			throw new Error('permanentlyDeleteDocument 应成功')
 		}
-		expect(result.data.documents).toHaveLength(1)
+		expect(result.data).toBeUndefined()
 	})
 })

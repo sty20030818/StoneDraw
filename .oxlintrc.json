@@ -45,7 +45,7 @@
 		"tsconfig*.tsbuildinfo",
 		"node_modules/**",
 		"src-tauri/**",
-		"Documents/**",
+		"docs/**",
 		"openspec/**",
 		".DS_Store"
 	]

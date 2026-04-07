@@ -42,11 +42,9 @@ export type SceneFilePayload = {
 
 export type CreateDocumentSuccessPayload = {
 	document: DocumentMeta
-	collections: WorkspaceDocumentCollections
 }
 
 export type OpenDocumentSuccessPayload = {
 	document: DocumentMeta
 	scene: SceneFilePayload
-	collections: WorkspaceDocumentCollections
 }

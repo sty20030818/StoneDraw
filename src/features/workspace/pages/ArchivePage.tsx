@@ -1,16 +1,15 @@
 import { RotateCcwIcon } from 'lucide-react'
-import { useDialogHost } from '@/shared/components/DialogHost'
 import { Button } from '@/shared/ui/button'
 import EmptyState from '@/shared/components/EmptyState'
-import { useDocumentStore, useWorkspaceDocuments } from '@/features/documents'
 import { useOverlayStore } from '@/features/overlays'
 import { formatDateTime } from '@/shared/lib/date'
+import { useWorkspaceDocuments } from '@/features/workspace/hooks'
+import { useWorkspaceStore } from '@/features/workspace/state'
 
 function ArchivePage() {
-	const trashedDocuments = useDocumentStore((state) => state.trashedDocuments)
-	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
-	const openOverlay = useOverlayStore((state) => state.openOverlay)
-	const { openConfirmDialog } = useDialogHost()
+	const trashedDocuments = useWorkspaceStore((state) => state.trashedDocuments)
+	const collectionStatus = useWorkspaceStore((state) => state.collectionStatus)
+	const openConfirmDialog = useOverlayStore((state) => state.openConfirmDialog)
 	const { handleRestoreDocument, handlePermanentlyDeleteDocument } = useWorkspaceDocuments()
 
 	return (
@@ -20,20 +19,8 @@ function ArchivePage() {
 					<h3 className='text-lg font-semibold tracking-tight'>Archive 页面容器</h3>
 					<p className='mt-2 text-sm leading-6 text-muted-foreground'>回收与历史页现在承接回收站文档恢复入口。</p>
 				</div>
-				<div className='flex items-center gap-2'>
-					<Button
-						type='button'
-						variant='outline'
-						onClick={() => {
-							openOverlay('recovery', {
-								source: 'archive-page',
-							})
-						}}>
-						打开恢复中心
-					</Button>
-					<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
-						{trashedDocuments.length} 个已删除
-					</div>
+				<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
+					{trashedDocuments.length} 个已删除
 				</div>
 			</div>
 
@@ -77,7 +64,7 @@ function ArchivePage() {
 				<div className='mt-5'>
 					<EmptyState
 						title='回收站为空'
-						description='当前没有已删除文档，后续版本会在这里继续补齐历史与恢复能力。'
+						description='当前没有已删除文档，删除到回收站后的内容会统一在这里恢复或彻底清理。'
 						icon={RotateCcwIcon}
 					/>
 				</div>

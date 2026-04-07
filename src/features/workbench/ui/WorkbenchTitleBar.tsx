@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, DownloadIcon, LoaderCircleIcon, MoreHorizontalIcon, SaveIcon } from 'lucide-react'
+import { ArrowLeftIcon, LoaderCircleIcon, SaveIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import type { SaveStatus } from '@/shared/types'
 import { resolveSaveStatusMeta } from './save-status'
@@ -10,8 +10,6 @@ type WorkbenchTitleBarProps = {
 	isFlushing: boolean
 	onBack: () => void
 	onSave: () => void
-	onExport: () => void
-	onMore: () => void
 }
 
 function WorkbenchTitleBar({
@@ -21,8 +19,6 @@ function WorkbenchTitleBar({
 	isFlushing,
 	onBack,
 	onSave,
-	onExport,
-	onMore,
 }: WorkbenchTitleBarProps) {
 	const statusMeta = resolveSaveStatusMeta(saveStatus)
 	const isSavePending = saveStatus === 'saving' || isFlushing
@@ -52,26 +48,10 @@ function WorkbenchTitleBar({
 				</div>
 			</div>
 
-			<div className='flex min-w-[20rem] flex-1 items-center justify-end gap-2.5'>
+			<div className='flex min-w-[16rem] flex-1 items-center justify-end gap-2.5'>
 				<div className='inline-flex h-9 items-center rounded-full border border-border/70 bg-[#f6f8fc] px-4 text-sm text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]'>
 					本地版本工作台
 				</div>
-				<Button
-					type='button'
-					variant='outline'
-					className='size-9 rounded-xl bg-white shadow-sm'
-					title='导出'
-					onClick={onExport}>
-					<DownloadIcon />
-				</Button>
-				<Button
-					type='button'
-					variant='outline'
-					className='size-9 rounded-xl bg-white shadow-sm'
-					title='更多'
-					onClick={onMore}>
-					<MoreHorizontalIcon />
-				</Button>
 				<Button
 					type='button'
 					variant={saveStatus === 'error' ? 'default' : 'outline'}

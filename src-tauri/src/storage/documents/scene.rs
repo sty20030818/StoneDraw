@@ -10,7 +10,7 @@ use serde_json::{Map, Value};
 use crate::commands::CommandError;
 use crate::storage::directories::{document_path_layout, DocumentPathLayout};
 
-use super::meta::{get_document_by_id_from_root, update_document_after_scene_save, DocumentMetaPayload};
+use super::meta::{get_document_by_id_from_root, DocumentMetaPayload};
 use super::{current_timestamp_ms, default_document_title_owned, default_schema_version, DEFAULT_SCHEMA_VERSION};
 
 #[cfg(windows)]
@@ -59,6 +59,13 @@ pub struct SceneFilePayload {
     pub meta: SceneMetaPayload,
 }
 
+#[derive(Debug, Clone)]
+pub struct DocumentSceneWriteResult {
+    pub document_id: String,
+    pub scene_path: String,
+    pub updated_at: i64,
+}
+
 pub fn open_document_scene_from_root(
     root_dir_path: &Path,
     document_id: &str,
@@ -82,10 +89,10 @@ pub fn open_document_scene_from_root(
     Ok(scene_payload)
 }
 
-pub fn save_document_scene_from_root(
+pub fn write_document_scene_from_root(
     root_dir_path: &Path,
     mut scene_payload: SceneFilePayload,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> Result<DocumentSceneWriteResult, CommandError> {
     let document_id = scene_payload.document_id.trim().to_string();
 
     if document_id.is_empty() {
@@ -103,7 +110,23 @@ pub fn save_document_scene_from_root(
     let scene_path = ensure_document_scene_ready(root_dir_path, &existing_document)?;
     write_scene_file(scene_path.as_path(), &scene_payload)?;
 
-    if let Err(error) = update_document_after_scene_save(root_dir_path, &document_id, saved_at) {
+    Ok(DocumentSceneWriteResult {
+        document_id,
+        scene_path: scene_path.display().to_string(),
+        updated_at: saved_at,
+    })
+}
+
+#[cfg(test)]
+pub(super) fn save_document_scene_from_root(
+    root_dir_path: &Path,
+    scene_payload: SceneFilePayload,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let write_result = write_document_scene_from_root(root_dir_path, scene_payload)?;
+
+    if let Err(error) =
+        super::meta::update_document_after_scene_save(root_dir_path, &write_result.document_id, write_result.updated_at)
+    {
         let details = error.details.as_deref().unwrap_or_default();
         let details_suffix = if details.is_empty() {
             String::new()
@@ -113,15 +136,15 @@ pub fn save_document_scene_from_root(
 
         return Err(
             error
-                .with_object_id(document_id.clone())
+                .with_object_id(write_result.document_id.clone())
                 .with_details(format!(
-                    "documentId={document_id}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
-                    scene_path.display()
+                    "documentId={}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
+                    write_result.document_id, write_result.scene_path
                 )),
         );
     }
 
-    get_document_by_id_from_root(root_dir_path, &document_id)
+    get_document_by_id_from_root(root_dir_path, &write_result.document_id)
 }
 
 pub(super) fn scene_relative_path(layout: &DocumentPathLayout) -> String {
@@ -137,7 +160,7 @@ pub(super) fn scene_relative_path(layout: &DocumentPathLayout) -> String {
         .to_string()
 }
 
-pub(super) fn ensure_document_scene_ready(
+pub fn ensure_document_scene_ready(
     root_dir_path: &Path,
     document_meta: &DocumentMetaPayload,
 ) -> Result<PathBuf, CommandError> {

@@ -6,8 +6,6 @@ type WorkbenchShellState = {
 	onBack: () => void
 	onSave: () => void
 	onCreateVersion: () => Promise<TauriCommandResult<DocumentVersionMeta> | null>
-	onExport: () => void
-	onMore: () => void
 }
 
 const noop = () => undefined
@@ -17,8 +15,6 @@ const initialShellState: WorkbenchShellState = {
 	onBack: noop,
 	onSave: noop,
 	onCreateVersion: asyncNoop,
-	onExport: noop,
-	onMore: noop,
 }
 
 const WorkbenchShellContext = createContext<{
@@ -39,9 +35,7 @@ export function WorkbenchShellProvider({ children }: PropsWithChildren) {
 			if (
 				currentState.onBack === nextState.onBack &&
 				currentState.onSave === nextState.onSave &&
-				currentState.onCreateVersion === nextState.onCreateVersion &&
-				currentState.onExport === nextState.onExport &&
-				currentState.onMore === nextState.onMore
+				currentState.onCreateVersion === nextState.onCreateVersion
 			) {
 				return currentState
 			}

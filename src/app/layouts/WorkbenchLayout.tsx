@@ -4,6 +4,7 @@ import { WindowChrome } from '@/app/chrome'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import { APP_ROUTES, buildWorkbenchRoute } from '@/shared/constants/routes'
 import { useDocumentStore } from '@/features/documents'
+import { useWorkspaceStore } from '@/features/workspace/state'
 import {
 	ActivityBar,
 	ExplorerPanel,
@@ -20,7 +21,7 @@ import {
 function WorkbenchShellContent() {
 	const navigate = useNavigate()
 	const { shellState, setActivePanel } = useWorkbenchShell()
-	const documents = useDocumentStore((state) => state.documents)
+	const documents = useWorkspaceStore((state) => state.documents)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
 	const activeDocumentId = useWorkbenchStore((state) => state.activeDocumentId)
 	const documentTitle = useWorkbenchStore((state) => state.documentTitle)
@@ -148,8 +149,6 @@ function WorkbenchShellContent() {
 					isFlushing={isFlushing}
 					onBack={shellState.onBack}
 					onSave={shellState.onSave}
-					onExport={shellState.onExport}
-					onMore={shellState.onMore}
 				/>
 			</div>
 

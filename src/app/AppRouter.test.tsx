@@ -3,12 +3,18 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { resetHashRoute, setHashRoute } from '@/test/helpers/hash-route'
 
-vi.mock('@/features', () => ({
+vi.mock('@/features/settings', () => ({
+	SettingsPage: () => <div>设置页面</div>,
+}))
+
+vi.mock('@/features/workbench', () => ({
+	WorkbenchPage: () => <div>工作台页面</div>,
+}))
+
+vi.mock('@/features/workspace', () => ({
 	ArchivePage: () => <div>归档页面</div>,
 	DocumentsPage: () => <div>文档页面</div>,
 	HomePage: () => <div>首页页面</div>,
-	SettingsPage: () => <div>设置页面</div>,
-	WorkbenchPage: () => <div>工作台页面</div>,
 }))
 
 vi.mock('@/app/router/NotFoundPage', () => ({

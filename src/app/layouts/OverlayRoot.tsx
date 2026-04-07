@@ -1,37 +1,10 @@
-import { useEffect } from 'react'
-import { CommandPalette, ExportDialog, NewDocumentDialog, RecoveryDialog, ShareDialog, useOverlayStore } from '@/features/overlays'
+import { ConfirmDialog, NewDocumentDialog } from '@/features/overlays'
 
 function OverlayRoot() {
-	const openOverlay = useOverlayStore((state) => state.openOverlay)
-
-	useEffect(() => {
-		function handleKeyDown(event: KeyboardEvent) {
-			const isCommandPaletteShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k'
-
-			if (!isCommandPaletteShortcut) {
-				return
-			}
-
-			event.preventDefault()
-			openOverlay('command-palette', {
-				source: 'keyboard-shortcut',
-			})
-		}
-
-		window.addEventListener('keydown', handleKeyDown)
-
-		return () => {
-			window.removeEventListener('keydown', handleKeyDown)
-		}
-	}, [openOverlay])
-
 	return (
 		<>
-			<CommandPalette />
 			<NewDocumentDialog />
-			<ExportDialog />
-			<RecoveryDialog />
-			<ShareDialog />
+			<ConfirmDialog />
 		</>
 	)
 }

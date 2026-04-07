@@ -4,24 +4,21 @@ import { FileStackIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import EmptyState from '@/shared/components/EmptyState'
-import { useDocumentStore, useWorkspaceDocuments, WorkspaceDocumentCards } from '@/features/documents'
+import { WorkspaceDocumentCards } from '@/features/documents'
+import { useOverlayStore } from '@/features/overlays'
+import { useWorkspaceDocuments } from '@/features/workspace/hooks'
+import { useWorkspaceStore } from '@/features/workspace/state'
 
 function DocumentsPage() {
 	const [searchParams] = useSearchParams()
-	const documents = useDocumentStore((state) => state.documents)
-	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
-	const collectionErrorMessage = useDocumentStore((state) => state.collectionErrorMessage)
+	const documents = useWorkspaceStore((state) => state.documents)
+	const collectionStatus = useWorkspaceStore((state) => state.collectionStatus)
+	const collectionErrorMessage = useWorkspaceStore((state) => state.collectionErrorMessage)
+	const openNewDocumentDialog = useOverlayStore((state) => state.openNewDocumentDialog)
 	const [searchDraft, setSearchDraft] = useState('')
 	const deferredSearchDraft = useDeferredValue(searchDraft)
 	const normalizedSearchDraft = useMemo(() => deferredSearchDraft.trim().toLowerCase(), [deferredSearchDraft])
-	const {
-		isCreating,
-		loadWorkspaceData,
-		handleCreateDocument,
-		handleOpenDocument,
-		handleRenameDocument,
-		handleMoveToTrash,
-	} = useWorkspaceDocuments()
+	const { loadWorkspaceData, handleOpenDocument, handleRenameDocument, handleMoveToTrash } = useWorkspaceDocuments()
 
 	useEffect(() => {
 		setSearchDraft(searchParams.get('q') ?? '')
@@ -68,11 +65,12 @@ function DocumentsPage() {
 						</Button>
 						<Button
 							type='button'
-							disabled={isCreating}
 							onClick={() => {
-								void handleCreateDocument()
+								openNewDocumentDialog({
+									source: 'workspace-page',
+								})
 							}}>
-							{isCreating ? '正在创建' : '新建文档'}
+							新建文档
 						</Button>
 					</div>
 				</div>
@@ -107,7 +105,9 @@ function DocumentsPage() {
 					icon={FileStackIcon}
 					actionLabel='新建第一份文档'
 					onAction={() => {
-						void handleCreateDocument()
+						openNewDocumentDialog({
+							source: 'workspace-page',
+						})
 					}}
 				/>
 			) : null}

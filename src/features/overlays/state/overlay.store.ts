@@ -1,36 +1,57 @@
 import { create } from 'zustand'
 
-type OverlayKey = 'command-palette' | 'new-document' | 'export' | 'recovery' | 'share'
+type OverlaySource = 'workspace-topbar' | 'workspace-page' | 'home-page' | 'window-chrome' | 'archive-page'
 
-type OverlayContext = {
-	documentId?: string | null
-	documentTitle?: string
-	source?: string
+type NewDocumentOverlay = {
+	kind: 'new-document'
+	source?: OverlaySource
+	defaultTitle?: string
 }
 
+type ConfirmDialogOverlay = {
+	kind: 'confirm-dialog'
+	title: string
+	description: string
+	confirmLabel?: string
+	cancelLabel?: string
+	secondaryActionLabel?: string
+	onConfirm?: () => void
+	onSecondaryAction?: () => void
+}
+
+type OverlayState = NewDocumentOverlay | ConfirmDialogOverlay | null
+
 type OverlayStoreState = {
-	activeOverlay: OverlayKey | null
-	context: OverlayContext | null
-	openOverlay: (overlay: OverlayKey, context?: OverlayContext) => void
-	closeOverlay: () => void
+	activeDialog: OverlayState
+	openNewDocumentDialog: (payload?: Omit<NewDocumentOverlay, 'kind'>) => void
+	openConfirmDialog: (payload: Omit<ConfirmDialogOverlay, 'kind'>) => void
+	closeDialog: () => void
 	reset: () => void
 }
 
 const initialOverlayState = {
-	activeOverlay: null,
-	context: null,
-} satisfies Pick<OverlayStoreState, 'activeOverlay' | 'context'>
+	activeDialog: null,
+} satisfies Pick<OverlayStoreState, 'activeDialog'>
 
-// Overlay store 统一管理应用级瞬时界面，避免页面各自维护命令面板、新建和导出入口。
+// Overlay store 只保留正式主链还在使用的弹层能力，避免占位入口继续留在运行时。
 export const useOverlayStore = create<OverlayStoreState>((set) => ({
 	...initialOverlayState,
-	openOverlay: (activeOverlay, context) =>
+	openNewDocumentDialog: (payload) =>
 		set({
-			activeOverlay,
-			context: context ?? null,
+			activeDialog: {
+				kind: 'new-document',
+				...payload,
+			},
 		}),
-	closeOverlay: () => set(initialOverlayState),
+	openConfirmDialog: (payload) =>
+		set({
+			activeDialog: {
+				kind: 'confirm-dialog',
+				...payload,
+			},
+		}),
+	closeDialog: () => set(initialOverlayState),
 	reset: () => set(initialOverlayState),
 }))
 
-export type { OverlayContext, OverlayKey }
+export type { ConfirmDialogOverlay, NewDocumentOverlay, OverlaySource, OverlayState }

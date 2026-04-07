@@ -4,8 +4,6 @@ use crate::commands::CommandError;
 
 #[path = "documents/meta.rs"]
 mod meta;
-#[path = "documents/repository.rs"]
-mod repository;
 #[path = "documents/scene.rs"]
 mod scene;
 #[path = "documents/versions.rs"]
@@ -19,27 +17,32 @@ const DEFAULT_SAVE_STATUS: &str = "saved";
 const DEFAULT_SCHEMA_VERSION: i64 = 1;
 const DEFAULT_VERSION_KIND: &str = "manual";
 
-pub use meta::{
-    create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
+pub(crate) use meta::{
+    create_document_from_root, delete_document_records_from_root,
+    get_document_by_id_any_from_root, get_document_by_id_from_root,
+    get_trashed_document_by_id_from_root, list_documents_from_root,
     list_recent_documents_from_root, list_trashed_documents_from_root,
-    move_document_to_trash_from_root, open_document_from_root,
-    permanently_delete_document_from_root, rename_document_from_root,
-    restore_document_from_root, DocumentMetaPayload,
+    mark_document_restored_from_root, mark_document_trashed_from_root,
+    record_document_opened_from_root, rename_document_from_root,
+    update_document_after_scene_save, DocumentMetaPayload,
 };
-pub use repository::{
-    create_document, create_document_version, get_document_by_id, list_document_versions,
-    list_documents, list_recent_documents, list_trashed_documents,
-    move_document_to_trash, open_document, open_document_scene,
-    permanently_delete_document, rename_document, restore_document, save_document_scene,
+pub(crate) use scene::{
+    ensure_document_scene_ready, open_document_scene_from_root,
+    write_document_scene_from_root, DocumentSceneWriteResult,
+    SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
 };
-pub use scene::{
-    open_document_scene_from_root, save_document_scene_from_root, SceneEnvelopePayload,
-    SceneFilePayload, SceneMetaPayload,
-};
-pub use versions::{
+pub(crate) use versions::{
     create_document_version_from_root, list_document_versions_from_root,
     DocumentVersionPayload,
 };
+
+#[cfg(test)]
+use meta::{
+    move_document_to_trash_from_root, open_document_from_root,
+    permanently_delete_document_from_root, restore_document_from_root,
+};
+#[cfg(test)]
+use scene::save_document_scene_from_root;
 
 fn default_document_title_owned() -> String {
     DEFAULT_DOCUMENT_TITLE.into()

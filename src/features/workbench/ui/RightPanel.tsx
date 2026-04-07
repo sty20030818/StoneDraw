@@ -33,7 +33,7 @@ function RightPanel({ documentId, documentTitle, isDocumentReady, saveStatus }: 
 					<p className='mt-2 text-xs leading-5 text-muted-foreground'>{statusMeta.summary}</p>
 				</div>
 				<div className='mx-4 rounded-[16px] border border-dashed border-border/70 bg-[#f7f9fd] p-4 text-sm leading-6 text-muted-foreground'>
-					当前阶段先固定右栏位置，后续继续接入属性面板、评论、导出与分享相关能力。
+					右栏当前用于承载文档上下文与保存状态，避免工作台同时挂入未收口的附加入口。
 				</div>
 			</div>
 		</aside>

@@ -4,7 +4,6 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Input } from '@/shared/ui/input'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import { useAppStore } from '@/app/state'
-import { useOverlayStore } from '@/features/overlays'
 import { detectDesktopShellPlatform } from './platform-shell'
 
 async function runWindowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
@@ -47,7 +46,6 @@ function WindowChrome() {
 	const shellPlatform = detectDesktopShellPlatform()
 	const isMacShell = shellPlatform === 'mac'
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
-	const openOverlay = useOverlayStore((state) => state.openOverlay)
 	const [chromeSearchDraft, setChromeSearchDraft] = useState('')
 
 	useEffect(() => {
@@ -58,9 +56,7 @@ function WindowChrome() {
 		const trimmedDraft = chromeSearchDraft.trim()
 
 		if (!trimmedDraft) {
-			openOverlay('command-palette', {
-				source: 'window-chrome',
-			})
+			window.location.hash = APP_ROUTES.WORKSPACE_DOCUMENTS
 			return
 		}
 

@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useDialogHost } from '@/shared/components/DialogHost'
 import { buildWorkbenchRoute } from '@/shared/constants/routes'
 import type { DocumentMeta } from '@/shared/types'
-import { documentService } from '../services'
-import { useDocumentStore } from '../state'
+import { documentService, useDocumentStore } from '@/features/documents'
+import { useOverlayStore } from '@/features/overlays'
+import { workspaceCollectionsService } from '@/features/workspace/services'
+import { useWorkspaceStore } from '@/features/workspace/state'
 
 type WorkspaceDocumentsActions = {
-	isCreating: boolean
 	loadWorkspaceData: () => Promise<void>
-	handleCreateDocument: () => Promise<void>
 	handleOpenDocument: (documentId: string) => Promise<void>
 	handleRenameDocument: (documentId: string, title: string) => Promise<boolean>
 	handleMoveToTrash: (document: DocumentMeta) => void
@@ -18,18 +17,21 @@ type WorkspaceDocumentsActions = {
 	handlePermanentlyDeleteDocument: (document: DocumentMeta) => Promise<void>
 }
 
+async function refreshWorkspaceCollections() {
+	return workspaceCollectionsService.loadCollections()
+}
+
 export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsActions {
 	const navigate = useNavigate()
-	const { openConfirmDialog } = useDialogHost()
-	const startCollectionLoading = useDocumentStore((state) => state.startCollectionLoading)
-	const failCollectionLoading = useDocumentStore((state) => state.failCollectionLoading)
+	const openConfirmDialog = useOverlayStore((state) => state.openConfirmDialog)
+	const startCollectionLoading = useWorkspaceStore((state) => state.startCollectionLoading)
+	const failCollectionLoading = useWorkspaceStore((state) => state.failCollectionLoading)
+	const syncWorkspaceCollections = useWorkspaceStore((state) => state.syncWorkspaceCollections)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
-	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
-	const [isCreating, setIsCreating] = useState(false)
 
 	const loadWorkspaceData = useCallback(async () => {
 		startCollectionLoading()
-		const collectionsResult = await documentService.loadWorkspaceCollections()
+		const collectionsResult = await refreshWorkspaceCollections()
 
 		if (!collectionsResult.ok) {
 			failCollectionLoading(collectionsResult.error.message)
@@ -47,21 +49,6 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 		void loadWorkspaceData()
 	}, [autoLoad, loadWorkspaceData])
 
-	const handleCreateDocument = useCallback(async () => {
-		setIsCreating(true)
-		const result = await documentService.createBlankDocument('未命名文档')
-		setIsCreating(false)
-
-		if (!result.ok) {
-			toast.error(result.error.message)
-			return
-		}
-
-		syncWorkspaceCollections(result.data.collections)
-		setSelectedDocumentId(result.data.document.id)
-		navigate(buildWorkbenchRoute(result.data.document.id))
-	}, [navigate, setSelectedDocumentId, syncWorkspaceCollections])
-
 	const handleOpenDocument = useCallback(
 		async (documentId: string) => {
 			const result = await documentService.openDocument(documentId)
@@ -73,7 +60,12 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 				return
 			}
 
-			syncWorkspaceCollections(result.data.collections)
+			const collectionsResult = await refreshWorkspaceCollections()
+
+			if (collectionsResult.ok) {
+				syncWorkspaceCollections(collectionsResult.data)
+			}
+
 			setSelectedDocumentId(result.data.document.id)
 			navigate(buildWorkbenchRoute(result.data.document.id))
 		},
@@ -96,7 +88,12 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 				return false
 			}
 
-			syncWorkspaceCollections(result.data.collections)
+			const collectionsResult = await refreshWorkspaceCollections()
+
+			if (collectionsResult.ok) {
+				syncWorkspaceCollections(collectionsResult.data)
+			}
+
 			toast.success('文档标题已更新。')
 			return true
 		},
@@ -112,7 +109,12 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 				return
 			}
 
-			syncWorkspaceCollections(result.data.collections)
+			const collectionsResult = await refreshWorkspaceCollections()
+
+			if (collectionsResult.ok) {
+				syncWorkspaceCollections(collectionsResult.data)
+			}
+
 			toast.success(`已将《${document.title}》移动到回收站。`)
 		},
 		[syncWorkspaceCollections],
@@ -142,7 +144,12 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 				return
 			}
 
-			syncWorkspaceCollections(result.data.collections)
+			const collectionsResult = await refreshWorkspaceCollections()
+
+			if (collectionsResult.ok) {
+				syncWorkspaceCollections(collectionsResult.data)
+			}
+
 			toast.success(`已恢复《${document.title}》。`)
 		},
 		[syncWorkspaceCollections],
@@ -159,16 +166,19 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 				return
 			}
 
-			syncWorkspaceCollections(result.data)
+			const collectionsResult = await refreshWorkspaceCollections()
+
+			if (collectionsResult.ok) {
+				syncWorkspaceCollections(collectionsResult.data)
+			}
+
 			toast.success(`已永久删除《${document.title}》。`)
 		},
 		[syncWorkspaceCollections],
 	)
 
 	return {
-		isCreating,
 		loadWorkspaceData,
-		handleCreateDocument,
 		handleOpenDocument,
 		handleRenameDocument,
 		handleMoveToTrash,

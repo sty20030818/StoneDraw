@@ -120,7 +120,7 @@ function SettingsPage() {
 					<div className='space-y-2'>
 						<h2 className='text-xl font-semibold tracking-tight'>设置与开发诊断</h2>
 						<p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
-							旧工作区首页里的系统状态和数据库健康检查已经收口到这里。后续正式设置分组也会继续挂在同一入口，避免主产品页面混入开发辅助信息。
+							旧工作区首页里的系统状态和数据库健康检查已经收口到这里，避免主产品页面继续混入开发辅助信息。
 						</p>
 					</div>
 				</div>

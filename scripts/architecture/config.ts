@@ -19,6 +19,16 @@ export const frozenLegacyFileAllowlist = new Set<string>()
 
 export const frozenLegacyRoots: string[] = []
 
+export const deletedLegacyFiles = [
+	join(srcRoot, 'shared', 'components', 'DialogHost.tsx'),
+	join(srcRoot, 'features', 'index.ts'),
+	join(srcRoot, 'features', 'documents', 'ui', 'use-workspace-documents.ts'),
+	join(srcRoot, 'features', 'overlays', 'dialogs', 'CommandPalette.tsx'),
+	join(srcRoot, 'features', 'overlays', 'dialogs', 'ExportDialog.tsx'),
+	join(srcRoot, 'features', 'overlays', 'dialogs', 'RecoveryDialog.tsx'),
+	join(srcRoot, 'features', 'overlays', 'dialogs', 'ShareDialog.tsx'),
+]
+
 export const deletedLegacyRoots = [
 	join(srcRoot, 'components', 'feedback'),
 	join(srcRoot, 'components', 'navigation'),
@@ -169,8 +179,29 @@ export const guardedImportRules: ImportBanRule[] = [
 		pattern: /system\.service/,
 		reason: 'system.service 已删除，不得重新引入低价值系统壳服务。',
 	},
+	{
+		pattern: /@\/incubating(?:\/|['"])/,
+		reason: 'src/incubating 只允许作为草图区存在，正式主链不得依赖。',
+	},
+	{
+		pattern: /@\/features['"]/,
+		reason: '根级 src/features barrel 已删除，必须显式按 feature 路径导入。',
+	},
 ]
 
 export const emptyPlaceholderAllowlist = new Set<string>()
 
 export const orphanWrapperAllowlist = new Set<string>()
+
+export const repositoryTruthSourceFiles = [
+	join(projectRoot, 'README.md'),
+	join(projectRoot, '.oxlintrc.json'),
+	join(projectRoot, '.oxfmtrc.json'),
+]
+
+export const repositoryTruthSourceRules: ImportBanRule[] = [
+	{
+		pattern: /Documents\//,
+		reason: '仓库文档真相源目录已切换为 docs/，不得继续引用 Documents/。',
+	},
+]

@@ -1,5 +1,2 @@
-export { default as CommandPalette } from './CommandPalette'
-export { default as ExportDialog } from './ExportDialog'
+export { default as ConfirmDialog } from './ConfirmDialog'
 export { default as NewDocumentDialog } from './NewDocumentDialog'
-export { default as RecoveryDialog } from './RecoveryDialog'
-export { default as ShareDialog } from './ShareDialog'

@@ -88,6 +88,34 @@ pub fn get_document_by_id_from_root(
     })
 }
 
+pub fn get_document_by_id_any_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+
+    fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?.ok_or_else(|| {
+        CommandError::not_found(
+            "文档不存在",
+            format!("documentId={document_id} 未命中记录"),
+        )
+    })
+}
+
+pub fn get_trashed_document_by_id_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
+
+    fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Deleted)?.ok_or_else(|| {
+        CommandError::not_found(
+            "文档不存在",
+            format!("documentId={document_id} 未命中回收站记录"),
+        )
+    })
+}
+
 pub fn list_documents_from_root(
     root_dir_path: &Path,
 ) -> Result<Vec<DocumentMetaPayload>, CommandError> {
@@ -202,25 +230,28 @@ pub fn rename_document_from_root(
     get_document_by_id_from_root(root_dir_path, document_id)
 }
 
-pub fn move_document_to_trash_from_root(
+#[cfg(test)]
+pub(super) fn move_document_to_trash_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<DocumentMetaPayload, CommandError> {
-    let connection = open_ready_connection(root_dir_path)?;
-    let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?
-        .ok_or_else(|| {
-            CommandError::not_found(
-                "文档不存在",
-                format!("documentId={document_id} 无法删除"),
-            )
-        })?;
+    let existing_document = get_document_by_id_any_from_root(root_dir_path, document_id)?;
 
     if existing_document.is_deleted {
         return Ok(existing_document);
     }
 
+    mark_document_trashed_from_root(root_dir_path, document_id)?;
+    get_trashed_document_by_id_from_root(root_dir_path, document_id)
+}
+
+pub fn mark_document_trashed_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<(), CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
     let now = current_timestamp_ms()?;
-    connection
+    let affected_rows = connection
         .execute(
             "
             UPDATE documents
@@ -236,33 +267,38 @@ pub fn move_document_to_trash_from_root(
             )
         })?;
 
-    fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Deleted)?.ok_or_else(|| {
-        CommandError::not_found(
-            "文档不存在",
-            format!("documentId={document_id} 删除后未命中记录"),
-        )
-    })
+    if affected_rows == 0 {
+        return Err(CommandError::not_found(
+            "文档不存在或已删除",
+            format!("documentId={document_id} 无法更新删除状态"),
+        ));
+    }
+
+    Ok(())
 }
 
-pub fn restore_document_from_root(
+#[cfg(test)]
+pub(super) fn restore_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<DocumentMetaPayload, CommandError> {
-    let connection = open_ready_connection(root_dir_path)?;
-    let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?
-        .ok_or_else(|| {
-            CommandError::not_found(
-                "文档不存在",
-                format!("documentId={document_id} 无法恢复"),
-            )
-        })?;
+    let existing_document = get_document_by_id_any_from_root(root_dir_path, document_id)?;
 
     if !existing_document.is_deleted {
         return Ok(existing_document);
     }
 
+    mark_document_restored_from_root(root_dir_path, document_id)?;
+    get_document_by_id_from_root(root_dir_path, document_id)
+}
+
+pub fn mark_document_restored_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<(), CommandError> {
+    let connection = open_ready_connection(root_dir_path)?;
     let now = current_timestamp_ms()?;
-    connection
+    let affected_rows = connection
         .execute(
             "
             UPDATE documents
@@ -278,25 +314,52 @@ pub fn restore_document_from_root(
             )
         })?;
 
-    get_document_by_id_from_root(root_dir_path, document_id)
+    if affected_rows == 0 {
+        return Err(CommandError::not_found(
+            "文档不存在或未处于回收站",
+            format!("documentId={document_id} 无法恢复"),
+        ));
+    }
+
+    Ok(())
 }
 
-pub fn open_document_from_root(
+#[cfg(test)]
+pub(super) fn open_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<DocumentMetaPayload, CommandError> {
     let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
 
     ensure_document_scene_ready(root_dir_path, &document_meta)?;
-    record_document_opened(root_dir_path, document_id)?;
+    record_document_opened_from_root(root_dir_path, document_id)?;
 
     get_document_by_id_from_root(root_dir_path, document_id)
 }
 
-pub fn permanently_delete_document_from_root(
+#[cfg(test)]
+pub(super) fn permanently_delete_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
 ) -> Result<(), CommandError> {
+    let document_dir = delete_document_records_from_root(root_dir_path, document_id)?;
+
+    if Path::new(&document_dir).exists() {
+        fs::remove_dir_all(&document_dir).map_err(|error| {
+            CommandError::io(
+                "删除文档目录失败",
+                format!("documentId={document_id}, path={document_dir}, error={error}"),
+            )
+        })?;
+    }
+
+    Ok(())
+}
+
+pub fn delete_document_records_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<String, CommandError> {
     let mut connection = open_ready_connection(root_dir_path)?;
     let existing_document =
         fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?.ok_or_else(|| {
@@ -339,16 +402,7 @@ pub fn permanently_delete_document_from_root(
         )
     })?;
 
-    if Path::new(&layout.document_dir).exists() {
-        fs::remove_dir_all(&layout.document_dir).map_err(|error| {
-            CommandError::io(
-                "删除文档目录失败",
-                format!("documentId={document_id}, path={}, error={error}", layout.document_dir),
-            )
-        })?;
-    }
-
-    Ok(())
+    Ok(layout.document_dir)
 }
 
 pub(super) fn fetch_document_meta_by_id(
@@ -424,7 +478,7 @@ pub(super) fn fetch_document_meta_by_id(
         })
 }
 
-pub(super) fn update_document_after_scene_save(
+pub fn update_document_after_scene_save(
     root_dir_path: &Path,
     document_id: &str,
     saved_at: i64,
@@ -551,7 +605,10 @@ fn insert_document_meta(
     Ok(())
 }
 
-fn record_document_opened(root_dir_path: &Path, document_id: &str) -> Result<(), CommandError> {
+pub fn record_document_opened_from_root(
+    root_dir_path: &Path,
+    document_id: &str,
+) -> Result<(), CommandError> {
     let mut connection = open_ready_connection(root_dir_path)?;
     let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Active)?
         .ok_or_else(|| {

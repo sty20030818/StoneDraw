@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { DialogHostProvider } from '@/shared/components/DialogHost'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 type AppProvidersProps = {
@@ -7,11 +6,7 @@ type AppProvidersProps = {
 }
 
 function AppProviders({ children }: AppProvidersProps) {
-	return (
-		<TooltipProvider>
-			<DialogHostProvider>{children}</DialogHostProvider>
-		</TooltipProvider>
-	)
+	return <TooltipProvider>{children}</TooltipProvider>
 }
 
 export default AppProviders
