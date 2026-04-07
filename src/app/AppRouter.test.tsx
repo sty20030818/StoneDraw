@@ -14,7 +14,7 @@ vi.mock('@/features', () => ({
 	WorkbenchPage: () => <div>工作台页面</div>,
 }))
 
-vi.mock('@/pages/not-found/NotFoundPage', () => ({
+vi.mock('@/app/router/NotFoundPage', () => ({
 	default: () => <div>未命中页面</div>,
 }))
 

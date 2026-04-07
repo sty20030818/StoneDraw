@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { OverlayRoot, WorkbenchLayout, WorkspaceLayout } from '@/app/layouts'
+import { NotFoundPage } from '@/app/router'
 import { resolveSceneByPathname, APP_ROUTES } from '@/shared/constants/routes'
 import {
 	ArchivePage,
@@ -13,7 +14,6 @@ import {
 	WorkbenchPage,
 } from '@/features'
 import { useAppStore } from '@/app/state'
-import NotFoundPage from '@/pages/not-found/NotFoundPage'
 
 function RouteStateSync() {
 	const location = useLocation()

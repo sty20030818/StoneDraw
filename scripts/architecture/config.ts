@@ -15,15 +15,9 @@ export const srcRoot = join(projectRoot, 'src')
 
 export const sourceFileExtensions = new Set(['.ts', '.tsx'])
 
-export const frozenLegacyFileAllowlist = new Set([
-	'src/pages/not-found/NotFoundPage.test.tsx',
-	'src/pages/not-found/NotFoundPage.tsx',
-])
+export const frozenLegacyFileAllowlist = new Set<string>()
 
-export const frozenLegacyRoots = [
-	join(srcRoot, 'pages'),
-	join(srcRoot, 'workbench'),
-]
+export const frozenLegacyRoots: string[] = []
 
 export const deletedLegacyRoots = [
 	join(srcRoot, 'components', 'feedback'),
@@ -43,6 +37,7 @@ export const deletedLegacyRoots = [
 	join(srcRoot, 'mocks'),
 	join(srcRoot, 'modules'),
 	join(srcRoot, 'overlay'),
+	join(srcRoot, 'pages'),
 	join(srcRoot, 'pages', 'editor'),
 	join(srcRoot, 'pages', 'home'),
 	join(srcRoot, 'pages', 'settings'),
@@ -51,6 +46,7 @@ export const deletedLegacyRoots = [
 	join(srcRoot, 'stores'),
 	join(srcRoot, 'types'),
 	join(srcRoot, 'utils'),
+	join(srcRoot, 'workbench'),
 ]
 
 export const guardedImportRoots = [
@@ -112,6 +108,10 @@ export const guardedImportRules: ImportBanRule[] = [
 	{
 		pattern: /from ['"]@\/adapters(?:\/|['"])/,
 		reason: '旧 adapters 目录已删除，编辑器适配层必须走 editor/excalidraw。',
+	},
+	{
+		pattern: /from ['"]@\/pages(?:\/|['"])/,
+		reason: '旧 pages 目录已删除，路由页面必须走 app/router 或对应 feature。',
 	},
 	{
 		pattern: /from ['"]@\/pages\/editor(?:\/|['"])/,
