@@ -8,6 +8,8 @@
   - 只负责应用装配、路由、壳层、Provider 和应用级状态
 - `src/features`
   - 唯一业务真相源，按业务域组织页面、状态、服务和 UI
+- `src/incubating`
+  - 只存放未来能力口子与实验性页面容器，不作为正式产品入口
 - `src/editor`
   - 编辑器内核适配层，目前为 `excalidraw`
 - `src/platform`
@@ -28,16 +30,21 @@
 - `features/overlays`
   - 统一 OverlayRoot、弹层状态和核心对话框聚合入口
 - `features/settings`
-  - 设置与诊断页面、设置服务
+  - 设置与开发诊断页面
+
+## 孵化目录
+
+以下能力当前只保留未来入口和页面容器，不再放在正式 `features` 主链中：
+
+- `incubating/search`
+  - 保留 SearchCenter 页面容器，后续再接真实检索、索引与结果面板
+- `incubating/templates`
+  - 保留模板与素材页面落点，后续再接资源分类、模板创建与卡片网格
 
 ## 当前只做结构收口的 Feature
 
 以下能力已经有正式落点，但这次 change 只完成结构归位，不补完整业务闭环：
 
-- `features/search`
-  - 保留 SearchCenter 页面容器和路由落点，暂不接真实检索、索引和结果面板
-- `features/templates`
-  - 保留模板与素材页面落点，暂不接资源分类、模板创建和卡片网格
 - `features/recovery`
   - 保留 Recovery overlay 落点，暂不补批量恢复、恢复草稿检测和版本恢复流程
 - `features/collaboration`
@@ -46,6 +53,7 @@
 这些目录的约束是：
 
 - 可以继续完善正式入口、类型和边界
+- 不允许把 `src/incubating` 里的能力重新挂回正式导航、正式路由或顶层 feature barrel
 - 不允许为了“先跑起来”重新引入顶层 `services / repositories / stores / overlay / adapters / pages`
 - 不允许用伪完整实现冒充正式能力
 

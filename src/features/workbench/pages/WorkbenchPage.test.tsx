@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { APP_ROUTES } from '@/shared/constants/routes'
-import { useWorkbenchStore } from '@/features/workbench/state'
+import { WorkbenchShellProvider, useWorkbenchShell, type WorkbenchShellState, useWorkbenchStore } from '@/features/workbench'
 import { createAppError } from '@/test/fixtures/error'
 import { createDocumentMeta } from '@/test/fixtures/document'
 import { createScenePayload } from '@/test/fixtures/scene'
@@ -59,6 +59,17 @@ let currentSnapshot = {
 	elements: [] as unknown[],
 	appState: {} as Record<string, unknown>,
 	files: {} as Record<string, unknown>,
+}
+let currentShellState: WorkbenchShellState | null = null
+let initialShellState: WorkbenchShellState | null = null
+
+function WorkbenchShellProbe() {
+	const { shellState } = useWorkbenchShell()
+
+	currentShellState = shellState
+	initialShellState ??= shellState
+
+	return null
 }
 
 vi.mock('@excalidraw/excalidraw', async () => {
@@ -139,12 +150,20 @@ vi.mock('@/features/workbench/services', () => ({
 }))
 
 function renderWorkbenchPage(initialEntry = `${APP_ROUTES.WORKBENCH}?documentId=doc-editor-1`) {
+	currentShellState = null
+	initialShellState = null
+
 	return renderRoute({
 		initialEntry,
 		routes: [
 			{
 				path: APP_ROUTES.WORKBENCH,
-				element: <WorkbenchPage />,
+				element: (
+					<WorkbenchShellProvider>
+						<WorkbenchShellProbe />
+						<WorkbenchPage />
+					</WorkbenchShellProvider>
+				),
 			},
 			{
 				path: APP_ROUTES.WORKSPACE_HOME,
@@ -152,6 +171,19 @@ function renderWorkbenchPage(initialEntry = `${APP_ROUTES.WORKBENCH}?documentId=
 			},
 		],
 	})
+}
+
+async function waitForShellActionsReady() {
+	await waitFor(() => {
+		expect(currentShellState).not.toBeNull()
+		expect(currentShellState).not.toBe(initialShellState)
+	})
+}
+
+function getShellState() {
+	expect(currentShellState).not.toBeNull()
+
+	return currentShellState as WorkbenchShellState
 }
 
 describe('WorkbenchPage', () => {
@@ -278,6 +310,7 @@ describe('WorkbenchPage', () => {
 	test('标题栏保存动作应触发手动保存并回到已保存状态', async () => {
 		renderWorkbenchPage()
 		await screen.findByRole('button', { name: '触发画布变化' })
+		await waitForShellActionsReady()
 		await waitFor(() => {
 			expect(useWorkbenchStore.getState().activeDocumentId).toBe('doc-editor-1')
 		})
@@ -287,7 +320,7 @@ describe('WorkbenchPage', () => {
 		})
 
 		act(() => {
-			useWorkbenchStore.getState().onSave()
+			getShellState().onSave()
 		})
 
 		await waitFor(() => {
@@ -304,11 +337,12 @@ describe('WorkbenchPage', () => {
 	test('创建版本动作应先保存 current 再创建手动版本', async () => {
 		renderWorkbenchPage()
 		await screen.findByRole('button', { name: '触发画布变化' })
+		await waitForShellActionsReady()
 
 		let createResult: TauriCommandResult<DocumentVersionMeta> | null = null
 
 		await act(async () => {
-			createResult = await useWorkbenchStore.getState().onCreateVersion()
+			createResult = await getShellState().onCreateVersion()
 		})
 
 		expect(saveNowMock).toHaveBeenCalledWith(
@@ -331,13 +365,14 @@ describe('WorkbenchPage', () => {
 
 		renderWorkbenchPage()
 		await screen.findByRole('button', { name: '触发画布变化' })
+		await waitForShellActionsReady()
 
 		act(() => {
 			useWorkbenchStore.getState().setSaveStatus('dirty')
 		})
 
 		act(() => {
-			useWorkbenchStore.getState().onBack()
+			getShellState().onBack()
 		})
 
 		await waitFor(() => {
