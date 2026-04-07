@@ -1,0 +1,16 @@
+export const DOCUMENT_TAURI_COMMANDS = {
+	CREATE: 'documents_create',
+	GET_BY_ID: 'documents_get_by_id',
+	LIST: 'documents_list',
+	LIST_RECENT: 'documents_list_recent',
+	LIST_TRASHED: 'documents_list_trashed',
+	OPEN: 'documents_open',
+	OPEN_SCENE: 'documents_open_scene',
+	RENAME: 'documents_rename',
+	MOVE_TO_TRASH: 'documents_move_to_trash',
+	RESTORE: 'documents_restore',
+	PERMANENTLY_DELETE: 'documents_permanently_delete',
+	SAVE_SCENE: 'editor_save_scene',
+	CREATE_VERSION: 'versions_create',
+	LIST_VERSIONS: 'versions_list',
+} as const

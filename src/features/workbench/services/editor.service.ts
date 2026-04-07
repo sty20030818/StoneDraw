@@ -1,5 +1,4 @@
-import { TAURI_COMMANDS } from '@/shared/constants/index'
-import { sceneRepository } from '@/features/documents'
+import { DOCUMENT_TAURI_COMMANDS, sceneRepository } from '@/features/documents'
 import { deserializeScene, serializeScene, SceneValidationError } from '@/editor/excalidraw'
 import { createFailureResult, createSuccessResult } from '@/platform/tauri'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/shared/types/index'
@@ -44,7 +43,7 @@ export const editorService = {
 				operation: 'loadScene',
 				correlationId: 'editor-load-scene-validation',
 				details,
-				command: TAURI_COMMANDS.DOCUMENTS_OPEN_SCENE,
+				command: DOCUMENT_TAURI_COMMANDS.OPEN_SCENE,
 				objectId: documentId,
 			}) as TauriCommandResult<SceneFilePayload>
 		}
@@ -68,7 +67,7 @@ export const editorService = {
 				operation: 'saveScene',
 				correlationId: 'editor-save-scene-validation',
 				details,
-				command: TAURI_COMMANDS.EDITOR_SAVE_SCENE,
+				command: DOCUMENT_TAURI_COMMANDS.SAVE_SCENE,
 				objectId: payload.documentId,
 			}) as TauriCommandResult<DocumentMeta>
 		}

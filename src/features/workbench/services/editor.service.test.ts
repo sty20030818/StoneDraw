@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { TAURI_COMMANDS } from '@/shared/constants'
+import { DOCUMENT_TAURI_COMMANDS } from '@/features/documents'
 import type { SceneFilePayload } from '@/shared/types'
 import { createScenePayload } from '@/test/fixtures/scene'
 
@@ -70,7 +70,7 @@ describe('editor.service', () => {
 			throw new Error('非法 scene 不应返回成功结果')
 		}
 		expect(result.error.code).toBe('INVALID_ARGUMENT')
-		expect(result.error.command).toBe(TAURI_COMMANDS.DOCUMENTS_OPEN_SCENE)
+		expect(result.error.command).toBe(DOCUMENT_TAURI_COMMANDS.OPEN_SCENE)
 	})
 
 	test('saveScene 应先规范化 payload 再调用保存命令', async () => {
@@ -140,6 +140,6 @@ describe('editor.service', () => {
 			throw new Error('非法 payload 不应返回成功结果')
 		}
 		expect(result.error.code).toBe('INVALID_ARGUMENT')
-		expect(result.error.command).toBe(TAURI_COMMANDS.EDITOR_SAVE_SCENE)
+		expect(result.error.command).toBe(DOCUMENT_TAURI_COMMANDS.SAVE_SCENE)
 	})
 })

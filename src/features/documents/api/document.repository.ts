@@ -1,12 +1,12 @@
-import { TAURI_COMMANDS } from '@/shared/constants'
 import { invokeTauriCommand } from '@/platform/tauri'
 import type { DocumentMeta, TauriCommandResult } from '@/shared/types'
 import { normalizeDocumentMetaListResult, normalizeDocumentMetaResult, type RawDocumentMeta } from '../model'
+import { DOCUMENT_TAURI_COMMANDS } from './commands'
 
 export const documentRepository = {
 	async create(title?: string, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.DOCUMENTS_CREATE,
+			DOCUMENT_TAURI_COMMANDS.CREATE,
 			{
 				title,
 			},
@@ -23,7 +23,7 @@ export const documentRepository = {
 
 	async getById(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.DOCUMENTS_GET_BY_ID,
+			DOCUMENT_TAURI_COMMANDS.GET_BY_ID,
 			{
 				documentId,
 			},
@@ -40,7 +40,7 @@ export const documentRepository = {
 	},
 
 	async list(correlationId?: string): Promise<TauriCommandResult<DocumentMeta[]>> {
-		const result = await invokeTauriCommand<RawDocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST, undefined, {
+		const result = await invokeTauriCommand<RawDocumentMeta[]>(DOCUMENT_TAURI_COMMANDS.LIST, undefined, {
 			module: 'document-repository',
 			operation: 'list',
 			layer: 'repository',
@@ -51,7 +51,7 @@ export const documentRepository = {
 	},
 
 	async listRecent(correlationId?: string): Promise<TauriCommandResult<DocumentMeta[]>> {
-		const result = await invokeTauriCommand<RawDocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST_RECENT, undefined, {
+		const result = await invokeTauriCommand<RawDocumentMeta[]>(DOCUMENT_TAURI_COMMANDS.LIST_RECENT, undefined, {
 			module: 'document-repository',
 			operation: 'listRecent',
 			layer: 'repository',
@@ -62,7 +62,7 @@ export const documentRepository = {
 	},
 
 	async listTrashed(correlationId?: string): Promise<TauriCommandResult<DocumentMeta[]>> {
-		const result = await invokeTauriCommand<RawDocumentMeta[]>(TAURI_COMMANDS.DOCUMENTS_LIST_TRASHED, undefined, {
+		const result = await invokeTauriCommand<RawDocumentMeta[]>(DOCUMENT_TAURI_COMMANDS.LIST_TRASHED, undefined, {
 			module: 'document-repository',
 			operation: 'listTrashed',
 			layer: 'repository',
@@ -74,7 +74,7 @@ export const documentRepository = {
 
 	async open(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.DOCUMENTS_OPEN,
+			DOCUMENT_TAURI_COMMANDS.OPEN,
 			{
 				documentId,
 			},
@@ -92,7 +92,7 @@ export const documentRepository = {
 
 	async rename(documentId: string, title: string, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.DOCUMENTS_RENAME,
+			DOCUMENT_TAURI_COMMANDS.RENAME,
 			{
 				documentId,
 				title,
@@ -111,7 +111,7 @@ export const documentRepository = {
 
 	async moveToTrash(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.DOCUMENTS_MOVE_TO_TRASH,
+			DOCUMENT_TAURI_COMMANDS.MOVE_TO_TRASH,
 			{
 				documentId,
 			},
@@ -129,7 +129,7 @@ export const documentRepository = {
 
 	async restore(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.DOCUMENTS_RESTORE,
+			DOCUMENT_TAURI_COMMANDS.RESTORE,
 			{
 				documentId,
 			},
@@ -147,7 +147,7 @@ export const documentRepository = {
 
 	async permanentlyDelete(documentId: string, correlationId?: string): Promise<TauriCommandResult<void>> {
 		return invokeTauriCommand<void>(
-			TAURI_COMMANDS.DOCUMENTS_PERMANENTLY_DELETE,
+			DOCUMENT_TAURI_COMMANDS.PERMANENTLY_DELETE,
 			{
 				documentId,
 			},

@@ -1,60 +1,17 @@
-import { TAURI_COMMANDS } from '@/shared/constants'
 import { invokeTauriCommand } from '@/platform/tauri'
-import type { DocumentPathLayout, LocalDirectoriesPayload, TauriCommandResult } from '@/shared/types'
+import type { LocalDirectoriesPayload, TauriCommandResult } from '@/shared/types'
+
+const DIRECTORY_COMMANDS = {
+	PREPARE_LOCAL_DIRECTORIES: 'files_prepare_local_directories',
+} as const
 
 export const directoryRepository = {
 	async prepareLocalDirectories(correlationId?: string): Promise<TauriCommandResult<LocalDirectoriesPayload>> {
-		return invokeTauriCommand<LocalDirectoriesPayload>(TAURI_COMMANDS.FILES_PREPARE_LOCAL_DIRECTORIES, undefined, {
+		return invokeTauriCommand<LocalDirectoriesPayload>(DIRECTORY_COMMANDS.PREPARE_LOCAL_DIRECTORIES, undefined, {
 			module: 'directory-repository',
 			operation: 'prepareLocalDirectories',
 			layer: 'repository',
 			correlationId,
 		})
-	},
-
-	async readLocalDirectories(correlationId?: string): Promise<TauriCommandResult<LocalDirectoriesPayload>> {
-		return invokeTauriCommand<LocalDirectoriesPayload>(TAURI_COMMANDS.FILES_READ_LOCAL_DIRECTORIES, undefined, {
-			module: 'directory-repository',
-			operation: 'readLocalDirectories',
-			layer: 'repository',
-			correlationId,
-		})
-	},
-
-	async resolveDataDirectory(correlationId?: string): Promise<TauriCommandResult<string>> {
-		return invokeTauriCommand<string>(TAURI_COMMANDS.FILES_RESOLVE_DATA_DIR, undefined, {
-			module: 'directory-repository',
-			operation: 'resolveDataDirectory',
-			layer: 'repository',
-			correlationId,
-		})
-	},
-
-	async resolveConfigDirectory(correlationId?: string): Promise<TauriCommandResult<string>> {
-		return invokeTauriCommand<string>(TAURI_COMMANDS.FILES_RESOLVE_CONFIG_DIR, undefined, {
-			module: 'directory-repository',
-			operation: 'resolveConfigDirectory',
-			layer: 'repository',
-			correlationId,
-		})
-	},
-
-	async resolveDocumentLayout(
-		documentId: string,
-		correlationId?: string,
-	): Promise<TauriCommandResult<DocumentPathLayout>> {
-		return invokeTauriCommand<DocumentPathLayout>(
-			TAURI_COMMANDS.FILES_RESOLVE_DOCUMENT_LAYOUT,
-			{
-				documentId,
-			},
-			{
-				module: 'directory-repository',
-				operation: 'resolveDocumentLayout',
-				layer: 'repository',
-				objectId: documentId,
-				correlationId,
-			},
-		)
 	},
 }

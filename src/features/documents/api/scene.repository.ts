@@ -1,12 +1,12 @@
-import { TAURI_COMMANDS } from '@/shared/constants'
 import { invokeTauriCommand } from '@/platform/tauri'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/shared/types'
 import { normalizeDocumentMetaResult, type RawDocumentMeta } from '../model'
+import { DOCUMENT_TAURI_COMMANDS } from './commands'
 
 export const sceneRepository = {
 	async readCurrent(documentId: string, correlationId?: string): Promise<TauriCommandResult<SceneFilePayload>> {
 		return invokeTauriCommand<SceneFilePayload>(
-			TAURI_COMMANDS.DOCUMENTS_OPEN_SCENE,
+			DOCUMENT_TAURI_COMMANDS.OPEN_SCENE,
 			{
 				documentId,
 			},
@@ -22,7 +22,7 @@ export const sceneRepository = {
 
 	async saveCurrent(scene: SceneFilePayload, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
 		const result = await invokeTauriCommand<RawDocumentMeta>(
-			TAURI_COMMANDS.EDITOR_SAVE_SCENE,
+			DOCUMENT_TAURI_COMMANDS.SAVE_SCENE,
 			{
 				scene,
 			},

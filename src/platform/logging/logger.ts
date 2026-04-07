@@ -1,7 +1,10 @@
 import { invoke } from '@tauri-apps/api/core'
-import { TAURI_COMMANDS } from '@/shared/constants'
 import { toIsoString } from '@/shared/lib/date'
 import type { AppError, AppLayer, LogEvent, LogLevel } from '@/shared/types'
+
+const LOG_COMMANDS = {
+	WRITE_EVENT: 'logs_write_event',
+} as const
 
 type CreateLogEventInput = {
 	level: LogLevel
@@ -43,7 +46,7 @@ async function persistLogEvent(event: LogEvent) {
 	}
 
 	try {
-		await invoke(TAURI_COMMANDS.LOGS_WRITE_EVENT, {
+		await invoke(LOG_COMMANDS.WRITE_EVENT, {
 			event,
 		})
 	} catch (error) {

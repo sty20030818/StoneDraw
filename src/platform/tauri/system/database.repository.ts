@@ -1,10 +1,15 @@
-import { TAURI_COMMANDS } from '@/shared/constants'
 import { invokeTauriCommand } from '@/platform/tauri'
 import type { DatabaseHealthPayload, DatabaseSchemaVersionPayload, TauriCommandResult } from '@/shared/types'
 
+const DATABASE_COMMANDS = {
+	INITIALIZE: 'database_initialize',
+	CHECK_HEALTH: 'database_check_health',
+	READ_SCHEMA_VERSION: 'database_read_schema_version',
+} as const
+
 export const databaseRepository = {
 	async initialize(correlationId?: string): Promise<TauriCommandResult<DatabaseHealthPayload>> {
-		return invokeTauriCommand<DatabaseHealthPayload>(TAURI_COMMANDS.DATABASE_INITIALIZE, undefined, {
+		return invokeTauriCommand<DatabaseHealthPayload>(DATABASE_COMMANDS.INITIALIZE, undefined, {
 			module: 'database-repository',
 			operation: 'initialize',
 			layer: 'repository',
@@ -13,7 +18,7 @@ export const databaseRepository = {
 	},
 
 	async readHealth(correlationId?: string): Promise<TauriCommandResult<DatabaseHealthPayload>> {
-		return invokeTauriCommand<DatabaseHealthPayload>(TAURI_COMMANDS.DATABASE_CHECK_HEALTH, undefined, {
+		return invokeTauriCommand<DatabaseHealthPayload>(DATABASE_COMMANDS.CHECK_HEALTH, undefined, {
 			module: 'database-repository',
 			operation: 'readHealth',
 			layer: 'repository',
@@ -22,7 +27,7 @@ export const databaseRepository = {
 	},
 
 	async readSchemaVersion(correlationId?: string): Promise<TauriCommandResult<DatabaseSchemaVersionPayload>> {
-		return invokeTauriCommand<DatabaseSchemaVersionPayload>(TAURI_COMMANDS.DATABASE_READ_SCHEMA_VERSION, undefined, {
+		return invokeTauriCommand<DatabaseSchemaVersionPayload>(DATABASE_COMMANDS.READ_SCHEMA_VERSION, undefined, {
 			module: 'database-repository',
 			operation: 'readSchemaVersion',
 			layer: 'repository',

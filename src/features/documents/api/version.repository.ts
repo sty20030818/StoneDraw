@@ -1,11 +1,11 @@
-import { TAURI_COMMANDS } from '@/shared/constants'
 import { invokeTauriCommand } from '@/platform/tauri'
 import type { DocumentVersionMeta, TauriCommandResult } from '@/shared/types'
+import { DOCUMENT_TAURI_COMMANDS } from './commands'
 
 export const versionRepository = {
 	async createManual(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentVersionMeta>> {
 		return invokeTauriCommand<DocumentVersionMeta>(
-			TAURI_COMMANDS.VERSIONS_CREATE,
+			DOCUMENT_TAURI_COMMANDS.CREATE_VERSION,
 			{
 				documentId,
 			},
@@ -21,7 +21,7 @@ export const versionRepository = {
 
 	async listByDocument(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentVersionMeta[]>> {
 		return invokeTauriCommand<DocumentVersionMeta[]>(
-			TAURI_COMMANDS.VERSIONS_LIST,
+			DOCUMENT_TAURI_COMMANDS.LIST_VERSIONS,
 			{
 				documentId,
 			},

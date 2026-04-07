@@ -1,10 +1,8 @@
 use crate::storage::directories::{
-    prepare_local_directories, read_local_directories, resolve_config_dir_string,
-    resolve_data_dir_string, resolve_document_path_layout, DocumentPathLayout,
-    LocalDirectoriesPayload,
+    prepare_local_directories, LocalDirectoriesPayload,
 };
 
-use super::{command_result, CommandError, CommandResult};
+use super::{command_result, CommandResult};
 
 #[tauri::command]
 pub fn files_prepare_local_directories(
@@ -15,61 +13,5 @@ pub fn files_prepare_local_directories(
         "files-command",
         "prepareLocalDirectories",
         prepare_local_directories(&app),
-    )
-}
-
-#[tauri::command]
-pub fn files_read_local_directories(
-    app: tauri::AppHandle,
-) -> CommandResult<LocalDirectoriesPayload> {
-    command_result(
-        "files_read_local_directories",
-        "files-command",
-        "readLocalDirectories",
-        read_local_directories(&app),
-    )
-}
-
-#[tauri::command]
-pub fn files_resolve_data_dir(app: tauri::AppHandle) -> CommandResult<String> {
-    command_result(
-        "files_resolve_data_dir",
-        "files-command",
-        "resolveDataDir",
-        resolve_data_dir_string(&app),
-    )
-}
-
-#[tauri::command]
-pub fn files_resolve_config_dir(app: tauri::AppHandle) -> CommandResult<String> {
-    command_result(
-        "files_resolve_config_dir",
-        "files-command",
-        "resolveConfigDir",
-        resolve_config_dir_string(&app),
-    )
-}
-
-#[tauri::command]
-pub fn files_resolve_document_layout(
-    app: tauri::AppHandle,
-    document_id: String,
-) -> CommandResult<DocumentPathLayout> {
-    if document_id.trim().is_empty() {
-        return Err(
-            CommandError::invalid_argument("document_id 不能为空")
-                .attach_command_context(
-                    "files_resolve_document_layout",
-                    "files-command",
-                    "resolveDocumentLayout",
-                ),
-        );
-    }
-
-    command_result(
-        "files_resolve_document_layout",
-        "files-command",
-        "resolveDocumentLayout",
-        resolve_document_path_layout(&app, &document_id),
     )
 }

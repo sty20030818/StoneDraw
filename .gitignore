@@ -41,9 +41,3 @@ vite.config.d.ts
 *.njsproj
 *.sln
 *.sw?
-
-/Documents
-
-# 全局 gitignore 中的 `Documents` 在 Windows 上会对 `src/services/documents` 大小写误匹配，此处显式纳入版本控制
-!/src/services/documents/
-!/src/services/documents/**

@@ -15,7 +15,7 @@ export type {
 } from './bootstrap'
 export type { CommandSuccessPayload, TauriCommandFailure, TauriCommandResult, TauriCommandSuccess } from './command'
 export type { DatabaseHealthPayload, DatabaseSchemaVersionPayload } from './database'
-export type { DirectoryHealth, DocumentPathLayout, LocalDirectoriesPayload } from './directory'
+export type { DirectoryHealth, LocalDirectoriesPayload } from './directory'
 export type {
 	CreateDocumentSuccessPayload,
 	DocumentMeta,

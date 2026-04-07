@@ -52,40 +52,11 @@ pub fn prepare_local_directories(app: &AppHandle) -> Result<LocalDirectoriesPayl
     prepare_local_directories_from_root(&root_dir)
 }
 
-pub fn read_local_directories(app: &AppHandle) -> Result<LocalDirectoriesPayload, CommandError> {
-    let root_dir = resolve_root_dir(app)?;
-    read_local_directories_from_root(&root_dir)
-}
-
-pub fn resolve_data_dir_string(app: &AppHandle) -> Result<String, CommandError> {
-    Ok(resolve_data_dir(app)?.display().to_string())
-}
-
-pub fn resolve_config_dir_string(app: &AppHandle) -> Result<String, CommandError> {
-    Ok(resolve_config_dir(app)?.display().to_string())
-}
-
-pub fn resolve_document_path_layout(
-    app: &AppHandle,
-    document_id: &str,
-) -> Result<DocumentPathLayout, CommandError> {
-    let root_dir = resolve_root_dir(app)?;
-    Ok(document_path_layout(&root_dir, document_id))
-}
-
 pub(crate) fn resolve_root_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
     app.path()
         .home_dir()
         .map(|path| path.join(STONEDRAW_HOME_DIRECTORY_NAME))
         .map_err(|error| CommandError::io("解析 StoneDraw 根目录失败", error.to_string()))
-}
-
-fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
-    resolve_root_dir(app).map(|path| data_dir_path(&path))
-}
-
-fn resolve_config_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
-    resolve_root_dir(app).map(|path| config_dir_path(&path))
 }
 
 fn prepare_local_directories_from_root(
@@ -134,10 +105,6 @@ fn read_local_directories_from_root(
 
 pub(crate) fn data_dir_path(root_dir_path: &Path) -> PathBuf {
     root_dir_path.join(DATA_DIRECTORY_NAME)
-}
-
-fn config_dir_path(root_dir_path: &Path) -> PathBuf {
-    root_dir_path.join("config")
 }
 
 pub(crate) fn documents_dir_path(root_dir_path: &Path) -> PathBuf {
