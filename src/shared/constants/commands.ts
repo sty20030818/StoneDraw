@@ -21,8 +21,6 @@ export const TAURI_COMMANDS = {
 	FILES_RESOLVE_CONFIG_DIR: 'files_resolve_config_dir',
 	FILES_RESOLVE_DOCUMENT_LAYOUT: 'files_resolve_document_layout',
 	LOGS_WRITE_EVENT: 'logs_write_event',
-	SETTINGS_READ: 'settings_read',
-	SETTINGS_SAVE: 'settings_save',
 	EDITOR_SAVE_SCENE: 'editor_save_scene',
 	SYSTEM_DEMO: 'system_demo',
 } as const

@@ -1,46 +1,62 @@
-import type { PropsWithChildren } from 'react'
-import { useShallow } from 'zustand/react/shallow'
+import { createContext, useContext, useMemo, useState, type PropsWithChildren } from 'react'
+import type { DocumentVersionMeta, TauriCommandResult } from '@/shared/types'
 import { useWorkbenchStore } from '@/features/workbench/state'
-import type { DocumentVersionMeta, SaveStatus, TauriCommandResult } from '@/shared/types'
 
 type WorkbenchShellState = {
-	activePanel: ReturnType<typeof useWorkbenchStore.getState>['activePanel']
-	documentId: string | null
-	documentTitle: string
-	searchDraft: string
-	isDocumentReady: boolean
-	saveStatus: SaveStatus
-	isFlushing: boolean
 	onBack: () => void
 	onSave: () => void
 	onCreateVersion: () => Promise<TauriCommandResult<DocumentVersionMeta> | null>
 	onExport: () => void
 	onMore: () => void
-	onSearchChange: (value: string) => void
 }
 
+const noop = () => undefined
+const asyncNoop = async () => null
+
+const initialShellState: WorkbenchShellState = {
+	onBack: noop,
+	onSave: noop,
+	onCreateVersion: asyncNoop,
+	onExport: noop,
+	onMore: noop,
+}
+
+const WorkbenchShellContext = createContext<{
+	shellActions: WorkbenchShellState
+	setShellActions: (patch: Partial<WorkbenchShellState>) => void
+	resetShellActions: () => void
+} | null>(null)
+
 export function WorkbenchShellProvider({ children }: PropsWithChildren) {
-	return children
+	const [shellActions, setShellActionsState] = useState(initialShellState)
+
+	const contextValue = useMemo(
+		() => ({
+			shellActions,
+			setShellActions: (patch: Partial<WorkbenchShellState>) => {
+				setShellActionsState((currentState) => ({
+					...currentState,
+					...patch,
+				}))
+			},
+			resetShellActions: () => {
+				setShellActionsState(initialShellState)
+			},
+		}),
+		[shellActions],
+	)
+
+	return <WorkbenchShellContext.Provider value={contextValue}>{children}</WorkbenchShellContext.Provider>
 }
 
 export function useWorkbenchShell() {
-	const shellState = useWorkbenchStore(
-		useShallow((state) => ({
-			activePanel: state.activePanel,
-			documentId: state.activeDocumentId,
-			documentTitle: state.documentTitle,
-			searchDraft: state.searchDraft,
-			isDocumentReady: state.isWorkbenchReady,
-			saveStatus: state.saveStatus,
-			isFlushing: state.isFlushing,
-			onBack: state.onBack,
-			onSave: state.onSave,
-			onCreateVersion: state.onCreateVersion,
-			onExport: state.onExport,
-			onMore: state.onMore,
-			onSearchChange: state.onSearchChange,
-		})),
-	)
+	const context = useContext(WorkbenchShellContext)
+
+	if (!context) {
+		throw new Error('useWorkbenchShell 必须在 WorkbenchShellProvider 内使用。')
+	}
+
+	const shellState = context.shellActions
 	const setActivePanel = useWorkbenchStore((state) => state.setActivePanel)
 
 	return {
@@ -50,53 +66,15 @@ export function useWorkbenchShell() {
 }
 
 export function useWorkbenchShellController() {
-	const resetShellState = useWorkbenchStore((state) => state.reset)
-	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
-	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
-	const setSearchDraft = useWorkbenchStore((state) => state.setSearchDraft)
-	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
-	const setSaveStatus = useWorkbenchStore((state) => state.setSaveStatus)
-	const setIsFlushing = useWorkbenchStore((state) => state.setIsFlushing)
-	const setWorkbenchActions = useWorkbenchStore((state) => state.setWorkbenchActions)
+	const context = useContext(WorkbenchShellContext)
 
-	function patchShellState(patch: Partial<WorkbenchShellState>) {
-		if (patch.documentId !== undefined) {
-			setActiveDocumentId(patch.documentId)
-		}
-
-		if (patch.documentTitle !== undefined) {
-			setDocumentTitle(patch.documentTitle)
-		}
-
-		if (patch.searchDraft !== undefined) {
-			setSearchDraft(patch.searchDraft)
-		}
-
-		if (patch.isDocumentReady !== undefined) {
-			setWorkbenchReady(patch.isDocumentReady)
-		}
-
-		if (patch.saveStatus !== undefined) {
-			setSaveStatus(patch.saveStatus)
-		}
-
-		if (patch.isFlushing !== undefined) {
-			setIsFlushing(patch.isFlushing)
-		}
-
-		setWorkbenchActions({
-			onBack: patch.onBack,
-			onSave: patch.onSave,
-			onCreateVersion: patch.onCreateVersion,
-			onExport: patch.onExport,
-			onMore: patch.onMore,
-			onSearchChange: patch.onSearchChange,
-		})
+	if (!context) {
+		throw new Error('useWorkbenchShellController 必须在 WorkbenchShellProvider 内使用。')
 	}
 
 	return {
-		patchShellState,
-		resetShellState,
+		patchShellActions: context.setShellActions,
+		resetShellActions: context.resetShellActions,
 	}
 }
 

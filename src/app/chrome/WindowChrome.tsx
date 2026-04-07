@@ -5,7 +5,6 @@ import { Input } from '@/shared/ui/input'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import { useAppStore } from '@/app/state'
 import { useOverlayStore } from '@/features/overlays'
-import { useWorkbenchStore } from '@/features/workbench'
 import { detectDesktopShellPlatform } from './platform-shell'
 
 async function runWindowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
@@ -47,20 +46,13 @@ function readWorkspaceSearchQuery() {
 function WindowChrome() {
 	const shellPlatform = detectDesktopShellPlatform()
 	const isMacShell = shellPlatform === 'mac'
-	const activeSceneKey = useAppStore((state) => state.activeSceneKey)
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
 	const openOverlay = useOverlayStore((state) => state.openOverlay)
-	const workbenchSearchDraft = useWorkbenchStore((state) => state.searchDraft)
 	const [chromeSearchDraft, setChromeSearchDraft] = useState('')
 
 	useEffect(() => {
-		if (activeSceneKey === 'workbench') {
-			setChromeSearchDraft(workbenchSearchDraft)
-			return
-		}
-
 		setChromeSearchDraft(readWorkspaceSearchQuery())
-	}, [activeSceneKey, activeRoutePath, workbenchSearchDraft])
+	}, [activeRoutePath])
 
 	function submitChromeSearch() {
 		const trimmedDraft = chromeSearchDraft.trim()
@@ -72,20 +64,11 @@ function WindowChrome() {
 			return
 		}
 
-		if (activeSceneKey === 'workbench') {
-			const workbenchStore = useWorkbenchStore.getState()
-
-			workbenchStore.setSearchDraft(trimmedDraft)
-			workbenchStore.setActivePanel('search')
-			workbenchStore.setSidePanelOpen(true)
-			return
-		}
-
 		const searchParams = new URLSearchParams({
 			q: trimmedDraft,
 		})
 
-		window.location.hash = `${APP_ROUTES.WORKSPACE_SEARCH}?${searchParams.toString()}`
+		window.location.hash = `${APP_ROUTES.WORKSPACE_DOCUMENTS}?${searchParams.toString()}`
 	}
 
 	return (
@@ -126,7 +109,7 @@ function WindowChrome() {
 									? 'h-8 rounded-full border-border/65 bg-white/78'
 									: 'h-9 rounded-full border-border/70 bg-[#f6f8fc]',
 							].join(' ')}
-							placeholder='搜索画布内容（本阶段仅保留输入骨架）'
+							placeholder='搜索文档标题'
 							onChange={(event) => {
 								setChromeSearchDraft(event.target.value)
 							}}

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FilePlus2Icon, SearchIcon, Settings2Icon } from 'lucide-react'
+import { ArchiveIcon, FilePlus2Icon, Settings2Icon } from 'lucide-react'
 import { WORKSPACE_NAV_ITEMS } from '@/app/router'
 import { useOverlayStore } from '@/features/overlays'
 import { Button } from '@/shared/ui/button'
@@ -26,10 +26,10 @@ function WorkspaceTopbar() {
 					variant='outline'
 					className='h-9 rounded-xl bg-white px-4 shadow-sm'
 					onClick={() => {
-						navigate(APP_ROUTES.WORKSPACE_SEARCH)
+						navigate(APP_ROUTES.WORKSPACE_ARCHIVE)
 					}}>
-					<SearchIcon data-icon='inline-start' />
-					搜索中心
+					<ArchiveIcon data-icon='inline-start' />
+					回收站
 				</Button>
 				<Button
 					type='button'

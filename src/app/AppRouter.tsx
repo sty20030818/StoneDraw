@@ -7,10 +7,7 @@ import {
 	ArchivePage,
 	DocumentsPage,
 	HomePage,
-	SearchCenterPage,
 	SettingsPage,
-	TeamPage,
-	TemplatesPage,
 	WorkbenchPage,
 } from '@/features'
 import { useAppStore } from '@/app/state'
@@ -62,20 +59,8 @@ function AppRouter() {
 						path='documents'
 					/>
 					<Route
-						element={<TemplatesPage />}
-						path='templates'
-					/>
-					<Route
-						element={<SearchCenterPage />}
-						path='search'
-					/>
-					<Route
 						element={<ArchivePage />}
 						path='archive'
-					/>
-					<Route
-						element={<TeamPage />}
-						path='team'
 					/>
 					<Route
 						element={<SettingsPage />}

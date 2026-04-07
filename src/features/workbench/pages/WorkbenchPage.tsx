@@ -50,18 +50,17 @@ function WorkbenchPage() {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const documentId = searchParams.get('documentId')
-	const { patchShellState, resetShellState } = useWorkbenchShellController()
+	const { patchShellActions, resetShellActions } = useWorkbenchShellController()
 	const openOverlay = useOverlayStore((state) => state.openOverlay)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
 	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
-	const searchDraft = useWorkbenchStore((state) => state.searchDraft)
 	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
 	const lastSaveError = useWorkbenchStore((state) => state.lastSaveError)
 	const isFlushing = useWorkbenchStore((state) => state.isFlushing)
 	const isWorkbenchReady = useWorkbenchStore((state) => state.isWorkbenchReady)
 	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
+	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
 	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
-	const setSearchDraft = useWorkbenchStore((state) => state.setSearchDraft)
 	const syncDocumentTab = useWorkbenchStore((state) => state.syncDocumentTab)
 	const [workbenchLoadState, setWorkbenchLoadState] = useState<WorkbenchLoadState>({
 		status: 'loading',
@@ -201,16 +200,18 @@ function WorkbenchPage() {
 			clearEditorApi()
 			setWorkbenchReady(false)
 			setActiveDocumentId(null)
+			setDocumentTitle('未选择文档')
 			setSelectedDocumentId(null)
-			resetShellState()
+			resetShellActions()
 		}
 	}, [
 		documentId,
-		resetShellState,
 		setActiveDocumentId,
+		setDocumentTitle,
 		setSelectedDocumentId,
 		setWorkbenchReady,
 		syncWorkspaceCollections,
+		resetShellActions,
 	])
 
 	useEffect(() => {
@@ -220,13 +221,14 @@ function WorkbenchPage() {
 
 		setWorkbenchReady(false)
 		setActiveDocumentId(workbenchLoadState.document.id)
+		setDocumentTitle(workbenchLoadState.document.title)
 		setSelectedDocumentId(workbenchLoadState.document.id)
 		syncDocumentTab({
 			id: workbenchLoadState.document.id,
 			title: workbenchLoadState.document.title,
 		})
 		documentPersistenceSession.initialize(workbenchLoadState.scene)
-	}, [setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady, syncDocumentTab, workbenchLoadState])
+	}, [setActiveDocumentId, setDocumentTitle, setSelectedDocumentId, setWorkbenchReady, syncDocumentTab, workbenchLoadState])
 
 	const handleContentChange = useCallback(
 		(payload: EditorContentChangePayload) => {
@@ -330,18 +332,7 @@ function WorkbenchPage() {
 	}, [documentId, openOverlay, workbenchLoadState])
 
 	useEffect(() => {
-		patchShellState({
-			documentId,
-			documentTitle:
-				workbenchLoadState.status === 'ready'
-					? workbenchLoadState.document.title
-					: workbenchLoadState.status === 'error'
-						? workbenchLoadState.title
-						: '工作台正在准备文档',
-			searchDraft,
-			isDocumentReady: isWorkbenchReady,
-			saveStatus,
-			isFlushing,
+		patchShellActions({
 			onBack: () => {
 				void navigateToWorkspace()
 			},
@@ -351,22 +342,14 @@ function WorkbenchPage() {
 			onCreateVersion: handleCreateVersion,
 			onExport: handleExportOverlay,
 			onMore: handleShareOverlay,
-			onSearchChange: setSearchDraft,
 		})
 	}, [
-		documentId,
 		handleExportOverlay,
 		handleCreateVersion,
 		handleManualSave,
 		handleShareOverlay,
-		isFlushing,
-		isWorkbenchReady,
 		navigateToWorkspace,
-		patchShellState,
-		saveStatus,
-		searchDraft,
-		setSearchDraft,
-		workbenchLoadState,
+		patchShellActions,
 	])
 
 	if (workbenchLoadState.status === 'error') {

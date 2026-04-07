@@ -5,10 +5,7 @@ export const APP_ROUTES = {
 	WORKSPACE: '/workspace',
 	WORKSPACE_HOME: '/workspace/home',
 	WORKSPACE_DOCUMENTS: '/workspace/documents',
-	WORKSPACE_TEMPLATES: '/workspace/templates',
-	WORKSPACE_SEARCH: '/workspace/search',
 	WORKSPACE_ARCHIVE: '/workspace/archive',
-	WORKSPACE_TEAM: '/workspace/team',
 	WORKSPACE_SETTINGS: '/workspace/settings',
 	WORKBENCH: '/workbench',
 } as const
@@ -41,7 +38,7 @@ export const APP_SCENES: Record<AppSceneKey, AppSceneMeta> = {
 	workspace: {
 		key: 'workspace',
 		label: '工作区',
-		description: '管理文档、模板、搜索、归档与设置的管理态。',
+		description: '管理文档、归档与设置的管理态。',
 		path: APP_ROUTES.WORKSPACE_HOME,
 		icon: FolderKanbanIcon,
 	},

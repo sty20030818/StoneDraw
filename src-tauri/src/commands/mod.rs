@@ -6,7 +6,6 @@ pub mod database;
 pub mod documents;
 pub mod files;
 pub mod logs;
-pub mod settings;
 pub mod system;
 
 const DEFAULT_NATIVE_LAYER: &str = "native-command";
@@ -231,7 +230,5 @@ pub fn register(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wr
         files::files_resolve_config_dir,
         files::files_resolve_document_layout,
         logs::logs_write_event,
-        settings::settings_read,
-        settings::settings_save,
     ])
 }

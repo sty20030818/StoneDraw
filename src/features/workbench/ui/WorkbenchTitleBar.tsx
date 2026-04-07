@@ -1,12 +1,10 @@
-import { ArrowLeftIcon, DownloadIcon, LoaderCircleIcon, MoreHorizontalIcon, SaveIcon, SearchIcon } from 'lucide-react'
+import { ArrowLeftIcon, DownloadIcon, LoaderCircleIcon, MoreHorizontalIcon, SaveIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
 import type { SaveStatus } from '@/shared/types'
 import { resolveSaveStatusMeta } from './save-status'
 
 type WorkbenchTitleBarProps = {
 	documentTitle: string
-	searchDraft: string
 	isDocumentReady: boolean
 	saveStatus: SaveStatus
 	isFlushing: boolean
@@ -14,12 +12,10 @@ type WorkbenchTitleBarProps = {
 	onSave: () => void
 	onExport: () => void
 	onMore: () => void
-	onSearchChange: (value: string) => void
 }
 
 function WorkbenchTitleBar({
 	documentTitle,
-	searchDraft,
 	isDocumentReady,
 	saveStatus,
 	isFlushing,
@@ -27,7 +23,6 @@ function WorkbenchTitleBar({
 	onSave,
 	onExport,
 	onMore,
-	onSearchChange,
 }: WorkbenchTitleBarProps) {
 	const statusMeta = resolveSaveStatusMeta(saveStatus)
 	const isSavePending = saveStatus === 'saving' || isFlushing
@@ -58,18 +53,8 @@ function WorkbenchTitleBar({
 			</div>
 
 			<div className='flex min-w-[20rem] flex-1 items-center justify-end gap-2.5'>
-				<div className='relative w-full max-w-[28rem]'>
-					<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-					<Input
-						type='search'
-						className='h-9 rounded-full border-border/70 bg-[#f6f8fc] pl-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]'
-						value={searchDraft}
-						disabled={!isDocumentReady}
-						onChange={(event) => {
-							onSearchChange(event.target.value)
-						}}
-						placeholder='搜索画布内容（本阶段仅保留输入骨架）'
-					/>
+				<div className='inline-flex h-9 items-center rounded-full border border-border/70 bg-[#f6f8fc] px-4 text-sm text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]'>
+					本地版本工作台
 				</div>
 				<Button
 					type='button'

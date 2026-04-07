@@ -8,11 +8,8 @@ import {
 	ActivityBar,
 	ExplorerPanel,
 	HistoryPanel,
-	LibraryPanel,
 	RightPanel,
-	SearchPanel,
 	StatusBar,
-	TeamPanel,
 	WorkbenchShellProvider,
 	WorkbenchTabs,
 	WorkbenchTitleBar,
@@ -25,14 +22,19 @@ function WorkbenchShellContent() {
 	const { shellState, setActivePanel } = useWorkbenchShell()
 	const documents = useDocumentStore((state) => state.documents)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
+	const activeDocumentId = useWorkbenchStore((state) => state.activeDocumentId)
+	const documentTitle = useWorkbenchStore((state) => state.documentTitle)
+	const isWorkbenchReady = useWorkbenchStore((state) => state.isWorkbenchReady)
+	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
+	const isFlushing = useWorkbenchStore((state) => state.isFlushing)
+	const activePanel = useWorkbenchStore((state) => state.activePanel)
 	const tabs = useWorkbenchStore((state) => state.tabs)
 	const activeTabId = useWorkbenchStore((state) => state.activeTabId)
 	const isSidePanelOpen = useWorkbenchStore((state) => state.isSidePanelOpen)
 	const isRightPanelOpen = useWorkbenchStore((state) => state.isRightPanelOpen)
 	const activateDocumentTab = useWorkbenchStore((state) => state.activateDocumentTab)
 	const closeDocumentTab = useWorkbenchStore((state) => state.closeDocumentTab)
-	const activeItem =
-		WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === shellState.activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
+	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
 	const shellGridClass = isSidePanelOpen
 		? isRightPanelOpen
 			? 'grid-cols-[3.5rem_17rem_minmax(0,1fr)_18rem]'
@@ -54,7 +56,7 @@ function WorkbenchShellContent() {
 		(documentId: string) => {
 			const nextDocumentId = closeDocumentTab(documentId)
 
-			if (shellState.documentId !== documentId) {
+			if (activeDocumentId !== documentId) {
 				return
 			}
 
@@ -67,41 +69,29 @@ function WorkbenchShellContent() {
 
 			navigate(APP_ROUTES.WORKSPACE_HOME)
 		},
-		[closeDocumentTab, navigate, setSelectedDocumentId, shellState.documentId],
+		[activeDocumentId, closeDocumentTab, navigate, setSelectedDocumentId],
 	)
 
 	function renderSidePanel() {
-		switch (shellState.activePanel) {
-			case 'search':
-				return <SearchPanel searchDraft={shellState.searchDraft} />
-			case 'library':
-				return (
-					<LibraryPanel
-						documentId={shellState.documentId}
-						documentTitle={shellState.documentTitle}
-						isDocumentReady={shellState.isDocumentReady}
-					/>
-				)
+		switch (activePanel) {
 			case 'history':
 				return (
 					<HistoryPanel
-						documentId={shellState.documentId}
-						documentTitle={shellState.documentTitle}
-						isDocumentReady={shellState.isDocumentReady}
-						saveStatus={shellState.saveStatus}
+						documentId={activeDocumentId}
+						documentTitle={documentTitle}
+						isDocumentReady={isWorkbenchReady}
+						saveStatus={saveStatus}
 						onCreateVersion={shellState.onCreateVersion}
 					/>
 				)
-			case 'team':
-				return <TeamPanel />
 			case 'explorer':
 			default:
 				return (
 					<ExplorerPanel
 						documents={documents}
-						activeDocumentId={shellState.documentId}
-						documentId={shellState.documentId}
-						documentTitle={shellState.documentTitle}
+						activeDocumentId={activeDocumentId}
+						documentId={activeDocumentId}
+						documentTitle={documentTitle}
 						onSelectDocument={openDocumentInWorkbench}
 					/>
 				)
@@ -117,7 +107,7 @@ function WorkbenchShellContent() {
 			].join(' ')}>
 			<div className='row-span-5'>
 				<ActivityBar
-					activePanel={shellState.activePanel}
+					activePanel={activePanel}
 					onPanelChange={setActivePanel}
 				/>
 			</div>
@@ -126,11 +116,10 @@ function WorkbenchShellContent() {
 				<aside className='row-span-5 flex min-h-0 flex-col border-r border-border/60 bg-[rgba(250,251,255,0.9)]'>
 					<div
 						data-tauri-drag-region
-						className='flex h-[42px] items-center justify-between border-b border-border/60 px-4'>
+						className='flex h-[42px] items-center border-b border-border/60 px-4'>
 						<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>
 							{activeItem.label}
 						</p>
-						<span className='tauri-no-drag text-sm text-muted-foreground'>＋</span>
 					</div>
 					<div className='px-4 pt-3 text-sm text-muted-foreground'>{activeItem.description}</div>
 					<div className='min-h-0 flex-1 overflow-auto px-3 py-3'>{renderSidePanel()}</div>
@@ -144,25 +133,23 @@ function WorkbenchShellContent() {
 				<WorkbenchTabs
 					tabs={tabs}
 					activeTabId={activeTabId}
-					fallbackDocumentId={shellState.documentId}
-					fallbackDocumentTitle={shellState.documentTitle}
-					isDocumentReady={shellState.isDocumentReady}
+					fallbackDocumentId={activeDocumentId}
+					fallbackDocumentTitle={documentTitle}
+					isDocumentReady={isWorkbenchReady}
 					onSelectTab={openDocumentInWorkbench}
 					onCloseTab={handleCloseTab}
 				/>
 			</div>
 			<div className='col-start-3 col-span-2 row-start-3 min-w-0'>
 				<WorkbenchTitleBar
-					documentTitle={shellState.documentTitle}
-					searchDraft={shellState.searchDraft}
-					isDocumentReady={shellState.isDocumentReady}
-					saveStatus={shellState.saveStatus}
-					isFlushing={shellState.isFlushing}
+					documentTitle={documentTitle}
+					isDocumentReady={isWorkbenchReady}
+					saveStatus={saveStatus}
+					isFlushing={isFlushing}
 					onBack={shellState.onBack}
 					onSave={shellState.onSave}
 					onExport={shellState.onExport}
 					onMore={shellState.onMore}
-					onSearchChange={shellState.onSearchChange}
 				/>
 			</div>
 
@@ -173,20 +160,20 @@ function WorkbenchShellContent() {
 			</div>
 			<div className='col-start-3 col-span-2 row-start-5 min-w-0'>
 				<StatusBar
-					activePanel={shellState.activePanel}
-					documentId={shellState.documentId}
-					isDocumentReady={shellState.isDocumentReady}
-					saveStatus={shellState.saveStatus}
+					activePanel={activePanel}
+					documentId={activeDocumentId}
+					isDocumentReady={isWorkbenchReady}
+					saveStatus={saveStatus}
 				/>
 			</div>
 
 			{isRightPanelOpen ? (
 				<div className='col-start-4 row-start-3 row-span-2 min-h-0'>
 					<RightPanel
-						documentId={shellState.documentId}
-						documentTitle={shellState.documentTitle}
-						isDocumentReady={shellState.isDocumentReady}
-						saveStatus={shellState.saveStatus}
+						documentId={activeDocumentId}
+						documentTitle={documentTitle}
+						isDocumentReady={isWorkbenchReady}
+						saveStatus={saveStatus}
 					/>
 				</div>
 			) : null}

@@ -1,14 +1,11 @@
-import { BlocksIcon, Clock3Icon, FilesIcon, SearchIcon, UsersIcon } from 'lucide-react'
+import { Clock3Icon, FilesIcon } from 'lucide-react'
 import { ActivityIcon } from '@/app/navigation'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import type { WorkbenchPanelKey } from '@/features/workbench/state'
 
 const panelIcons = {
 	explorer: FilesIcon,
-	search: SearchIcon,
-	library: BlocksIcon,
 	history: Clock3Icon,
-	team: UsersIcon,
 } satisfies Record<WorkbenchPanelKey, typeof FilesIcon>
 
 type ActivityBarProps = {

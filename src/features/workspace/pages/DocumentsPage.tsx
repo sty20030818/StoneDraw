@@ -1,4 +1,5 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FileStackIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
@@ -6,6 +7,7 @@ import EmptyState from '@/shared/components/EmptyState'
 import { useDocumentStore, useWorkspaceDocuments, WorkspaceDocumentCards } from '@/features/documents'
 
 function DocumentsPage() {
+	const [searchParams] = useSearchParams()
 	const documents = useDocumentStore((state) => state.documents)
 	const collectionStatus = useDocumentStore((state) => state.collectionStatus)
 	const collectionErrorMessage = useDocumentStore((state) => state.collectionErrorMessage)
@@ -21,6 +23,10 @@ function DocumentsPage() {
 		handleMoveToTrash,
 	} = useWorkspaceDocuments()
 
+	useEffect(() => {
+		setSearchDraft(searchParams.get('q') ?? '')
+	}, [searchParams])
+
 	const filteredDocuments = useMemo(() => {
 		if (!normalizedSearchDraft) {
 			return documents
@@ -28,8 +34,7 @@ function DocumentsPage() {
 
 		return documents.filter((document) => {
 			const title = document.title.toLowerCase()
-			const scenePath = document.currentScenePath.toLowerCase()
-			return title.includes(normalizedSearchDraft) || scenePath.includes(normalizedSearchDraft)
+			return title.includes(normalizedSearchDraft)
 		})
 	}, [documents, normalizedSearchDraft])
 
