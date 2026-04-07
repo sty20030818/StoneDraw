@@ -6,7 +6,7 @@ import { createScenePayload } from '@/test/fixtures/scene'
 const readCurrentMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 const saveCurrentMock = vi.fn<(...args: never[]) => Promise<unknown>>()
 
-vi.mock('@/repositories', () => ({
+vi.mock('@/features/documents', () => ({
 	sceneRepository: {
 		readCurrent: readCurrentMock,
 		saveCurrent: saveCurrentMock,

@@ -6,7 +6,6 @@ import type {
 	AppBootStage,
 	AppError,
 	BootstrapHealthSnapshot,
-	CommandBridgeStatus,
 	DatabaseHealthPayload,
 	DatabaseStatus,
 	LocalDirectoriesPayload,
@@ -19,15 +18,12 @@ type AppStoreState = {
 	lastError: AppError | null
 	bootstrapError: AppError | null
 	bootstrapSnapshot: BootstrapHealthSnapshot | null
-	commandBridgeStatus: CommandBridgeStatus
 	localDirectoryStatus: LocalDirectoryStatus
 	localDirectories: LocalDirectoriesPayload | null
 	localDirectoriesReadyAt: string | null
 	databaseStatus: DatabaseStatus
 	databaseHealth: DatabaseHealthPayload | null
 	databaseReadyAt: string | null
-	lastCommandName: string | null
-	lastCommandAt: string | null
 	activeSceneKey: AppSceneKey
 	activeRoutePath: string | null
 	setBootStage: (bootStage: AppBootStage) => void
@@ -43,8 +39,6 @@ type AppStoreState = {
 	setDatabaseHealth: (databaseHealth: DatabaseHealthPayload) => void
 	clearDatabaseHealth: () => void
 	clearLastError: () => void
-	reportCommandSuccess: (commandName: string) => void
-	reportCommandError: (commandName: string, error: AppError) => void
 	reset: () => void
 }
 
@@ -54,15 +48,12 @@ const initialAppState = {
 	lastError: null,
 	bootstrapError: null,
 	bootstrapSnapshot: null,
-	commandBridgeStatus: 'idle' as CommandBridgeStatus,
 	localDirectoryStatus: 'idle' as LocalDirectoryStatus,
 	localDirectories: null,
 	localDirectoriesReadyAt: null,
 	databaseStatus: 'idle' as DatabaseStatus,
 	databaseHealth: null,
 	databaseReadyAt: null,
-	lastCommandName: null,
-	lastCommandAt: null,
 	activeSceneKey: 'workspace' as AppSceneKey,
 	activeRoutePath: null,
 } satisfies Pick<
@@ -72,15 +63,12 @@ const initialAppState = {
 	| 'lastError'
 	| 'bootstrapError'
 	| 'bootstrapSnapshot'
-	| 'commandBridgeStatus'
 	| 'localDirectoryStatus'
 	| 'localDirectories'
 	| 'localDirectoriesReadyAt'
 	| 'databaseStatus'
 	| 'databaseHealth'
 	| 'databaseReadyAt'
-	| 'lastCommandName'
-	| 'lastCommandAt'
 	| 'activeSceneKey'
 	| 'activeRoutePath'
 >
@@ -134,20 +122,5 @@ export const useAppStore = create<AppStoreState>((set) => ({
 			databaseReadyAt: null,
 		}),
 	clearLastError: () => set({ lastError: null }),
-	reportCommandSuccess: (commandName) =>
-		set({
-			commandBridgeStatus: 'ready',
-			lastCommandName: commandName,
-			lastCommandAt: toIsoString(),
-		}),
-	reportCommandError: (commandName, error) =>
-		set({
-			commandBridgeStatus: 'error',
-			lastCommandAt: toIsoString(),
-			lastError: {
-				...error,
-				command: error.command ?? commandName,
-			},
-		}),
 	reset: () => set(initialAppState),
 }))

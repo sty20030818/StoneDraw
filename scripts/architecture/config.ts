@@ -16,29 +16,12 @@ export const srcRoot = join(projectRoot, 'src')
 export const sourceFileExtensions = new Set(['.ts', '.tsx'])
 
 export const frozenLegacyFileAllowlist = new Set([
-	'src/overlay/CommandPalette.tsx',
-	'src/overlay/ExportDialog.tsx',
-	'src/overlay/index.ts',
-	'src/overlay/NewDocumentDialog.tsx',
-	'src/pages/index.ts',
 	'src/pages/not-found/NotFoundPage.test.tsx',
 	'src/pages/not-found/NotFoundPage.tsx',
-	'src/repositories/index.ts',
-	'src/repositories/settings/settings.repository.ts',
-	'src/repositories/system/database.repository.ts',
-	'src/repositories/system/directory.repository.ts',
-	'src/services/database.service.ts',
-	'src/services/directory.service.ts',
-	'src/services/index.ts',
-	'src/services/settings.service.ts',
 ])
 
 export const frozenLegacyRoots = [
-	join(srcRoot, 'overlay'),
 	join(srcRoot, 'pages'),
-	join(srcRoot, 'repositories'),
-	join(srcRoot, 'services'),
-	join(srcRoot, 'stores'),
 	join(srcRoot, 'workbench'),
 ]
 
@@ -51,6 +34,7 @@ export const deletedLegacyRoots = [
 	join(srcRoot, 'components', 'ui'),
 	join(srcRoot, 'components', 'workbench'),
 	join(srcRoot, 'components', 'workspace'),
+	join(srcRoot, 'adapters'),
 	join(srcRoot, 'constants'),
 	join(srcRoot, 'domain'),
 	join(srcRoot, 'hooks'),
@@ -58,9 +42,13 @@ export const deletedLegacyRoots = [
 	join(srcRoot, 'lib'),
 	join(srcRoot, 'mocks'),
 	join(srcRoot, 'modules'),
+	join(srcRoot, 'overlay'),
 	join(srcRoot, 'pages', 'editor'),
 	join(srcRoot, 'pages', 'home'),
 	join(srcRoot, 'pages', 'settings'),
+	join(srcRoot, 'repositories'),
+	join(srcRoot, 'services'),
+	join(srcRoot, 'stores'),
 	join(srcRoot, 'types'),
 	join(srcRoot, 'utils'),
 ]
@@ -104,6 +92,26 @@ export const guardedImportRules: ImportBanRule[] = [
 	{
 		pattern: /from ['"]@\/components\/workspace(?:\/|['"])/,
 		reason: '旧 workspace 目录已删除，工作区组件必须走 features/workspace。',
+	},
+	{
+		pattern: /from ['"]@\/overlay(?:\/|['"])/,
+		reason: '旧 overlay 目录已删除，弹层必须走 features/overlays。',
+	},
+	{
+		pattern: /from ['"]@\/repositories(?:\/|['"])/,
+		reason: '旧 repositories 目录已删除，仓储能力必须回到 feature 或 platform/tauri。',
+	},
+	{
+		pattern: /from ['"]@\/services(?:\/|['"])/,
+		reason: '旧 services 目录已删除，服务能力必须回到 owning feature 或 platform。',
+	},
+	{
+		pattern: /from ['"]@\/stores(?:\/|['"])/,
+		reason: '旧 stores 目录已删除，状态必须走 app/state 或 feature state。',
+	},
+	{
+		pattern: /from ['"]@\/adapters(?:\/|['"])/,
+		reason: '旧 adapters 目录已删除，编辑器适配层必须走 editor/excalidraw。',
 	},
 	{
 		pattern: /from ['"]@\/pages\/editor(?:\/|['"])/,

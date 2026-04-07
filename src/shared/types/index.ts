@@ -3,7 +3,6 @@ export type {
 	AppError,
 	AppErrorCode,
 	AppLayer,
-	CommandBridgeStatus,
 	DatabaseStatus,
 	LocalDirectoryStatus,
 	SaveStatus,

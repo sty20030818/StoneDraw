@@ -1,5 +1,5 @@
-import { databaseRepository, directoryRepository } from '@/repositories'
 import { logger } from '@/platform/logging'
+import { databaseRepository, directoryRepository } from '@/platform/tauri'
 import { createId, toIsoString } from '@/shared/lib'
 import type { BootstrapHealthSnapshot, BootstrapRuntimeResult } from '@/shared/types'
 

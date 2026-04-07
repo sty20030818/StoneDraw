@@ -107,8 +107,6 @@ function SettingsPage() {
 	const databaseStatus = useAppStore((state) => state.databaseStatus)
 	const databaseHealth = useAppStore((state) => state.databaseHealth)
 	const databaseReadyAt = useAppStore((state) => state.databaseReadyAt)
-	const lastCommandName = useAppStore((state) => state.lastCommandName)
-	const lastCommandAt = useAppStore((state) => state.lastCommandAt)
 	const activeSceneKey = useAppStore((state) => state.activeSceneKey)
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
 
@@ -184,20 +182,6 @@ function SettingsPage() {
 				</div>
 				<div className='mt-4'>
 					<DatabasePanel databaseHealth={databaseHealth} />
-				</div>
-			</section>
-
-			<section className='rounded-[1.75rem] border border-border/70 bg-card p-5'>
-				<h3 className='text-base font-semibold tracking-tight'>命令桥最近活动</h3>
-				<div className='mt-4 grid gap-3 md:grid-cols-2'>
-					<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
-						<p className='text-xs text-muted-foreground'>最近一次命令</p>
-						<p className='mt-2 font-medium'>{lastCommandName ?? '本次会话暂无记录'}</p>
-					</div>
-					<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
-						<p className='text-xs text-muted-foreground'>最近一次执行时间</p>
-						<p className='mt-2 font-medium'>{formatTimestamp(lastCommandAt)}</p>
-					</div>
 				</div>
 			</section>
 		</div>

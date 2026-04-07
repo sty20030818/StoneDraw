@@ -23,8 +23,6 @@ export type AppError = {
 
 export type AppBootStage = 'bootstrapping' | 'failed' | 'ready'
 
-export type CommandBridgeStatus = 'idle' | 'ready' | 'error'
-
 export type LocalDirectoryStatus = 'idle' | 'ready' | 'error'
 
 export type DatabaseStatus = 'idle' | 'ready' | 'error'

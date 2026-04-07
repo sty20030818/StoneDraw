@@ -1,6 +1,6 @@
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
-import { useOverlayStore } from '@/features/overlays'
+import { useOverlayStore } from '../state'
 
 function ExportDialog() {
 	const activeOverlay = useOverlayStore((state) => state.activeOverlay)

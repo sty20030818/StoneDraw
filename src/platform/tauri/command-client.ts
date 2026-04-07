@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore } from '@/app/state'
 import { createId } from '@/shared/lib/id'
 import type { AppError, AppErrorCode, AppLayer, CommandSuccessPayload, TauriCommandResult } from '@/shared/types'
 import { logger } from '@/platform/logging'
@@ -116,7 +115,6 @@ export async function invokeTauriCommand<TData>(
 		const response = await invoke<CommandSuccessPayload<TData>>(command, payload)
 		const result = createSuccessResult(response.data)
 
-		useAppStore.getState().reportCommandSuccess(command)
 		logger.info({
 			layer: normalizedOptions.layer ?? 'infra',
 			module: normalizedOptions.module,
@@ -131,7 +129,6 @@ export async function invokeTauriCommand<TData>(
 	} catch (error) {
 		const normalizedError = normalizeInvokeError(command, error, normalizedOptions)
 
-		useAppStore.getState().reportCommandError(command, normalizedError)
 		logger.error({
 			layer: normalizedError.layer,
 			module: normalizedError.module,

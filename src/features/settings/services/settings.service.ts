@@ -1,15 +1,6 @@
-import { settingsRepository } from '@/repositories'
 import type { TauriCommandResult } from '@/shared/types'
-
-export type AppSettings = {
-	language: 'zh-CN'
-	theme: 'system'
-}
-
-const defaultSettings: AppSettings = {
-	language: 'zh-CN',
-	theme: 'system',
-}
+import { settingsRepository } from '../api'
+import { defaultSettings, type AppSettings } from '../model'
 
 export const settingsService = {
 	getDefaults(): AppSettings {
