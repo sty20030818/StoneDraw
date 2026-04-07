@@ -1,5 +1,6 @@
 export * from './collaboration'
 export * from './documents'
+export * from './overlays'
 export * from './recovery'
 export * from './search'
 export * from './settings'

@@ -1,5 +1,5 @@
 import type { AppState, BinaryFiles, ExcalidrawInitialDataState } from '@excalidraw/excalidraw/types'
-import { createSceneFingerprint, serializeScene } from '@/adapters/excalidraw'
+import { createSceneFingerprint, serializeScene } from '@/editor/excalidraw'
 import { readActiveScene } from '@/features/workbench/editor'
 import { useWorkbenchStore } from '@/features/workbench/state'
 import { createFailureResult } from '@/platform/tauri'

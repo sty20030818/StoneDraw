@@ -12,7 +12,7 @@ import {
 	TemplatesPage,
 	WorkbenchPage,
 } from '@/features'
-import { useAppStore } from '@/stores/app.store'
+import { useAppStore } from '@/app/state'
 import NotFoundPage from '@/pages/not-found/NotFoundPage'
 
 function RouteStateSync() {

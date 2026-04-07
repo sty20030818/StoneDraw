@@ -1,5 +1,5 @@
 import { TAURI_COMMANDS } from '@/shared/constants/index'
-import { deserializeScene, serializeScene, SceneValidationError } from '@/adapters/excalidraw/scene.adapter'
+import { deserializeScene, serializeScene, SceneValidationError } from '@/editor/excalidraw'
 import { sceneRepository } from '@/repositories'
 import { createFailureResult, createSuccessResult } from '@/platform/tauri'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/shared/types/index'

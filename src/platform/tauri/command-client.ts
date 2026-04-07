@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { useAppStore } from '@/stores/app.store'
+import { useAppStore } from '@/app/state'
 import { createId } from '@/shared/lib/id'
 import type { AppError, AppErrorCode, AppLayer, CommandSuccessPayload, TauriCommandResult } from '@/shared/types'
 import { logger } from '@/platform/logging'

@@ -1,5 +1,5 @@
 import { BugIcon, DatabaseIcon, FolderTreeIcon, RouteIcon } from 'lucide-react'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/app/state'
 import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/shared/types'
 
 type DiagnosticStatus = 'idle' | 'ready' | 'error'

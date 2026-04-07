@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { useAppStore } from '@/stores/app.store'
+import { useAppStore } from '@/app/state'
 
 const { detectDesktopShellPlatformMock } = vi.hoisted(() => ({
 	detectDesktopShellPlatformMock: vi.fn<() => 'mac' | 'windows' | 'other'>(),

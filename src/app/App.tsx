@@ -6,7 +6,7 @@ import { AppShell } from '@/app/layouts'
 import { APP_BOOT_STAGES } from '@/shared/constants'
 import EmptyState from '@/shared/components/EmptyState'
 import LoadingState from '@/shared/components/LoadingState'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/app/state'
 
 function App() {
 	const bootStage = useAppStore((state) => state.bootStage)
@@ -19,7 +19,7 @@ function App() {
 	const setDatabaseHealth = useAppStore((state) => state.setDatabaseHealth)
 	const setDatabaseStatus = useAppStore((state) => state.setDatabaseStatus)
 
-	function renderShell(content: ReactNode, showWindowChrome = false) {
+	function renderShell(content: ReactNode) {
 		return <AppShell>{content}</AppShell>
 	}
 
@@ -82,7 +82,6 @@ function App() {
 					/>
 				</div>
 			</div>,
-			true,
 		)
 	}
 
@@ -99,7 +98,6 @@ function App() {
 					}}
 				/>
 			</div>,
-			true,
 		)
 	}
 
@@ -116,7 +114,6 @@ function App() {
 					}}
 				/>
 			</div>,
-			true,
 		)
 	}
 

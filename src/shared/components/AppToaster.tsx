@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Toaster, toast } from 'sonner'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/app/state'
 
 function AppToaster() {
 	const lastError = useAppStore((state) => state.lastError)

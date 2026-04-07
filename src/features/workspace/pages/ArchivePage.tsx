@@ -3,7 +3,7 @@ import { useDialogHost } from '@/shared/components/DialogHost'
 import { Button } from '@/shared/ui/button'
 import EmptyState from '@/shared/components/EmptyState'
 import { useDocumentStore, useWorkspaceDocuments } from '@/features/documents'
-import { useOverlayStore } from '@/stores/overlay.store'
+import { useOverlayStore } from '@/features/overlays'
 import { formatDateTime } from '@/shared/lib/date'
 
 function ArchivePage() {

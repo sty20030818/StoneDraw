@@ -1,9 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FilePlus2Icon, SearchIcon, Settings2Icon } from 'lucide-react'
 import { WORKSPACE_NAV_ITEMS } from '@/app/router'
+import { useOverlayStore } from '@/features/overlays'
 import { Button } from '@/shared/ui/button'
 import { APP_ROUTES } from '@/shared/constants/routes'
-import { useOverlayStore } from '@/stores/overlay.store'
 
 function WorkspaceTopbar() {
 	const location = useLocation()

@@ -141,13 +141,13 @@ export const useAppStore = create<AppStoreState>((set) => ({
 			lastCommandAt: toIsoString(),
 		}),
 	reportCommandError: (commandName, error) =>
-		set((state) => ({
+		set({
 			commandBridgeStatus: 'error',
 			lastCommandAt: toIsoString(),
 			lastError: {
 				...error,
 				command: error.command ?? commandName,
 			},
-		})),
+		}),
 	reset: () => set(initialAppState),
 }))

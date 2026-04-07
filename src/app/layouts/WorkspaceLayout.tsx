@@ -1,22 +1,10 @@
-import { useEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { WindowChrome } from '@/app/chrome'
 import { detectDesktopShellPlatform } from '@/app/chrome/platform-shell'
 import { WorkspaceNav, WorkspaceTopbar } from '@/app/navigation'
-import { useWorkspaceStore, type WorkspaceSection } from '@/stores/workspace.store'
 
 function WorkspaceLayout() {
 	const isMacShell = detectDesktopShellPlatform() === 'mac'
-	const location = useLocation()
-	const setActiveSection = useWorkspaceStore((state) => state.setActiveSection)
-
-	useEffect(() => {
-		const section = location.pathname.split('/').at(-1) as WorkspaceSection | undefined
-
-		if (section) {
-			setActiveSection(section)
-		}
-	}, [location.pathname, setActiveSection])
 
 	return (
 		<section className='flex h-full min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(250,251,255,0.92))]'>

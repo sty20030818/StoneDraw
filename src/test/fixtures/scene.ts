@@ -1,4 +1,4 @@
-import { serializeScene } from '@/adapters/excalidraw'
+import { serializeScene } from '@/editor/excalidraw'
 import type { SceneFilePayload } from '@/shared/types'
 
 type SceneFixtureOptions = {

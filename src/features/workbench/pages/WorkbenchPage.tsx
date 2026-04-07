@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import EmptyState from '@/shared/components/EmptyState'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import { documentService, useDocumentStore, versionService } from '@/features/documents'
+import { useOverlayStore } from '@/features/overlays'
 import {
 	clearEditorApi,
 	ExcalidrawHost,
@@ -15,7 +16,6 @@ import {
 import { documentPersistenceSession } from '@/features/workbench/services'
 import { useWorkbenchStore } from '@/features/workbench/state'
 import { CanvasShell, useWorkbenchShellController } from '@/features/workbench/ui'
-import { useOverlayStore } from '@/stores/overlay.store'
 import type { DocumentMeta, DocumentVersionMeta, SceneFilePayload, TauriCommandResult } from '@/shared/types'
 
 type WorkbenchLoadState =

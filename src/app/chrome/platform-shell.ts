@@ -5,8 +5,14 @@ export function detectDesktopShellPlatform(): DesktopShellPlatform {
 		return 'other'
 	}
 
+	const navigatorWithUserAgentData = navigator as Navigator & {
+		userAgentData?: {
+			platform?: string
+		}
+	}
+
 	const platformCandidate =
-		navigator.userAgentData?.platform ??
+		navigatorWithUserAgentData.userAgentData?.platform ??
 		navigator.platform ??
 		navigator.userAgent
 

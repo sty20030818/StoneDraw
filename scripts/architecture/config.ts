@@ -31,16 +31,6 @@ export const frozenLegacyFileAllowlist = new Set([
 	'src/services/directory.service.ts',
 	'src/services/index.ts',
 	'src/services/settings.service.ts',
-	'src/stores/app.store.test.ts',
-	'src/stores/app.store.ts',
-	'src/stores/document.store.test.ts',
-	'src/stores/document.store.ts',
-	'src/stores/index.ts',
-	'src/stores/overlay.store.ts',
-	'src/stores/workbench.store.test.ts',
-	'src/stores/workbench.store.ts',
-	'src/stores/workspace.store.test.ts',
-	'src/stores/workspace.store.ts',
 ])
 
 export const frozenLegacyRoots = [
@@ -175,7 +165,4 @@ export const guardedImportRules: ImportBanRule[] = [
 
 export const emptyPlaceholderAllowlist = new Set<string>()
 
-export const orphanWrapperAllowlist = new Set([
-	'src/stores/document.store.ts',
-	'src/stores/workbench.store.ts',
-])
+export const orphanWrapperAllowlist = new Set<string>()

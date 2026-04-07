@@ -6,7 +6,7 @@ import { Input } from '@/shared/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { buildWorkbenchRoute } from '@/shared/constants/routes'
 import { documentService, useDocumentStore } from '@/features/documents'
-import { useOverlayStore } from '@/stores/overlay.store'
+import { useOverlayStore } from '@/features/overlays'
 
 function NewDocumentDialog() {
 	const navigate = useNavigate()

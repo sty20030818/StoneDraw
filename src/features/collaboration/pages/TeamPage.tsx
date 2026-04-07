@@ -1,5 +1,5 @@
 import { Button } from '@/shared/ui/button'
-import { useOverlayStore } from '@/stores/overlay.store'
+import { useOverlayStore } from '@/features/overlays'
 
 function TeamPage() {
 	const openOverlay = useOverlayStore((state) => state.openOverlay)

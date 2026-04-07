@@ -4,7 +4,7 @@ import { APP_BOOT_STAGES } from '@/shared/constants'
 import { createDatabaseHealthPayload, createLocalDirectoriesPayload } from '@/test/fixtures/app'
 import { createAppError } from '@/test/fixtures/error'
 import { createDeferredPromise } from '@/test/helpers/deferred'
-import { useAppStore } from '@/stores/app.store'
+import { useAppStore } from '@/app/state'
 import type { BootstrapRuntimeResult } from '@/shared/types'
 
 const { runBootstrapRuntimeMock } = vi.hoisted(() => ({

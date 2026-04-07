@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { APP_ROUTES } from '@/shared/constants/routes'
-import { useOverlayStore } from '@/stores/overlay.store'
+import { useOverlayStore } from '@/features/overlays'
 
 function CommandPalette() {
 	const navigate = useNavigate()

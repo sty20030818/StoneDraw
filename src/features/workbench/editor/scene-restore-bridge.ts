@@ -1,5 +1,5 @@
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
-import { applySceneToApi, createInitialSceneData, deserializeScene } from '@/adapters/excalidraw'
+import { applySceneToApi, createInitialSceneData, deserializeScene } from '@/editor/excalidraw'
 import { logger } from '@/platform/logging'
 import type { SceneFilePayload } from '@/shared/types'
 

@@ -3,9 +3,9 @@ import { MinusIcon, SearchIcon, SquareIcon, XIcon } from 'lucide-react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { Input } from '@/shared/ui/input'
 import { APP_ROUTES } from '@/shared/constants/routes'
-import { useAppStore } from '@/stores/app.store'
-import { useOverlayStore } from '@/stores/overlay.store'
-import { useWorkbenchStore } from '@/features/workbench/state'
+import { useAppStore } from '@/app/state'
+import { useOverlayStore } from '@/features/overlays'
+import { useWorkbenchStore } from '@/features/workbench'
 import { detectDesktopShellPlatform } from './platform-shell'
 
 async function runWindowAction(action: 'minimize' | 'toggleMaximize' | 'close') {

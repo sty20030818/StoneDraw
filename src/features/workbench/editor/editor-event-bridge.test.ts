@@ -1,3 +1,4 @@
+import type { BinaryFiles, ExcalidrawInitialDataState } from '@excalidraw/excalidraw/types'
 import { describe, expect, test, vi } from 'vitest'
 import { createEditorEventBridge } from './editor-event-bridge'
 
@@ -7,13 +8,15 @@ describe('workbench.editor-event-bridge', () => {
 		const bridge = createEditorEventBridge({
 			onContentChange,
 		})
+		const elements = [{ id: 'element-1' }] as unknown as NonNullable<ExcalidrawInitialDataState['elements']>
+		const files = {
+			'file-1': { id: 'file-1' },
+		} as unknown as BinaryFiles
 
 		bridge.handleContentChange(
-			[{ id: 'element-1' }],
+			elements,
 			{ viewBackgroundColor: '#fff' } as never,
-			{
-				'file-1': { id: 'file-1' },
-			} as never,
+			files,
 		)
 
 		expect(onContentChange).toHaveBeenCalledTimes(1)

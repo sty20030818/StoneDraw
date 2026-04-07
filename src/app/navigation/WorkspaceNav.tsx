@@ -23,7 +23,7 @@ function WorkspaceNav() {
 				<div key={section.label}>
 					<p className='px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-[#8a96ad]'>{section.label}</p>
 					<div className='mt-2 grid gap-1.5'>
-						{WORKSPACE_NAV_ITEMS.filter((item) => section.keys.includes(item.key)).map((item) => (
+						{WORKSPACE_NAV_ITEMS.filter((item) => section.keys.some((key) => key === item.key)).map((item) => (
 							<WorkspaceNavItem
 								key={item.key}
 								item={item}
