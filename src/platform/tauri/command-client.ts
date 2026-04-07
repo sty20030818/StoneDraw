@@ -92,7 +92,13 @@ function normalizeInvokeError(command: string, error: unknown, options: InvokeCo
 		}
 	}
 
-	return createCommandError(command, 'UNKNOWN_ERROR', `命令 ${command} 调用失败`, options, '未能解析 Tauri 返回的错误对象。')
+	return createCommandError(
+		command,
+		'UNKNOWN_ERROR',
+		`命令 ${command} 调用失败`,
+		options,
+		'未能解析 Tauri 返回的错误对象。',
+	)
 }
 
 export async function invokeTauriCommand<TData>(

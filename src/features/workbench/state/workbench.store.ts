@@ -154,7 +154,7 @@ export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
 
 		const nextTabs = tabs.filter((tab) => tab.id !== documentId)
 		const fallbackTab = nextTabs[Math.max(0, tabIndex - 1)] ?? nextTabs[tabIndex] ?? null
-		const nextActiveDocumentId = activeTabId === documentId ? fallbackTab?.id ?? null : activeTabId
+		const nextActiveDocumentId = activeTabId === documentId ? (fallbackTab?.id ?? null) : activeTabId
 
 		set({
 			tabs: nextTabs,

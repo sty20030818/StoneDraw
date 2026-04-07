@@ -69,7 +69,14 @@ function App() {
 		return () => {
 			isMounted = false
 		}
-	}, [setBootstrapFailure, setBootstrapReady, setDatabaseHealth, setDatabaseStatus, setLocalDirectories, setLocalDirectoryStatus])
+	}, [
+		setBootstrapFailure,
+		setBootstrapReady,
+		setDatabaseHealth,
+		setDatabaseStatus,
+		setLocalDirectories,
+		setLocalDirectoryStatus,
+	])
 
 	if (bootStage === APP_BOOT_STAGES.BOOTSTRAPPING) {
 		return renderShell(
@@ -88,15 +95,15 @@ function App() {
 	if (bootStage === APP_BOOT_STAGES.FAILED) {
 		return renderShell(
 			<div className='flex min-h-0 flex-1 items-center justify-center p-6'>
-					<EmptyState
-						title='应用启动失败'
-						description={bootstrapError?.message ?? '启动链路未能完成，请检查本地目录、数据库和日志输出。'}
-						icon={TriangleAlertIcon}
-						actionLabel='重新加载'
-						onAction={() => {
-							window.location.reload()
-						}}
-					/>
+				<EmptyState
+					title='应用启动失败'
+					description={bootstrapError?.message ?? '启动链路未能完成，请检查本地目录、数据库和日志输出。'}
+					icon={TriangleAlertIcon}
+					actionLabel='重新加载'
+					onAction={() => {
+						window.location.reload()
+					}}
+				/>
 			</div>,
 			true,
 		)
@@ -105,23 +112,21 @@ function App() {
 	if (!isAppReady || bootStage !== APP_BOOT_STAGES.READY) {
 		return renderShell(
 			<div className='flex min-h-0 flex-1 items-center justify-center p-6'>
-					<EmptyState
-						title='启动状态异常'
-						description='应用未处于 bootstrapping、failed 或 ready 的有效状态，请重新启动应用。'
-						icon={RotateCcwIcon}
-						actionLabel='重新加载'
-						onAction={() => {
-							window.location.reload()
-						}}
-					/>
+				<EmptyState
+					title='启动状态异常'
+					description='应用未处于 bootstrapping、failed 或 ready 的有效状态，请重新启动应用。'
+					icon={RotateCcwIcon}
+					actionLabel='重新加载'
+					onAction={() => {
+						window.location.reload()
+					}}
+				/>
 			</div>,
 			true,
 		)
 	}
 
-	return renderShell(
-			<AppRouter />
-	)
+	return renderShell(<AppRouter />)
 }
 
 export default App

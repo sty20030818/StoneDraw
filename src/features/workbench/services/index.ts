@@ -1,8 +1,5 @@
 export { editorService } from './editor.service'
-export {
-	createDocumentPersistenceSession,
-	documentPersistenceSession,
-} from './document-persistence-session'
+export { createDocumentPersistenceSession, documentPersistenceSession } from './document-persistence-session'
 export type {
 	DocumentPersistenceSession,
 	DocumentPersistenceUiState,

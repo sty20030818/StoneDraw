@@ -158,13 +158,7 @@ export function serializeScene(
 		textIndex?: string
 	},
 ): SceneFilePayload {
-	const payload = createScenePayload(
-		documentId,
-		snapshot.elements,
-		snapshot.appState,
-		snapshot.files,
-		options?.title,
-	)
+	const payload = createScenePayload(documentId, snapshot.elements, snapshot.appState, snapshot.files, options?.title)
 
 	return {
 		...payload,
@@ -234,9 +228,7 @@ export function readSceneFromApi(api: ExcalidrawImperativeAPI, documentId: strin
 
 export function applySceneToApi(api: ExcalidrawImperativeAPI, scene: SceneFilePayload) {
 	const normalizedScene = deserializeScene(scene)
-	const files = Object.values(
-		normalizedScene.scene.files,
-	) as Parameters<ExcalidrawImperativeAPI['addFiles']>[0]
+	const files = Object.values(normalizedScene.scene.files) as Parameters<ExcalidrawImperativeAPI['addFiles']>[0]
 
 	// Excalidraw 0.18 的 updateScene 不再接受 files，需要通过 addFiles 单独补齐二进制资源。
 	if (files.length > 0) {

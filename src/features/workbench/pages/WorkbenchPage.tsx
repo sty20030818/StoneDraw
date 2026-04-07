@@ -121,10 +121,7 @@ function WorkbenchPage() {
 				return true
 			}
 
-			const isFlushed = await documentPersistenceSession.flushBeforeLeave(
-				workbenchLoadState.document,
-				options,
-			)
+			const isFlushed = await documentPersistenceSession.flushBeforeLeave(workbenchLoadState.document, options)
 
 			if (!isFlushed && options?.timeoutMs === undefined) {
 				toast('自动保存未完成', {
@@ -207,7 +204,14 @@ function WorkbenchPage() {
 			setSelectedDocumentId(null)
 			resetShellState()
 		}
-	}, [documentId, resetShellState, setActiveDocumentId, setSelectedDocumentId, setWorkbenchReady, syncWorkspaceCollections])
+	}, [
+		documentId,
+		resetShellState,
+		setActiveDocumentId,
+		setSelectedDocumentId,
+		setWorkbenchReady,
+		syncWorkspaceCollections,
+	])
 
 	useEffect(() => {
 		if (workbenchLoadState.status !== 'ready') {

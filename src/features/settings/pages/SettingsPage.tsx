@@ -4,13 +4,7 @@ import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/shared/ty
 
 type DiagnosticStatus = 'idle' | 'ready' | 'error'
 
-function StatusBadge({
-	status,
-	label,
-}: {
-	status: DiagnosticStatus
-	label?: string
-}) {
+function StatusBadge({ status, label }: { status: DiagnosticStatus; label?: string }) {
 	const palette =
 		status === 'ready'
 			? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700'
@@ -46,11 +40,7 @@ function formatSceneLabel(sceneKey: string) {
 	}
 }
 
-function DirectoryGrid({
-	directories,
-}: {
-	directories: LocalDirectoriesPayload | null
-}) {
+function DirectoryGrid({ directories }: { directories: LocalDirectoriesPayload | null }) {
 	if (!directories) {
 		return (
 			<div className='rounded-2xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm text-muted-foreground'>
@@ -79,11 +69,7 @@ function DirectoryGrid({
 	)
 }
 
-function DatabasePanel({
-	databaseHealth,
-}: {
-	databaseHealth: DatabaseHealthPayload | null
-}) {
+function DatabasePanel({ databaseHealth }: { databaseHealth: DatabaseHealthPayload | null }) {
 	if (!databaseHealth) {
 		return (
 			<div className='rounded-2xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm text-muted-foreground'>

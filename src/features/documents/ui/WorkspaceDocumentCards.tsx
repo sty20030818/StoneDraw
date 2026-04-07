@@ -12,12 +12,7 @@ type WorkspaceDocumentCardsProps = {
 	onMoveToTrash: (document: DocumentMeta) => void
 }
 
-function WorkspaceDocumentCards({
-	documents,
-	onOpen,
-	onRename,
-	onMoveToTrash,
-}: WorkspaceDocumentCardsProps) {
+function WorkspaceDocumentCards({ documents, onOpen, onRename, onMoveToTrash }: WorkspaceDocumentCardsProps) {
 	const [expandedDocumentId, setExpandedDocumentId] = useState<string | null>(null)
 	const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null)
 	const [renameDraft, setRenameDraft] = useState('')
@@ -43,7 +38,9 @@ function WorkspaceDocumentCards({
 			<div className='flex items-center justify-between gap-3'>
 				<div>
 					<h3 className='text-lg font-semibold tracking-tight'>文档主列表</h3>
-					<p className='mt-2 text-sm leading-6 text-muted-foreground'>保留真实文档浏览、重命名、删除到回收站和打开链路。</p>
+					<p className='mt-2 text-sm leading-6 text-muted-foreground'>
+						保留真实文档浏览、重命名、删除到回收站和打开链路。
+					</p>
 				</div>
 				<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
 					{documentCountLabel}

@@ -132,7 +132,11 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 							void handleCreateVersion()
 						}}
 						type='button'>
-						{isCreatingVersion ? <LoaderCircleIcon className='size-3.5 animate-spin' /> : <HistoryIcon className='size-3.5' />}
+						{isCreatingVersion ? (
+							<LoaderCircleIcon className='size-3.5 animate-spin' />
+						) : (
+							<HistoryIcon className='size-3.5' />
+						)}
 						创建版本
 					</button>
 				</div>
@@ -140,8 +144,12 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 
 			<section className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
 				<p className='text-sm font-medium'>当前文档</p>
-				<p className='mt-2 truncate text-sm text-foreground'>{isDocumentReady ? documentTitle : '当前还没有可追踪的文档版本上下文'}</p>
-				<p className='mt-2 text-xs text-muted-foreground'>{documentId ? `ID: ${documentId}` : '等待 Workbench 注入 active document'}</p>
+				<p className='mt-2 truncate text-sm text-foreground'>
+					{isDocumentReady ? documentTitle : '当前还没有可追踪的文档版本上下文'}
+				</p>
+				<p className='mt-2 text-xs text-muted-foreground'>
+					{documentId ? `ID: ${documentId}` : '等待 Workbench 注入 active document'}
+				</p>
 				<p className='mt-2 text-xs text-muted-foreground'>保存状态：{saveStatus}</p>
 			</section>
 
@@ -169,7 +177,9 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 
 				{panelState.status === 'empty' ? (
 					<div className='mt-4 rounded-2xl border border-dashed border-border/70 bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
-						{documentId && isDocumentReady ? '当前文档还没有冻结过手动版本。' : '请先打开一个文档，再查看它的历史版本。'}
+						{documentId && isDocumentReady
+							? '当前文档还没有冻结过手动版本。'
+							: '请先打开一个文档，再查看它的历史版本。'}
 					</div>
 				) : null}
 

@@ -8,7 +8,13 @@ type ExplorerPanelProps = {
 	onSelectDocument: (documentId: string) => void
 }
 
-function ExplorerPanel({ documents, activeDocumentId, documentId, documentTitle, onSelectDocument }: ExplorerPanelProps) {
+function ExplorerPanel({
+	documents,
+	activeDocumentId,
+	documentId,
+	documentTitle,
+	onSelectDocument,
+}: ExplorerPanelProps) {
 	return (
 		<div className='grid gap-3'>
 			<div className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
@@ -32,14 +38,14 @@ function ExplorerPanel({ documents, activeDocumentId, documentId, documentTitle,
 											: 'border-transparent bg-[#f7f9fd] text-muted-foreground hover:border-border/60 hover:bg-white',
 									].join(' ')}>
 									<span className='truncate text-sm'>{document.title}</span>
-									<span className='ml-3 text-[10px] uppercase tracking-[0.18em]'>
-										{isActive ? '当前' : '打开'}
-									</span>
+									<span className='ml-3 text-[10px] uppercase tracking-[0.18em]'>{isActive ? '当前' : '打开'}</span>
 								</button>
 							)
 						})
 					) : (
-						<p className='text-xs leading-5 text-muted-foreground'>当前还没有可切换的文档，先从工作区创建或打开文档。</p>
+						<p className='text-xs leading-5 text-muted-foreground'>
+							当前还没有可切换的文档，先从工作区创建或打开文档。
+						</p>
 					)}
 				</div>
 			</div>

@@ -19,7 +19,9 @@ function ActivityIcon({ icon: Icon, isActive, label, onClick }: ActivityIconProp
 			].join(' ')}
 			title={label}
 			onClick={onClick}>
-			{isActive ? <span className='absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary' /> : null}
+			{isActive ? (
+				<span className='absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary' />
+			) : null}
 			<Icon />
 		</button>
 	)

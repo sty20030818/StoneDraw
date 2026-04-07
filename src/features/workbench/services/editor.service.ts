@@ -58,8 +58,7 @@ export const editorService = {
 
 			return sceneRepository.saveCurrent(normalizedPayload)
 		} catch (error) {
-			const details =
-				error instanceof SceneValidationError || error instanceof Error ? error.message : 'scene 校验失败'
+			const details = error instanceof SceneValidationError || error instanceof Error ? error.message : 'scene 校验失败'
 
 			return createFailureResult({
 				code: 'INVALID_ARGUMENT',

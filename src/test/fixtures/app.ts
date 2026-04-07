@@ -1,6 +1,8 @@
 import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/shared/types'
 
-export function createLocalDirectoriesPayload(overrides: Partial<LocalDirectoriesPayload> = {}): LocalDirectoriesPayload {
+export function createLocalDirectoriesPayload(
+	overrides: Partial<LocalDirectoriesPayload> = {},
+): LocalDirectoriesPayload {
 	return {
 		rootDir: {
 			path: '/tmp/.stonedraw',
@@ -34,9 +36,7 @@ export function createLocalDirectoriesPayload(overrides: Partial<LocalDirectorie
 	}
 }
 
-export function createDatabaseHealthPayload(
-	overrides: Partial<DatabaseHealthPayload> = {},
-): DatabaseHealthPayload {
+export function createDatabaseHealthPayload(overrides: Partial<DatabaseHealthPayload> = {}): DatabaseHealthPayload {
 	return {
 		databasePath: '/tmp/.stonedraw/data/db/app.db',
 		databaseDir: '/tmp/.stonedraw/data/db',

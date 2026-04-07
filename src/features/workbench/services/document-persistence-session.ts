@@ -123,8 +123,8 @@ export function createDocumentPersistenceSession(
 		files: BinaryFiles,
 	) {
 		return (
-			dependencies.readScene(document.id, document.title)
-			?? serializeScene(
+			dependencies.readScene(document.id, document.title) ??
+			serializeScene(
 				document.id,
 				{
 					elements,
@@ -269,10 +269,10 @@ export function createDocumentPersistenceSession(
 			}
 
 			const shouldSave =
-				(Boolean(options?.forceInitialSave) && !hasForcedInitialSave)
-				|| state.saveStatus === 'dirty'
-				|| state.saveStatus === 'error'
-				|| state.hasPendingCompensationSave
+				(Boolean(options?.forceInitialSave) && !hasForcedInitialSave) ||
+				state.saveStatus === 'dirty' ||
+				state.saveStatus === 'error' ||
+				state.hasPendingCompensationSave
 
 			if (!shouldSave) {
 				if (latestResult) {
@@ -337,11 +337,7 @@ export function createDocumentPersistenceSession(
 								return activeSaveResult.result
 							}
 
-							if (
-								state.saveStatus === 'dirty'
-								|| state.saveStatus === 'error'
-								|| state.hasPendingCompensationSave
-							) {
+							if (state.saveStatus === 'dirty' || state.saveStatus === 'error' || state.hasPendingCompensationSave) {
 								return runSaveLoop(document)
 							}
 

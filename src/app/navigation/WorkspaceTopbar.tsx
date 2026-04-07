@@ -9,8 +9,7 @@ function WorkspaceTopbar() {
 	const location = useLocation()
 	const navigate = useNavigate()
 	const openOverlay = useOverlayStore((state) => state.openOverlay)
-	const activeItem =
-		WORKSPACE_NAV_ITEMS.find((item) => item.path === location.pathname) ?? WORKSPACE_NAV_ITEMS[0]
+	const activeItem = WORKSPACE_NAV_ITEMS.find((item) => item.path === location.pathname) ?? WORKSPACE_NAV_ITEMS[0]
 
 	return (
 		<header className='flex shrink-0 items-center justify-between gap-4 border-b border-border/60 bg-white/90 px-6 py-4'>

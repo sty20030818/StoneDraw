@@ -19,10 +19,7 @@ export const versionRepository = {
 		)
 	},
 
-	async listByDocument(
-		documentId: string,
-		correlationId?: string,
-	): Promise<TauriCommandResult<DocumentVersionMeta[]>> {
+	async listByDocument(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentVersionMeta[]>> {
 		return invokeTauriCommand<DocumentVersionMeta[]>(
 			TAURI_COMMANDS.VERSIONS_LIST,
 			{

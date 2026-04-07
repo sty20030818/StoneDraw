@@ -3,11 +3,7 @@ import { FileStackIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import EmptyState from '@/shared/components/EmptyState'
-import {
-	useDocumentStore,
-	useWorkspaceDocuments,
-	WorkspaceDocumentCards,
-} from '@/features/documents'
+import { useDocumentStore, useWorkspaceDocuments, WorkspaceDocumentCards } from '@/features/documents'
 
 function DocumentsPage() {
 	const documents = useDocumentStore((state) => state.documents)

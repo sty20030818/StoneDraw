@@ -27,7 +27,8 @@
 		"src-tauri/**",
 		"Documents/**",
 		"openspec/**",
-		".DS_Store"
+		".DS_Store",
+		"*.md"
 	],
 	"overrides": [
 		{

@@ -8,9 +8,13 @@ describe('workbench.editor-event-bridge', () => {
 			onContentChange,
 		})
 
-		bridge.handleContentChange([{ id: 'element-1' }], { viewBackgroundColor: '#fff' } as never, {
-			'file-1': { id: 'file-1' },
-		} as never)
+		bridge.handleContentChange(
+			[{ id: 'element-1' }],
+			{ viewBackgroundColor: '#fff' } as never,
+			{
+				'file-1': { id: 'file-1' },
+			} as never,
+		)
 
 		expect(onContentChange).toHaveBeenCalledTimes(1)
 		expect(onContentChange).toHaveBeenCalledWith({

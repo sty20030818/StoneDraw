@@ -31,7 +31,8 @@ function WorkbenchShellContent() {
 	const isRightPanelOpen = useWorkbenchStore((state) => state.isRightPanelOpen)
 	const activateDocumentTab = useWorkbenchStore((state) => state.activateDocumentTab)
 	const closeDocumentTab = useWorkbenchStore((state) => state.closeDocumentTab)
-	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === shellState.activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
+	const activeItem =
+		WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === shellState.activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
 	const shellGridClass = isSidePanelOpen
 		? isRightPanelOpen
 			? 'grid-cols-[3.5rem_17rem_minmax(0,1fr)_18rem]'
@@ -126,7 +127,9 @@ function WorkbenchShellContent() {
 					<div
 						data-tauri-drag-region
 						className='flex h-[42px] items-center justify-between border-b border-border/60 px-4'>
-						<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>{activeItem.label}</p>
+						<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>
+							{activeItem.label}
+						</p>
 						<span className='tauri-no-drag text-sm text-muted-foreground'>＋</span>
 					</div>
 					<div className='px-4 pt-3 text-sm text-muted-foreground'>{activeItem.description}</div>

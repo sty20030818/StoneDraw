@@ -39,7 +39,10 @@ export const directoryRepository = {
 		})
 	},
 
-	async resolveDocumentLayout(documentId: string, correlationId?: string): Promise<TauriCommandResult<DocumentPathLayout>> {
+	async resolveDocumentLayout(
+		documentId: string,
+		correlationId?: string,
+	): Promise<TauriCommandResult<DocumentPathLayout>> {
 		return invokeTauriCommand<DocumentPathLayout>(
 			TAURI_COMMANDS.FILES_RESOLVE_DOCUMENT_LAYOUT,
 			{

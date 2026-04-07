@@ -1,11 +1,6 @@
 import { FolderOpenIcon } from 'lucide-react'
 import EmptyState from '@/shared/components/EmptyState'
-import {
-	HomeQuickActions,
-	RecentDocumentList,
-	useDocumentStore,
-	useWorkspaceDocuments,
-} from '@/features/documents'
+import { HomeQuickActions, RecentDocumentList, useDocumentStore, useWorkspaceDocuments } from '@/features/documents'
 
 function HomePage() {
 	const recentDocuments = useDocumentStore((state) => state.recentDocuments)

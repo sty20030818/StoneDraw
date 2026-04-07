@@ -1,10 +1,4 @@
-import {
-	BlocksIcon,
-	Clock3Icon,
-	FilesIcon,
-	SearchIcon,
-	UsersIcon,
-} from 'lucide-react'
+import { BlocksIcon, Clock3Icon, FilesIcon, SearchIcon, UsersIcon } from 'lucide-react'
 import { ActivityIcon } from '@/app/navigation'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import type { WorkbenchPanelKey } from '@/features/workbench/state'

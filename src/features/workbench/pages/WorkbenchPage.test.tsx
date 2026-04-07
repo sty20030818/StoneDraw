@@ -40,9 +40,7 @@ const {
 
 		return {
 			window: {
-				onCloseRequested: vi.fn<
-					(handler: NonNullable<typeof closeHandler>) => Promise<() => void>
-				>(async (handler) => {
+				onCloseRequested: vi.fn<(handler: NonNullable<typeof closeHandler>) => Promise<() => void>>(async (handler) => {
 					closeHandler = handler
 					return () => {
 						closeHandler = null
@@ -118,10 +116,12 @@ vi.mock('@/features/documents', () => ({
 	versionService: {
 		createManualVersion: createManualVersionMock,
 	},
-	useDocumentStore: (selector: (state: {
-		setSelectedDocumentId: typeof setSelectedDocumentIdMock
-		syncWorkspaceCollections: typeof syncWorkspaceCollectionsMock
-	}) => unknown) =>
+	useDocumentStore: (
+		selector: (state: {
+			setSelectedDocumentId: typeof setSelectedDocumentIdMock
+			syncWorkspaceCollections: typeof syncWorkspaceCollectionsMock
+		}) => unknown,
+	) =>
 		selector({
 			setSelectedDocumentId: setSelectedDocumentIdMock,
 			syncWorkspaceCollections: syncWorkspaceCollectionsMock,

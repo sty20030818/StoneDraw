@@ -24,21 +24,23 @@ export function WorkbenchShellProvider({ children }: PropsWithChildren) {
 }
 
 export function useWorkbenchShell() {
-	const shellState = useWorkbenchStore(useShallow((state) => ({
-		activePanel: state.activePanel,
-		documentId: state.activeDocumentId,
-		documentTitle: state.documentTitle,
-		searchDraft: state.searchDraft,
-		isDocumentReady: state.isWorkbenchReady,
-		saveStatus: state.saveStatus,
-		isFlushing: state.isFlushing,
-		onBack: state.onBack,
-		onSave: state.onSave,
-		onCreateVersion: state.onCreateVersion,
-		onExport: state.onExport,
-		onMore: state.onMore,
-		onSearchChange: state.onSearchChange,
-	})))
+	const shellState = useWorkbenchStore(
+		useShallow((state) => ({
+			activePanel: state.activePanel,
+			documentId: state.activeDocumentId,
+			documentTitle: state.documentTitle,
+			searchDraft: state.searchDraft,
+			isDocumentReady: state.isWorkbenchReady,
+			saveStatus: state.saveStatus,
+			isFlushing: state.isFlushing,
+			onBack: state.onBack,
+			onSave: state.onSave,
+			onCreateVersion: state.onCreateVersion,
+			onExport: state.onExport,
+			onMore: state.onMore,
+			onSearchChange: state.onSearchChange,
+		})),
+	)
 	const setActivePanel = useWorkbenchStore((state) => state.setActivePanel)
 
 	return {

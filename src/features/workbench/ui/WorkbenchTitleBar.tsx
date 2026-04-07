@@ -1,11 +1,4 @@
-import {
-	ArrowLeftIcon,
-	DownloadIcon,
-	LoaderCircleIcon,
-	MoreHorizontalIcon,
-	SaveIcon,
-	SearchIcon,
-} from 'lucide-react'
+import { ArrowLeftIcon, DownloadIcon, LoaderCircleIcon, MoreHorizontalIcon, SaveIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import type { SaveStatus } from '@/shared/types'
@@ -107,7 +100,10 @@ function WorkbenchTitleBar({
 					disabled={!isDocumentReady || isSavePending}
 					onClick={onSave}>
 					{isSavePending ? (
-						<LoaderCircleIcon data-icon='inline-start' className='animate-spin' />
+						<LoaderCircleIcon
+							data-icon='inline-start'
+							className='animate-spin'
+						/>
 					) : (
 						<SaveIcon data-icon='inline-start' />
 					)}

@@ -62,90 +62,108 @@ export function useWorkspaceDocuments(autoLoad = true): WorkspaceDocumentsAction
 		navigate(buildWorkbenchRoute(result.data.document.id))
 	}, [navigate, setSelectedDocumentId, syncWorkspaceCollections])
 
-	const handleOpenDocument = useCallback(async (documentId: string) => {
-		const result = await documentService.openDocument(documentId)
+	const handleOpenDocument = useCallback(
+		async (documentId: string) => {
+			const result = await documentService.openDocument(documentId)
 
-		if (!result.ok) {
-			toast.error(result.error.message, {
-				description: result.error.details,
+			if (!result.ok) {
+				toast.error(result.error.message, {
+					description: result.error.details,
+				})
+				return
+			}
+
+			syncWorkspaceCollections(result.data.collections)
+			setSelectedDocumentId(result.data.document.id)
+			navigate(buildWorkbenchRoute(result.data.document.id))
+		},
+		[navigate, setSelectedDocumentId, syncWorkspaceCollections],
+	)
+
+	const handleRenameDocument = useCallback(
+		async (documentId: string, title: string) => {
+			const normalizedTitle = title.trim()
+
+			if (!normalizedTitle) {
+				toast.error('标题不能为空。')
+				return false
+			}
+
+			const result = await documentService.renameDocument(documentId, normalizedTitle)
+
+			if (!result.ok) {
+				toast.error(result.error.message)
+				return false
+			}
+
+			syncWorkspaceCollections(result.data.collections)
+			toast.success('文档标题已更新。')
+			return true
+		},
+		[syncWorkspaceCollections],
+	)
+
+	const executeMoveToTrash = useCallback(
+		async (document: DocumentMeta) => {
+			const result = await documentService.trashDocument(document.id)
+
+			if (!result.ok) {
+				toast.error(result.error.message)
+				return
+			}
+
+			syncWorkspaceCollections(result.data.collections)
+			toast.success(`已将《${document.title}》移动到回收站。`)
+		},
+		[syncWorkspaceCollections],
+	)
+
+	const handleMoveToTrash = useCallback(
+		(document: DocumentMeta) => {
+			openConfirmDialog({
+				title: '删除到回收站',
+				description: `确认将《${document.title}》移动到回收站吗？当前版本不会永久删除，可在工作区内恢复。`,
+				confirmLabel: '移入回收站',
+				cancelLabel: '取消',
+				onConfirm: () => {
+					void executeMoveToTrash(document)
+				},
 			})
-			return
-		}
+		},
+		[executeMoveToTrash, openConfirmDialog],
+	)
 
-		syncWorkspaceCollections(result.data.collections)
-		setSelectedDocumentId(result.data.document.id)
-		navigate(buildWorkbenchRoute(result.data.document.id))
-	}, [navigate, setSelectedDocumentId, syncWorkspaceCollections])
+	const handleRestoreDocument = useCallback(
+		async (document: DocumentMeta) => {
+			const result = await documentService.restoreDocument(document.id)
 
-	const handleRenameDocument = useCallback(async (documentId: string, title: string) => {
-		const normalizedTitle = title.trim()
+			if (!result.ok) {
+				toast.error(result.error.message)
+				return
+			}
 
-		if (!normalizedTitle) {
-			toast.error('标题不能为空。')
-			return false
-		}
+			syncWorkspaceCollections(result.data.collections)
+			toast.success(`已恢复《${document.title}》。`)
+		},
+		[syncWorkspaceCollections],
+	)
 
-		const result = await documentService.renameDocument(documentId, normalizedTitle)
+	const handlePermanentlyDeleteDocument = useCallback(
+		async (document: DocumentMeta) => {
+			const result = await documentService.permanentlyDeleteDocument(document.id)
 
-		if (!result.ok) {
-			toast.error(result.error.message)
-			return false
-		}
+			if (!result.ok) {
+				toast.error(result.error.message, {
+					description: result.error.details,
+				})
+				return
+			}
 
-		syncWorkspaceCollections(result.data.collections)
-		toast.success('文档标题已更新。')
-		return true
-	}, [syncWorkspaceCollections])
-
-	const executeMoveToTrash = useCallback(async (document: DocumentMeta) => {
-		const result = await documentService.trashDocument(document.id)
-
-		if (!result.ok) {
-			toast.error(result.error.message)
-			return
-		}
-
-		syncWorkspaceCollections(result.data.collections)
-		toast.success(`已将《${document.title}》移动到回收站。`)
-	}, [syncWorkspaceCollections])
-
-	const handleMoveToTrash = useCallback((document: DocumentMeta) => {
-		openConfirmDialog({
-			title: '删除到回收站',
-			description: `确认将《${document.title}》移动到回收站吗？当前版本不会永久删除，可在工作区内恢复。`,
-			confirmLabel: '移入回收站',
-			cancelLabel: '取消',
-			onConfirm: () => {
-				void executeMoveToTrash(document)
-			},
-		})
-	}, [executeMoveToTrash, openConfirmDialog])
-
-	const handleRestoreDocument = useCallback(async (document: DocumentMeta) => {
-		const result = await documentService.restoreDocument(document.id)
-
-		if (!result.ok) {
-			toast.error(result.error.message)
-			return
-		}
-
-		syncWorkspaceCollections(result.data.collections)
-		toast.success(`已恢复《${document.title}》。`)
-	}, [syncWorkspaceCollections])
-
-	const handlePermanentlyDeleteDocument = useCallback(async (document: DocumentMeta) => {
-		const result = await documentService.permanentlyDeleteDocument(document.id)
-
-		if (!result.ok) {
-			toast.error(result.error.message, {
-				description: result.error.details,
-			})
-			return
-		}
-
-		syncWorkspaceCollections(result.data)
-		toast.success(`已永久删除《${document.title}》。`)
-	}, [syncWorkspaceCollections])
+			syncWorkspaceCollections(result.data)
+			toast.success(`已永久删除《${document.title}》。`)
+		},
+		[syncWorkspaceCollections],
+	)
 
 	return {
 		isCreating,

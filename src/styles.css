@@ -83,7 +83,7 @@
 
 	input,
 	textarea,
-	[contenteditable='true'] {
+	[contenteditable="true"] {
 		@apply select-text;
 	}
 }

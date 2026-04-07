@@ -7,9 +7,7 @@ import { createDeferredPromise } from '@/test/helpers/deferred'
 import { useAppStore } from '@/stores/app.store'
 import type { BootstrapRuntimeResult } from '@/shared/types'
 
-const {
-	runBootstrapRuntimeMock,
-} = vi.hoisted(() => ({
+const { runBootstrapRuntimeMock } = vi.hoisted(() => ({
 	runBootstrapRuntimeMock: vi.fn<() => Promise<BootstrapRuntimeResult>>(),
 }))
 
