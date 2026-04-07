@@ -5,7 +5,7 @@ use serde_json::Map;
 use stonedraw_lib::commands::CommandErrorCode;
 use stonedraw_lib::storage::documents::{
     create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
-    list_recent_documents_from_root, move_document_to_trash_from_root,
+    list_recent_documents_from_root, move_document_to_trash_from_root, open_document_from_root,
     open_document_scene_from_root, restore_document_from_root, save_document_scene_from_root,
     SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
 };
@@ -51,6 +51,8 @@ fn document_scene_round_trip_keeps_latest_scene_and_recent_open_state() {
         .expect("重新读取 scene 应成功");
     let reopened_document = get_document_by_id_from_root(&root_directory_path, &created_document.id)
         .expect("重新读取文档元数据应成功");
+    let opened_document = open_document_from_root(&root_directory_path, &created_document.id)
+        .expect("正式打开文档后应写入最近打开记录");
     let recent_documents =
         list_recent_documents_from_root(&root_directory_path).expect("最近打开列表应成功");
     let listed_documents =
@@ -63,6 +65,7 @@ fn document_scene_round_trip_keeps_latest_scene_and_recent_open_state() {
     assert_eq!(reopened_scene.scene.elements[1]["id"], "element-2");
     assert_eq!(reopened_scene.meta.title, "集成文档");
     assert_eq!(reopened_document.id, created_document.id);
+    assert_eq!(opened_document.id, created_document.id);
     assert_eq!(listed_documents.len(), 1);
     assert_eq!(recent_documents.len(), 1);
     assert_eq!(recent_documents[0].id, created_document.id);
@@ -173,7 +176,11 @@ fn invalid_save_and_corrupted_scene_recovery_keep_last_valid_scene() {
     assert_eq!(scene_after_invalid_save.scene.elements.len(), 1);
     assert_eq!(scene_after_invalid_save.scene.elements[0]["id"], "element-valid-1");
 
-    std::fs::write(&created_document.current_scene_path, "{ broken json }")
+    let current_scene_path = root_directory_path
+        .join("data")
+        .join(&created_document.current_scene_path);
+
+    std::fs::write(&current_scene_path, "{ broken json }")
         .expect("损坏 scene 文件应可写入");
 
     let corrupted_open_error = open_document_scene_from_root(&root_directory_path, &created_document.id)
