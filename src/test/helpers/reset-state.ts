@@ -1,7 +1,7 @@
 import { useAppStore } from '../../app/state'
-import { useDocumentStore } from '../../features/documents'
-import { useOverlayStore } from '../../features/overlays'
-import { useWorkbenchStore } from '../../features/workbench'
+import { useDocumentStore } from '../../features/documents/state'
+import { useOverlayStore } from '../../features/overlays/state'
+import { useWorkbenchStore } from '../../features/workbench/state'
 
 export function resetTestState() {
 	useAppStore.getState().reset()

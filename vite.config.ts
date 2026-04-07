@@ -11,6 +11,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': fileURLToPath(new URL('./src', import.meta.url)),
+			'open-color': fileURLToPath(new URL('./node_modules/open-color/open-color.js', import.meta.url)),
 		},
 	},
 	server: {

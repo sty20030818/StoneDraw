@@ -3,9 +3,24 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vitest/config'
 
-const alias = {
-	'@': fileURLToPath(new URL('./src', import.meta.url)),
-}
+const alias = [
+	{
+		find: '@excalidraw/excalidraw/index.css',
+		replacement: fileURLToPath(new URL('./src/test/mocks/excalidraw.css', import.meta.url)),
+	},
+	{
+		find: '@excalidraw/excalidraw',
+		replacement: fileURLToPath(new URL('./src/test/mocks/excalidraw.tsx', import.meta.url)),
+	},
+	{
+		find: 'open-color',
+		replacement: fileURLToPath(new URL('./node_modules/open-color/open-color.js', import.meta.url)),
+	},
+	{
+		find: '@',
+		replacement: fileURLToPath(new URL('./src', import.meta.url)),
+	},
+]
 
 export default defineConfig({
 	plugins: [react(), tailwindcss()],

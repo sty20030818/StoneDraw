@@ -171,9 +171,14 @@ describe('document-persistence-session', () => {
 			id: 'doc-4',
 			title: 'flush 文档',
 		})
+		const dirtyScene = createScenePayload({
+			documentId: document.id,
+			title: document.title,
+			elements: [{ id: 'element-1' }],
+		})
 		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
 		const session = createDocumentPersistenceSession({
-			readScene: () => createScenePayload({ documentId: document.id, title: document.title }),
+			readScene: () => dirtyScene,
 			executeSave: async () => ({
 				ok: false,
 				error: createAppError({
@@ -203,9 +208,14 @@ describe('document-persistence-session', () => {
 			id: 'doc-5',
 			title: '窗口关闭超时文档',
 		})
+		const dirtyScene = createScenePayload({
+			documentId: document.id,
+			title: document.title,
+			elements: [{ id: 'element-1' }],
+		})
 		const { createDocumentPersistenceSession } = await import('./document-persistence-session')
 		const session = createDocumentPersistenceSession({
-			readScene: () => createScenePayload({ documentId: document.id, title: document.title }),
+			readScene: () => dirtyScene,
 			executeSave: async () => new Promise(() => undefined),
 			writeUiState: uiState.write,
 		})

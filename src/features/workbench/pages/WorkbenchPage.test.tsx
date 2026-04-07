@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { APP_ROUTES } from '@/shared/constants/routes'
-import { useWorkbenchStore } from '@/features/workbench'
+import { useWorkbenchStore } from '@/features/workbench/state'
 import { createAppError } from '@/test/fixtures/error'
 import { createDocumentMeta } from '@/test/fixtures/document'
 import { createScenePayload } from '@/test/fixtures/scene'
@@ -128,20 +128,15 @@ vi.mock('@/features/documents', () => ({
 		}),
 }))
 
-vi.mock('@/features/workbench', async () => {
-	const actual = await vi.importActual<typeof import('@/features/workbench')>('@/features/workbench')
-
-	return {
-		...actual,
-		documentPersistenceSession: {
-			initialize: initializeMock,
-			onSceneChange: onSceneChangeMock,
-			saveNow: saveNowMock,
-			flushBeforeLeave: flushBeforeLeaveMock,
-			dispose: disposeMock,
-		},
-	}
-})
+vi.mock('@/features/workbench/services', () => ({
+	documentPersistenceSession: {
+		initialize: initializeMock,
+		onSceneChange: onSceneChangeMock,
+		saveNow: saveNowMock,
+		flushBeforeLeave: flushBeforeLeaveMock,
+		dispose: disposeMock,
+	},
+}))
 
 function renderWorkbenchPage(initialEntry = `${APP_ROUTES.WORKBENCH}?documentId=doc-editor-1`) {
 	return renderRoute({

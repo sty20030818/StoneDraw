@@ -6,8 +6,10 @@ import { createAppError } from '@/test/fixtures/error'
 import { createDocumentVersionMeta } from '@/test/fixtures/version'
 import HistoryPanel from './HistoryPanel'
 
-const listDocumentVersionsMock = vi.fn<(...args: never[]) => Promise<unknown>>()
-const toastMock = vi.fn<(message?: unknown, options?: unknown) => unknown>()
+const { listDocumentVersionsMock, toastMock } = vi.hoisted(() => ({
+	listDocumentVersionsMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
+	toastMock: vi.fn<(message?: unknown, options?: unknown) => unknown>(),
+}))
 
 vi.mock('@/features/documents', () => ({
 	versionService: {

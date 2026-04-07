@@ -1,114 +1,71 @@
-# Feature 架构迁移分区
+# 当前前端正式架构
 
-这份文档是 `restructure-src-feature-architecture` change 的第一阶段真相源，用来明确当前 `src/` 中哪些对象保留、哪些迁移、哪些待删、哪些冻结。
+这份文档用于记录 `consolidate-feature-first-architecture` 收口后的正式目录真相源，后续新增代码默认以这里为准。
 
-## 正式目标目录
-
-- `app`
-- `features`
-- `shared`
-- `platform`
-- `test`
-
-后续所有新代码默认只允许进入以上正式结构。
-
-## 保留区
-
-以下目录当前仍然是正式真相源，后续重构时以“迁移引用、保持行为”为主，不直接推翻：
+## 正式目录
 
 - `src/app`
+  - 只负责应用装配、路由、壳层、Provider 和应用级状态
+- `src/features`
+  - 唯一业务真相源，按业务域组织页面、状态、服务和 UI
+- `src/editor`
+  - 编辑器内核适配层，目前为 `excalidraw`
+- `src/platform`
+  - Tauri 命令桥、日志和平台运行时能力
+- `src/shared`
+  - 跨 feature 复用的组件、常量、工具和类型
 - `src/test`
-- `src/styles.css`
-- `src/main.tsx`
+  - 测试基座、fixture、mock 和 helper
 
-## 迁移区
-
-以下目录中存在真实业务能力，但后续必须迁入 `features`、`shared` 或 `platform`：
-
-- `src/adapters`
-- `src/components/feedback`
-- `src/components/panels`
-- `src/components/states`
-- `src/components/ui`
-- `src/components/workspace`
-- `src/constants`
-- `src/hooks`
-- `src/infra`
-- `src/lib`
-- `src/overlay`
-- `src/pages`
-- `src/repositories`
-- `src/services`
-- `src/stores`
-- `src/types`
-- `src/utils`
-- `src/workbench`
-
-## 待删区
-
-以下目录或文件在新结构接线完成后应直接删除，不保留长期兼容层：
-
-- `src/components/navigation`
-- `src/components/workbench`
-- `src/components/overlays`
-- `src/pages/editor`
-- `src/pages/settings`
-- `src/pages/workspace/WorkspacePage.tsx`
-- `src/domain`
-- `src/modules`
-- `src/services/local/local-storage.service.ts`
-- `src/services/system.service.ts`
-- `src/utils/logger.ts`
-
-## 冻结区
-
-以下对象当前进入冻结状态：
-
-- `src/components/navigation`
-- `src/components/workbench`
-- `src/components/overlays`
-- 顶层 `src/pages`
-- 顶层 `src/services`
-- 顶层 `src/repositories`
-- 顶层 `src/stores`
-- 顶层 `src/workbench`
-- 顶层 `src/overlay`
-
-冻结规则：
-
-- 不再向这些目录新增主职责文件
-- 不再新增从 `app` 直接指向这些旧目录的业务接线
-- 只允许“迁出、删除、兼容过渡”三类改动
-
-## Feature 归属约定
+## Feature 归属
 
 - `features/documents`
-  - 文档元数据、文档列表、最近打开、回收站、版本元数据、文档服务、文档状态
+  - 文档元数据、文档集合、场景与版本仓储、文档服务、文档状态、工作区文档 UI
 - `features/workspace`
-  - 管理态页面编排与共享页面 UI
+  - 管理态页面编排与 Workspace 共享 UI
 - `features/workbench`
-  - 编辑器运行时、工作台面板、工作台状态、工作台 UI
+  - 创作态页面、工作台面板、持久化编排、工作台状态和壳层 UI
+- `features/overlays`
+  - 统一 OverlayRoot、弹层状态和核心对话框聚合入口
 - `features/settings`
-  - 设置页、诊断页、设置服务
+  - 设置与诊断页面、设置服务
+
+## 当前只做结构收口的 Feature
+
+以下能力已经有正式落点，但这次 change 只完成结构归位，不补完整业务闭环：
+
 - `features/search`
-  - 搜索中心与搜索相关 UI
+  - 保留 SearchCenter 页面容器和路由落点，暂不接真实检索、索引和结果面板
 - `features/templates`
-  - 模板与素材相关页面和 UI
+  - 保留模板与素材页面落点，暂不接资源分类、模板创建和卡片网格
 - `features/recovery`
-  - 恢复中心与恢复相关弹层
+  - 保留 Recovery overlay 落点，暂不补批量恢复、恢复草稿检测和版本恢复流程
 - `features/collaboration`
-  - Team、Share、协作入口
+  - 保留 Team 页面与 Share overlay 落点，暂不补成员、权限、共享链接和实时协作
 
-## Shared 与 Platform 约定
+这些目录的约束是：
 
-- `shared`
-  - 真正跨 feature 复用的 UI、组件、hooks、types、constants、lib
-- `platform`
-  - Tauri command bridge、logging、平台运行时能力
+- 可以继续完善正式入口、类型和边界
+- 不允许为了“先跑起来”重新引入顶层 `services / repositories / stores / overlay / adapters / pages`
+- 不允许用伪完整实现冒充正式能力
 
-## 当前阶段完成标准
+## 已删除的过渡结构
 
-- `features / shared / platform` 正式目录已经建立
-- 八类 feature 已有公开入口
-- 迁移分区已经明确
-- 下一步开始迁移 `documents` 与 `workbench` 主链路
+以下旧真相源已经从当前主链移除，不再作为长期目录存在：
+
+- 顶层 `src/stores`
+- 顶层 `src/services`
+- 顶层 `src/repositories`
+- 顶层 `src/overlay`
+- 顶层 `src/adapters`
+- 顶层 `src/pages`
+- 顶层 `src/components` 中承载业务主职责的旧入口
+- `workspaceStore` 与其他只做 legacy re-export 的 wrapper
+
+## 当前仓库约束
+
+- 新业务代码优先进入 owning feature，而不是回到横向目录
+- `app` 只能消费 feature 的公开入口，不承载业务真相源
+- `platform/tauri` 只负责命令调用、归一化和日志，不直接写 UI store
+- Workbench 业务编排放在 `features/workbench`，编辑器内核适配放在 `editor/excalidraw`
+- 架构边界以 `bun run check:architecture` 为准，违反边界时直接修目录与导入，不再加兼容层
