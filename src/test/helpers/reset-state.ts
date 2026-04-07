@@ -1,7 +1,7 @@
 import { useAppStore } from '../../stores/app.store'
 import { useDocumentStore } from '../../stores/document.store'
 import { useOverlayStore } from '../../stores/overlay.store'
-import { useWorkbenchStore } from '../../stores/workbench.store'
+import { useWorkbenchStore } from '../../features/workbench/state'
 import { useWorkspaceStore } from '../../stores/workspace.store'
 
 export function resetTestState() {

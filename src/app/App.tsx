@@ -2,7 +2,6 @@ import { useEffect, type ReactNode } from 'react'
 import { RotateCcwIcon, TriangleAlertIcon } from 'lucide-react'
 import AppRouter from '@/app/AppRouter'
 import { runBootstrapRuntime } from '@/app/bootstrap'
-import { WindowChrome } from '@/app/chrome'
 import { AppShell } from '@/app/layouts'
 import { APP_BOOT_STAGES } from '@/shared/constants'
 import EmptyState from '@/shared/components/EmptyState'
@@ -21,12 +20,7 @@ function App() {
 	const setDatabaseStatus = useAppStore((state) => state.setDatabaseStatus)
 
 	function renderShell(content: ReactNode, showWindowChrome = false) {
-		return (
-			<AppShell>
-				{showWindowChrome ? <WindowChrome /> : null}
-				{content}
-			</AppShell>
-		)
+		return <AppShell>{content}</AppShell>
 	}
 
 	useEffect(() => {

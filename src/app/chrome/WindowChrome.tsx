@@ -5,7 +5,8 @@ import { Input } from '@/shared/ui/input'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import { useAppStore } from '@/stores/app.store'
 import { useOverlayStore } from '@/stores/overlay.store'
-import { useWorkbenchStore } from '@/features/workbench'
+import { useWorkbenchStore } from '@/features/workbench/state'
+import { detectDesktopShellPlatform } from './platform-shell'
 
 async function runWindowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
 	try {
@@ -44,6 +45,8 @@ function readWorkspaceSearchQuery() {
 }
 
 function WindowChrome() {
+	const shellPlatform = detectDesktopShellPlatform()
+	const isMacShell = shellPlatform === 'mac'
 	const activeSceneKey = useAppStore((state) => state.activeSceneKey)
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
 	const openOverlay = useOverlayStore((state) => state.openOverlay)
@@ -86,12 +89,26 @@ function WindowChrome() {
 	}
 
 	return (
-		<header className='grid h-11 shrink-0 grid-cols-[minmax(0,1fr)_8.5rem] border-b border-border/60 bg-[linear-gradient(180deg,rgba(249,251,255,0.96),rgba(244,247,253,0.9))] backdrop-blur supports-backdrop-filter:bg-[linear-gradient(180deg,rgba(249,251,255,0.88),rgba(244,247,253,0.78))]'>
-			<div className='flex h-full items-center gap-3 px-5'>
+		<header
+			className={[
+				'grid shrink-0 border-b border-border/60 bg-[linear-gradient(180deg,rgba(249,251,255,0.96),rgba(244,247,253,0.9))] backdrop-blur supports-backdrop-filter:bg-[linear-gradient(180deg,rgba(249,251,255,0.88),rgba(244,247,253,0.78))]',
+				isMacShell ? 'h-12 grid-cols-[5.5rem_minmax(0,1fr)]' : 'h-11 grid-cols-[minmax(0,1fr)_8.5rem]',
+			].join(' ')}>
+			{isMacShell ? (
 				<div
+					data-testid='mac-window-controls-spacer'
 					data-tauri-drag-region
-					className='h-full min-w-8 flex-1'
+					className='h-full'
 				/>
+			) : null}
+
+			<div className={isMacShell ? 'flex h-full items-center gap-3 pr-5' : 'flex h-full items-center gap-3 px-5'}>
+				{isMacShell ? null : (
+					<div
+						data-tauri-drag-region
+						className='h-full min-w-8 flex-1'
+					/>
+				)}
 				<form
 					className='window-chrome-no-drag flex w-full max-w-md shrink-0 items-center'
 					onSubmit={(event) => {
@@ -103,7 +120,12 @@ function WindowChrome() {
 						<Input
 							type='search'
 							value={chromeSearchDraft}
-							className='h-9 rounded-full border-border/70 bg-[#f6f8fc] pl-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]'
+							className={[
+								'pl-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]',
+								isMacShell
+									? 'h-8 rounded-full border-border/65 bg-white/78'
+									: 'h-9 rounded-full border-border/70 bg-[#f6f8fc]',
+							].join(' ')}
 							placeholder='搜索画布内容（本阶段仅保留输入骨架）'
 							onChange={(event) => {
 								setChromeSearchDraft(event.target.value)
@@ -117,35 +139,39 @@ function WindowChrome() {
 				/>
 			</div>
 
-			<div className='window-chrome-no-drag grid h-full grid-cols-3'>
-				<button
-					type='button'
-					className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground'
-					title='最小化'
-					onClick={() => {
-						void runWindowAction('minimize')
-					}}>
-					<MinusIcon className='size-4' />
-				</button>
-				<button
-					type='button'
-					className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground'
-					title='最大化或还原'
-					onClick={() => {
-						void runWindowAction('toggleMaximize')
-					}}>
-					<SquareIcon className='size-3.5' />
-				</button>
-				<button
-					type='button'
-					className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-[#e81123] hover:text-white'
-					title='关闭'
-					onClick={() => {
-						void runWindowAction('close')
-					}}>
-					<XIcon className='size-4' />
-				</button>
-			</div>
+			{isMacShell ? null : (
+				<div
+					data-testid='windows-window-controls'
+					className='window-chrome-no-drag grid h-full grid-cols-3'>
+					<button
+						type='button'
+						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground'
+						title='最小化'
+						onClick={() => {
+							void runWindowAction('minimize')
+						}}>
+						<MinusIcon className='size-4' />
+					</button>
+					<button
+						type='button'
+						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground'
+						title='最大化或还原'
+						onClick={() => {
+							void runWindowAction('toggleMaximize')
+						}}>
+						<SquareIcon className='size-3.5' />
+					</button>
+					<button
+						type='button'
+						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-[#e81123] hover:text-white'
+						title='关闭'
+						onClick={() => {
+							void runWindowAction('close')
+						}}>
+						<XIcon className='size-4' />
+					</button>
+				</div>
+			)}
 		</header>
 	)
 }

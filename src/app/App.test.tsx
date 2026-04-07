@@ -23,6 +23,10 @@ vi.mock('@/shared/components/AppToaster', () => ({
 	default: () => <div>Toast 容器</div>,
 }))
 
+vi.mock('@/app/chrome', () => ({
+	WindowChrome: () => <div>窗口标题栏</div>,
+}))
+
 describe('App', () => {
 	beforeEach(() => {
 		runBootstrapRuntimeMock.mockReset()

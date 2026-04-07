@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { WindowChrome } from '@/app/chrome'
+import { detectDesktopShellPlatform } from '@/app/chrome/platform-shell'
 import { WorkspaceNav, WorkspaceTopbar } from '@/app/navigation'
 import { useWorkspaceStore, type WorkspaceSection } from '@/stores/workspace.store'
 
 function WorkspaceLayout() {
+	const isMacShell = detectDesktopShellPlatform() === 'mac'
 	const location = useLocation()
 	const setActiveSection = useWorkspaceStore((state) => state.setActiveSection)
 
@@ -18,10 +20,11 @@ function WorkspaceLayout() {
 
 	return (
 		<section className='flex h-full min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(250,251,255,0.92))]'>
-			<aside className='flex w-62 shrink-0 flex-col border-r border-border/60 bg-[rgba(247,249,252,0.9)] px-3 py-4'>
+			<aside className='flex w-62 shrink-0 flex-col border-r border-border/60 bg-[rgba(247,249,252,0.9)] px-3 pb-4'>
 				<div
+					data-testid='workspace-sidebar-brand'
 					data-tauri-drag-region
-					className='px-3 pb-3'>
+					className={['px-3 pt-3 pb-3', isMacShell ? 'pl-16' : ''].join(' ')}>
 					<p
 						data-tauri-drag-region
 						className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>
