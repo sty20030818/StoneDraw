@@ -13,10 +13,6 @@ const alias = [
 		replacement: fileURLToPath(new URL('./src/test/mocks/excalidraw.tsx', import.meta.url)),
 	},
 	{
-		find: 'open-color',
-		replacement: fileURLToPath(new URL('./node_modules/open-color/open-color.js', import.meta.url)),
-	},
-	{
 		find: '@',
 		replacement: fileURLToPath(new URL('./src', import.meta.url)),
 	},

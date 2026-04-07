@@ -1,7 +1,10 @@
 pub mod commands;
 pub mod storage;
 
-use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
+use tauri::{WebviewUrl, WebviewWindowBuilder};
+
+#[cfg(target_os = "macos")]
+use tauri::TitleBarStyle;
 
 fn build_main_window(app: &tauri::App) -> tauri::Result<()> {
     let window_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
