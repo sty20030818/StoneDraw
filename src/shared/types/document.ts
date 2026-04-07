@@ -5,7 +5,6 @@ export type DocumentSourceType = 'local'
 export type DocumentMeta = {
 	id: string
 	title: string
-	currentScenePath: string
 	createdAt: number
 	updatedAt: number
 	lastOpenedAt: number | null

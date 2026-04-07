@@ -1,7 +1,5 @@
-export * from './collaboration'
 export * from './documents'
 export * from './overlays'
-export * from './recovery'
 export * from './settings'
 export * from './workbench'
 export * from './workspace'

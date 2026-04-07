@@ -89,7 +89,6 @@ describe('editor.service', () => {
 			data: {
 				id: 'doc-service-3',
 				title: '保存文档',
-				currentScenePath: 'documents/doc-service-3/current.scene.json',
 				createdAt: 1,
 				updatedAt: 2,
 				lastOpenedAt: 2,

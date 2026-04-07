@@ -19,11 +19,11 @@ function RecoveryDialog() {
 				<DialogHeader>
 					<DialogTitle>恢复中心</DialogTitle>
 					<DialogDescription>
-						恢复相关入口已经进入统一 OverlayRoot，后续会把批量恢复与历史版本恢复收口到这里。
+						恢复入口已经统一并入 OverlayRoot，后续在这里继续接批量恢复、草稿检测与版本回退流程。
 					</DialogDescription>
 				</DialogHeader>
-				<div className='rounded-[1rem] border border-dashed border-border/70 bg-card/60 p-4 text-sm leading-6 text-muted-foreground'>
-					当前阶段 Archive 页面仍保留直接恢复按钮，这个弹层先作为统一承载位保留。
+				<div className='rounded-md border border-dashed border-border/70 bg-card/60 p-4 text-sm leading-6 text-muted-foreground'>
+					当前阶段 Archive 页面仍保留直接恢复动作，这个弹层只作为统一恢复入口，不再伪装成独立 feature。
 				</div>
 				<DialogFooter showCloseButton>
 					<Button

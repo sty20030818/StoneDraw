@@ -41,14 +41,12 @@
 - `incubating/templates`
   - 保留模板与素材页面落点，后续再接资源分类、模板创建与卡片网格
 
-## 当前只做结构收口的 Feature
+## 当前只做结构收口的正式入口
 
-以下能力已经有正式落点，但这次 change 只完成结构归位，不补完整业务闭环：
+以下能力当前只保留真实入口，不补完整业务闭环：
 
-- `features/recovery`
-  - 保留 Recovery overlay 落点，暂不补批量恢复、恢复草稿检测和版本恢复流程
-- `features/collaboration`
-  - 保留 Team 页面与 Share overlay 落点，暂不补成员、权限、共享链接和实时协作
+- `features/overlays`
+  - 保留 `RecoveryDialog` 与 `ShareDialog` 作为真实入口，暂不补批量恢复、草稿检测、成员、权限、共享链接和实时协作
 
 这些目录的约束是：
 

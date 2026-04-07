@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
-import { RecoveryDialog, ShareDialog } from '@/features'
-import { CommandPalette, ExportDialog, NewDocumentDialog, useOverlayStore } from '@/features/overlays'
+import { CommandPalette, ExportDialog, NewDocumentDialog, RecoveryDialog, ShareDialog, useOverlayStore } from '@/features/overlays'
 
 function OverlayRoot() {
 	const openOverlay = useOverlayStore((state) => state.openOverlay)

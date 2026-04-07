@@ -7,10 +7,7 @@ vi.mock('@/features', () => ({
 	ArchivePage: () => <div>归档页面</div>,
 	DocumentsPage: () => <div>文档页面</div>,
 	HomePage: () => <div>首页页面</div>,
-	SearchCenterPage: () => <div>搜索页面</div>,
 	SettingsPage: () => <div>设置页面</div>,
-	TeamPage: () => <div>团队页面</div>,
-	TemplatesPage: () => <div>模板页面</div>,
 	WorkbenchPage: () => <div>工作台页面</div>,
 }))
 

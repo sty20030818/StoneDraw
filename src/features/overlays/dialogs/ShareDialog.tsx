@@ -20,10 +20,10 @@ function ShareDialog() {
 				<DialogHeader>
 					<DialogTitle>分享与协作</DialogTitle>
 					<DialogDescription>
-						分享入口已经统一进入 OverlayRoot，后续在这里接入成员邀请、权限和共享链接。
+						分享入口已经统一并入 OverlayRoot，后续在这里接成员邀请、权限与共享链接，不再保留伪独立协作 feature。
 					</DialogDescription>
 				</DialogHeader>
-				<div className='rounded-[1rem] border border-border/70 bg-card/60 p-4 text-sm text-muted-foreground'>
+				<div className='rounded-md border border-border/70 bg-card/60 p-4 text-sm text-muted-foreground'>
 					<p>{context?.documentTitle ? `准备分享：${context.documentTitle}` : '当前没有绑定具体文档。'}</p>
 				</div>
 				<DialogFooter showCloseButton>

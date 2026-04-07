@@ -1,6 +1,7 @@
 import { TAURI_COMMANDS } from '@/shared/constants'
 import { invokeTauriCommand } from '@/platform/tauri'
 import type { DocumentMeta, SceneFilePayload, TauriCommandResult } from '@/shared/types'
+import { normalizeDocumentMetaResult, type RawDocumentMeta } from '../model'
 
 export const sceneRepository = {
 	async readCurrent(documentId: string, correlationId?: string): Promise<TauriCommandResult<SceneFilePayload>> {
@@ -20,7 +21,7 @@ export const sceneRepository = {
 	},
 
 	async saveCurrent(scene: SceneFilePayload, correlationId?: string): Promise<TauriCommandResult<DocumentMeta>> {
-		return invokeTauriCommand<DocumentMeta>(
+		const result = await invokeTauriCommand<RawDocumentMeta>(
 			TAURI_COMMANDS.EDITOR_SAVE_SCENE,
 			{
 				scene,
@@ -33,5 +34,7 @@ export const sceneRepository = {
 				correlationId,
 			},
 		)
+
+		return normalizeDocumentMetaResult(result)
 	},
 }

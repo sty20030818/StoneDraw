@@ -4,7 +4,6 @@ export function createDocumentMeta(overrides: Partial<DocumentMeta> = {}): Docum
 	return {
 		id: 'doc-test-1',
 		title: '测试文档',
-		currentScenePath: 'documents/doc-test-1/current.scene.json',
 		createdAt: 1,
 		updatedAt: 1,
 		lastOpenedAt: 1,
