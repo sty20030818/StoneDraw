@@ -81,6 +81,7 @@ fn prepare_local_directories_from_root(
     })
 }
 
+#[cfg(test)]
 fn read_local_directories_from_root(
     root_dir_path: &Path,
 ) -> Result<LocalDirectoriesPayload, CommandError> {

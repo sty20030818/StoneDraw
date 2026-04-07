@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type PropsWithChildren } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from 'react'
 import type { DocumentVersionMeta, TauriCommandResult } from '@/shared/types'
 import { useWorkbenchStore } from '@/features/workbench/state'
 
@@ -29,21 +29,37 @@ const WorkbenchShellContext = createContext<{
 
 export function WorkbenchShellProvider({ children }: PropsWithChildren) {
 	const [shellActions, setShellActionsState] = useState(initialShellState)
+	const setShellActions = useCallback((patch: Partial<WorkbenchShellState>) => {
+		setShellActionsState((currentState) => {
+			const nextState = {
+				...currentState,
+				...patch,
+			}
+
+			if (
+				currentState.onBack === nextState.onBack &&
+				currentState.onSave === nextState.onSave &&
+				currentState.onCreateVersion === nextState.onCreateVersion &&
+				currentState.onExport === nextState.onExport &&
+				currentState.onMore === nextState.onMore
+			) {
+				return currentState
+			}
+
+			return nextState
+		})
+	}, [])
+	const resetShellActions = useCallback(() => {
+		setShellActionsState((currentState) => (currentState === initialShellState ? currentState : initialShellState))
+	}, [])
 
 	const contextValue = useMemo(
 		() => ({
 			shellActions,
-			setShellActions: (patch: Partial<WorkbenchShellState>) => {
-				setShellActionsState((currentState) => ({
-					...currentState,
-					...patch,
-				}))
-			},
-			resetShellActions: () => {
-				setShellActionsState(initialShellState)
-			},
+			setShellActions,
+			resetShellActions,
 		}),
-		[shellActions],
+		[resetShellActions, setShellActions, shellActions],
 	)
 
 	return <WorkbenchShellContext.Provider value={contextValue}>{children}</WorkbenchShellContext.Provider>
