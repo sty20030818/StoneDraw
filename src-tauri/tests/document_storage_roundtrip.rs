@@ -1,13 +1,18 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::Map;
-use stonedraw_lib::commands::CommandErrorCode;
-use stonedraw_lib::storage::documents::{
-    create_document_from_root, get_document_by_id_from_root, list_documents_from_root,
-    list_recent_documents_from_root, move_document_to_trash_from_root, open_document_from_root,
-    open_document_scene_from_root, restore_document_from_root, save_document_scene_from_root,
-    SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
+use stonedraw_lib::{
+    CommandError, CommandErrorCode,
+    documents::{
+        create_document_from_root, get_document_by_id_from_root,
+        get_trashed_document_by_id_from_root, list_documents_from_root,
+        list_recent_documents_from_root, mark_document_restored_from_root,
+        mark_document_trashed_from_root, open_document_scene_from_root,
+        record_document_opened_from_root, update_document_after_scene_save,
+        write_document_scene_from_root, DocumentMetaPayload,
+        SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
+    },
 };
 
 fn unique_temp_path(name: &str) -> PathBuf {
@@ -17,6 +22,48 @@ fn unique_temp_path(name: &str) -> PathBuf {
         .as_nanos();
 
     std::env::temp_dir().join(format!("stonedraw-integration-{name}-{timestamp}"))
+}
+
+/// 复用正式存储 API 组合出“保存 scene 并刷新元数据”的集成测试动作。
+fn save_document_scene_from_root(
+    root_directory_path: &Path,
+    scene_payload: SceneFilePayload,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let write_result = write_document_scene_from_root(root_directory_path, scene_payload)?;
+    update_document_after_scene_save(
+        root_directory_path,
+        &write_result.document_id,
+        write_result.updated_at,
+    )?;
+
+    get_document_by_id_from_root(root_directory_path, &write_result.document_id)
+}
+
+/// 模拟应用层“正式打开文档”的动作，确保最近打开记录被写入。
+fn open_document_from_root(
+    root_directory_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    let _scene_payload = open_document_scene_from_root(root_directory_path, document_id)?;
+    record_document_opened_from_root(root_directory_path, document_id)?;
+
+    get_document_by_id_from_root(root_directory_path, document_id)
+}
+
+fn move_document_to_trash_from_root(
+    root_directory_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    mark_document_trashed_from_root(root_directory_path, document_id)?;
+    get_trashed_document_by_id_from_root(root_directory_path, document_id)
+}
+
+fn restore_document_from_root(
+    root_directory_path: &Path,
+    document_id: &str,
+) -> Result<DocumentMetaPayload, CommandError> {
+    mark_document_restored_from_root(root_directory_path, document_id)?;
+    get_document_by_id_from_root(root_directory_path, document_id)
 }
 
 #[test]

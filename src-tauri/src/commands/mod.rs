@@ -49,10 +49,6 @@ pub struct CommandSuccess<T: Serialize> {
 
 pub type CommandResult<T> = Result<CommandSuccess<T>, CommandError>;
 
-pub fn success<T: Serialize>(data: T) -> CommandResult<T> {
-    Ok(CommandSuccess { data })
-}
-
 pub fn command_result<T: Serialize>(
     command: &str,
     module: &str,
@@ -87,11 +83,6 @@ impl CommandError {
 
     pub fn with_details(mut self, details: impl Into<String>) -> Self {
         self.details = Some(details.into());
-        self
-    }
-
-    pub fn with_command(mut self, command: impl Into<String>) -> Self {
-        self.command = Some(command.into());
         self
     }
 
@@ -180,18 +171,6 @@ impl CommandError {
             UNKNOWN_OPERATION,
         )
         .with_details(details)
-    }
-
-    pub fn unimplemented(command: &str) -> Self {
-        Self::new(
-            CommandErrorCode::UnimplementedCommand,
-            format!("命令 {command} 尚未实现"),
-            DEFAULT_NATIVE_LAYER,
-            DEFAULT_NATIVE_MODULE,
-            "unimplemented",
-        )
-        .with_command(command)
-        .with_details("当前版本只提供命令桥接骨架，真实业务逻辑将在后续版本补齐。")
     }
 }
 

@@ -17,20 +17,23 @@ const DEFAULT_SAVE_STATUS: &str = "saved";
 const DEFAULT_SCHEMA_VERSION: i64 = 1;
 const DEFAULT_VERSION_KIND: &str = "manual";
 
-pub(crate) use meta::{
-    create_document_from_root, delete_document_records_from_root,
-    get_document_by_id_any_from_root, get_document_by_id_from_root,
+pub use meta::{
+    create_document_from_root, get_document_by_id_from_root,
     get_trashed_document_by_id_from_root, list_documents_from_root,
-    list_recent_documents_from_root, list_trashed_documents_from_root,
-    mark_document_restored_from_root, mark_document_trashed_from_root,
-    record_document_opened_from_root, rename_document_from_root,
+    list_recent_documents_from_root, mark_document_restored_from_root,
+    mark_document_trashed_from_root, record_document_opened_from_root,
     update_document_after_scene_save, DocumentMetaPayload,
 };
-pub(crate) use scene::{
-    ensure_document_scene_ready, open_document_scene_from_root,
-    write_document_scene_from_root, DocumentSceneWriteResult,
-    SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
+pub(crate) use meta::{
+    delete_document_records_from_root, get_document_by_id_any_from_root,
+    list_trashed_documents_from_root, rename_document_from_root,
 };
+pub use scene::{
+    open_document_scene_from_root, write_document_scene_from_root,
+    DocumentSceneWriteResult, SceneEnvelopePayload, SceneFilePayload,
+    SceneMetaPayload,
+};
+pub(crate) use scene::ensure_document_scene_ready;
 pub(crate) use versions::{
     create_document_version_from_root, list_document_versions_from_root,
     DocumentVersionPayload,
@@ -109,8 +112,8 @@ mod tests {
         open_document_from_root, open_document_scene_from_root,
         permanently_delete_document_from_root, rename_document_from_root,
         restore_document_from_root, save_document_scene_from_root,
-        SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload,
     };
+    use super::scene::{SceneEnvelopePayload, SceneFilePayload, SceneMetaPayload};
 
     fn unique_temp_path(name: &str) -> std::path::PathBuf {
         let timestamp = SystemTime::now()

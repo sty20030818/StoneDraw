@@ -1,5 +1,7 @@
-use std::fs;
 use std::path::{Path, PathBuf};
+
+#[cfg(test)]
+use std::fs;
 
 use rusqlite::{params, Connection, OptionalExtension, Row};
 use serde::{Deserialize, Serialize};
@@ -10,8 +12,10 @@ use crate::storage::directories::document_path_layout;
 
 use super::scene::{
     cleanup_document_directory, create_empty_scene_payload, ensure_document_layout_ready,
-    ensure_document_scene_ready, scene_relative_path, write_scene_file,
+    scene_relative_path, write_scene_file,
 };
+#[cfg(test)]
+use super::scene::ensure_document_scene_ready;
 use super::{
     current_timestamp_ms, generate_document_id, normalize_optional_document_title,
     normalize_required_document_title, DEFAULT_SAVE_STATUS, DEFAULT_SOURCE_TYPE,

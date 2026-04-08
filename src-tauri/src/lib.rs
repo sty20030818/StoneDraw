@@ -2,6 +2,9 @@ mod application;
 mod commands;
 mod storage;
 
+pub use commands::{CommandError, CommandErrorCode};
+pub use storage::documents;
+
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 
 #[cfg(target_os = "macos")]
