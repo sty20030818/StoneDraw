@@ -11,13 +11,13 @@ import { useWorkbenchPersistenceActions } from './hooks/useWorkbenchPersistenceA
 import { useWorkbenchSaveFeedback } from './hooks/useWorkbenchSaveFeedback'
 
 const CANVAS_CARD_CLASS =
-	'flex h-full min-h-0 flex-1 overflow-hidden rounded-[1.75rem] border border-border/70 bg-background/82 shadow-sm backdrop-blur'
+	'flex h-full min-h-0 flex-1 overflow-hidden rounded-xl border bg-background'
 
 function WorkbenchLoadingCanvas() {
 	return (
 		<div className={CANVAS_CARD_CLASS}>
 			<div className='flex h-full min-h-0 w-full p-4 md:p-5'>
-				<div className='h-full w-full rounded-lg border border-border/50 bg-white/95' />
+				<div className='h-full w-full rounded-lg border bg-card' />
 			</div>
 		</div>
 	)

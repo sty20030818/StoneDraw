@@ -43,7 +43,7 @@ function formatSceneLabel(sceneKey: string) {
 function DirectoryGrid({ directories }: { directories: LocalDirectoriesPayload | null }) {
 	if (!directories) {
 		return (
-			<div className='rounded-2xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm text-muted-foreground'>
+			<div className='rounded-xl border border-dashed bg-background px-4 py-5 text-sm text-muted-foreground'>
 				本次会话还没有拿到目录初始化结果。
 			</div>
 		)
@@ -54,7 +54,7 @@ function DirectoryGrid({ directories }: { directories: LocalDirectoriesPayload |
 			{Object.entries(directories).map(([key, directory]) => (
 				<div
 					key={key}
-					className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3'>
+					className='rounded-xl border bg-background px-4 py-3'>
 					<div className='flex items-center justify-between gap-3'>
 						<p className='text-sm font-medium'>{key}</p>
 						<StatusBadge
@@ -72,7 +72,7 @@ function DirectoryGrid({ directories }: { directories: LocalDirectoriesPayload |
 function DatabasePanel({ databaseHealth }: { databaseHealth: DatabaseHealthPayload | null }) {
 	if (!databaseHealth) {
 		return (
-			<div className='rounded-2xl border border-dashed border-border/70 bg-background/70 px-4 py-5 text-sm text-muted-foreground'>
+			<div className='rounded-xl border border-dashed bg-background px-4 py-5 text-sm text-muted-foreground'>
 				数据库还没有返回健康检查信息。
 			</div>
 		)
@@ -80,19 +80,19 @@ function DatabasePanel({ databaseHealth }: { databaseHealth: DatabaseHealthPaylo
 
 	return (
 		<div className='grid gap-3 md:grid-cols-2'>
-			<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
+			<div className='rounded-xl border bg-background px-4 py-3 text-sm'>
 				<p className='text-xs text-muted-foreground'>数据库文件</p>
 				<p className='mt-2 break-all font-medium'>{databaseHealth.databasePath}</p>
 			</div>
-			<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
+			<div className='rounded-xl border bg-background px-4 py-3 text-sm'>
 				<p className='text-xs text-muted-foreground'>数据库目录</p>
 				<p className='mt-2 break-all font-medium'>{databaseHealth.databaseDir}</p>
 			</div>
-			<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
+			<div className='rounded-xl border bg-background px-4 py-3 text-sm'>
 				<p className='text-xs text-muted-foreground'>当前 schema</p>
 				<p className='mt-2 font-medium'>{databaseHealth.schemaVersion}</p>
 			</div>
-			<div className='rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm'>
+			<div className='rounded-xl border bg-background px-4 py-3 text-sm'>
 				<p className='text-xs text-muted-foreground'>目标 schema</p>
 				<p className='mt-2 font-medium'>{databaseHealth.targetSchemaVersion}</p>
 			</div>
@@ -112,12 +112,12 @@ function SettingsPage() {
 
 	return (
 		<div className='flex flex-col gap-5'>
-			<section className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
+			<section className='rounded-xl border bg-card p-6'>
 				<div className='flex items-start gap-4'>
-					<div className='flex size-12 items-center justify-center rounded-2xl bg-accent/70 text-accent-foreground'>
+					<div className='flex size-12 items-center justify-center rounded-xl bg-muted text-foreground'>
 						<BugIcon />
 					</div>
-					<div className='space-y-2'>
+					<div className='flex flex-col gap-2'>
 						<h2 className='text-xl font-semibold tracking-tight'>设置与开发诊断</h2>
 						<p className='max-w-3xl text-sm leading-6 text-muted-foreground'>
 							旧工作区首页里的系统状态和数据库健康检查已经收口到这里，避免主产品页面继续混入开发辅助信息。
@@ -127,7 +127,7 @@ function SettingsPage() {
 			</section>
 
 			<section className='grid gap-4 lg:grid-cols-3'>
-				<div className='rounded-[1.5rem] border border-border/70 bg-card p-5'>
+				<div className='rounded-xl border bg-card p-5'>
 					<div className='flex items-center gap-3'>
 						<RouteIcon className='size-4 text-muted-foreground' />
 						<h3 className='text-sm font-semibold'>当前场景</h3>
@@ -136,7 +136,7 @@ function SettingsPage() {
 					<p className='mt-2 break-all text-sm text-muted-foreground'>{activeRoutePath ?? '当前路由尚未同步'}</p>
 				</div>
 
-				<div className='rounded-[1.5rem] border border-border/70 bg-card p-5'>
+				<div className='rounded-xl border bg-card p-5'>
 					<div className='flex items-center gap-3'>
 						<FolderTreeIcon className='size-4 text-muted-foreground' />
 						<h3 className='text-sm font-semibold'>目录初始化</h3>
@@ -147,7 +147,7 @@ function SettingsPage() {
 					</div>
 				</div>
 
-				<div className='rounded-[1.5rem] border border-border/70 bg-card p-5'>
+				<div className='rounded-xl border bg-card p-5'>
 					<div className='flex items-center gap-3'>
 						<DatabaseIcon className='size-4 text-muted-foreground' />
 						<h3 className='text-sm font-semibold'>数据库状态</h3>
@@ -159,7 +159,7 @@ function SettingsPage() {
 				</div>
 			</section>
 
-			<section className='rounded-[1.75rem] border border-border/70 bg-card p-5'>
+			<section className='rounded-xl border bg-card p-5'>
 				<div className='flex items-center justify-between gap-3'>
 					<div>
 						<h3 className='text-base font-semibold tracking-tight'>目录健康检查</h3>
@@ -172,7 +172,7 @@ function SettingsPage() {
 				</div>
 			</section>
 
-			<section className='rounded-[1.75rem] border border-border/70 bg-card p-5'>
+			<section className='rounded-xl border bg-card p-5'>
 				<div className='flex items-center justify-between gap-3'>
 					<div>
 						<h3 className='text-base font-semibold tracking-tight'>数据库健康检查</h3>

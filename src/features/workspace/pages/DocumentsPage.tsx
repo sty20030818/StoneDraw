@@ -39,7 +39,7 @@ function DocumentsPage() {
 
 	return (
 		<div className='grid gap-5'>
-			<section className='rounded-[1.75rem] border border-border/70 bg-card/78 p-5'>
+			<section className='rounded-xl border bg-card p-5'>
 				<div className='flex flex-wrap items-center justify-between gap-3'>
 					<div className='relative min-w-64 flex-1'>
 						<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
@@ -77,7 +77,7 @@ function DocumentsPage() {
 			</section>
 
 			{collectionStatus === 'loading' ? (
-				<div className='rounded-[1.75rem] border border-dashed border-border/80 bg-card/70 px-6 py-10 text-sm text-muted-foreground'>
+				<div className='rounded-xl border border-dashed bg-card px-6 py-10 text-sm text-muted-foreground'>
 					正在读取 Documents 页面文档列表...
 				</div>
 			) : null}

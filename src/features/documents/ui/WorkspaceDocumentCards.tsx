@@ -34,7 +34,7 @@ function WorkspaceDocumentCards({ documents, onOpen, onRename, onMoveToTrash }: 
 	}
 
 	return (
-		<div className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
+		<div className='rounded-xl border bg-card p-6'>
 			<div className='flex items-center justify-between gap-3'>
 				<div>
 					<h3 className='text-lg font-semibold tracking-tight'>文档主列表</h3>
@@ -42,7 +42,7 @@ function WorkspaceDocumentCards({ documents, onOpen, onRename, onMoveToTrash }: 
 						保留真实文档浏览、重命名、删除到回收站和打开链路。
 					</p>
 				</div>
-				<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
+				<div className='rounded-full border bg-muted/50 px-4 py-2 text-xs text-muted-foreground'>
 					{documentCountLabel}
 				</div>
 			</div>
@@ -56,7 +56,7 @@ function WorkspaceDocumentCards({ documents, onOpen, onRename, onMoveToTrash }: 
 					return (
 						<div
 							key={document.id}
-							className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
+							className='rounded-lg border bg-background p-4'>
 							<div className='flex items-start justify-between gap-3'>
 								<button
 									type='button'
@@ -81,7 +81,7 @@ function WorkspaceDocumentCards({ documents, onOpen, onRename, onMoveToTrash }: 
 							</div>
 
 							{isExpanded ? (
-								<div className='mt-4 rounded-[1rem] border border-border/70 bg-card/80 p-3'>
+								<div className='mt-4 rounded-lg border bg-card p-3'>
 									{isEditing ? (
 										<div className='flex flex-col gap-3'>
 											<Input

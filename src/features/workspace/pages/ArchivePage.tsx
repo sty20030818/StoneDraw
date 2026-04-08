@@ -13,13 +13,13 @@ function ArchivePage() {
 	const { handleRestoreDocument, handlePermanentlyDeleteDocument } = useWorkspaceDocuments()
 
 	return (
-		<div className='rounded-[1.75rem] border border-border/70 bg-card/78 p-6'>
+		<div className='rounded-xl border bg-card p-6'>
 			<div className='flex items-center justify-between gap-3'>
 				<div>
 					<h3 className='text-lg font-semibold tracking-tight'>Archive 页面容器</h3>
 					<p className='mt-2 text-sm leading-6 text-muted-foreground'>回收与历史页现在承接回收站文档恢复入口。</p>
 				</div>
-				<div className='rounded-full border border-border/70 bg-background/90 px-4 py-2 text-xs text-muted-foreground'>
+				<div className='rounded-full border bg-muted/50 px-4 py-2 text-xs text-muted-foreground'>
 					{trashedDocuments.length} 个已删除
 				</div>
 			</div>
@@ -29,7 +29,7 @@ function ArchivePage() {
 					{trashedDocuments.map((document) => (
 						<div
 							key={document.id}
-							className='rounded-[1.25rem] border border-border/70 bg-background/88 px-4 py-4'>
+							className='rounded-lg border bg-background px-4 py-4'>
 							<p className='text-sm font-semibold'>{document.title}</p>
 							<p className='mt-2 text-xs text-muted-foreground'>
 								删除时间：{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}

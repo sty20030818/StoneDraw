@@ -17,7 +17,7 @@ function ExplorerPanel({
 }: ExplorerPanelProps) {
 	return (
 		<div className='grid gap-3'>
-			<div className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
+			<div className='rounded-lg border bg-background p-4'>
 				<p className='text-sm font-medium'>Explorer</p>
 				<div className='mt-3 grid gap-2'>
 					{documents.length > 0 ? (
@@ -32,13 +32,13 @@ function ExplorerPanel({
 										onSelectDocument(document.id)
 									}}
 									className={[
-										'flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition',
+										'flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors',
 										isActive
-											? 'border-border bg-white text-foreground shadow-sm'
-											: 'border-transparent bg-[#f7f9fd] text-muted-foreground hover:border-border/60 hover:bg-white',
+											? 'border-border bg-accent text-foreground'
+											: 'border-transparent bg-muted/40 text-muted-foreground hover:border-border hover:bg-background',
 									].join(' ')}>
 									<span className='truncate text-sm'>{document.title}</span>
-									<span className='ml-3 text-[10px] uppercase tracking-[0.18em]'>{isActive ? '当前' : '打开'}</span>
+									<span className='ml-3 text-[10px] uppercase'>{isActive ? '当前' : '打开'}</span>
 								</button>
 							)
 						})
@@ -49,7 +49,7 @@ function ExplorerPanel({
 					)}
 				</div>
 			</div>
-			<div className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
+			<div className='rounded-lg border bg-background p-4'>
 				<p className='text-sm font-medium'>当前上下文</p>
 				<p className='mt-2 text-sm text-muted-foreground'>{documentTitle}</p>
 				<p className='mt-2 text-xs text-muted-foreground'>

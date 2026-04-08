@@ -6,7 +6,6 @@
       "name": "stonedraw",
       "dependencies": {
         "@excalidraw/excalidraw": "^0.18.0",
-        "@fontsource-variable/geist": "^5.2.8",
         "@tauri-apps/api": "^2.10.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -208,8 +207,6 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.8", "https://registry.npmmirror.com/@floating-ui/react-dom/-/react-dom-2.1.8.tgz", { "dependencies": { "@floating-ui/dom": "^1.7.6" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "https://registry.npmmirror.com/@floating-ui/utils/-/utils-0.2.11.tgz", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
-
-    "@fontsource-variable/geist": ["@fontsource-variable/geist@5.2.8", "https://registry.npmmirror.com/@fontsource-variable/geist/-/geist-5.2.8.tgz", {}, "sha512-cJ6m9e+8MQ5dCYJsLylfZrgBh6KkG4bOLckB35Tr9J/EqdkEM6QllH5PxqP1dhTvFup+HtMRPuz9xOjxXJggxw=="],
 
     "@hono/node-server": ["@hono/node-server@1.19.12", "https://registry.npmmirror.com/@hono/node-server/-/node-server-1.19.12.tgz", { "peerDependencies": { "hono": "^4" } }, "sha512-txsUW4SQ1iilgE0l9/e9VQWmELXifEFvmdA1j6WFh/aFPj99hIntrSsq/if0UWyGVkmrRPKA1wCeP+UCr1B9Uw=="],
 

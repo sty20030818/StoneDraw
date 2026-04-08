@@ -8,7 +8,7 @@ type LoadingStateProps = {
 
 function LoadingState({ title, description }: LoadingStateProps) {
 	return (
-		<section className='flex min-h-80 flex-col gap-6 rounded-xl border border-border/70 bg-card/85 p-6 shadow-sm backdrop-blur'>
+		<section className='flex min-h-80 flex-col gap-6 rounded-xl border bg-card p-6'>
 			<div className='flex items-center gap-3'>
 				<div className='flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary'>
 					<LoaderCircleIcon className='animate-spin' />
@@ -20,15 +20,15 @@ function LoadingState({ title, description }: LoadingStateProps) {
 			</div>
 
 			<div className='grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]'>
-				<div className='flex flex-col gap-3 rounded-3xl border bg-background/80 p-4'>
+				<div className='flex flex-col gap-3 rounded-xl border bg-background p-4'>
 					<Skeleton className='h-5 w-24 rounded-full' />
 					<Skeleton className='h-12 w-full rounded-2xl' />
 					<Skeleton className='h-12 w-full rounded-2xl' />
 					<Skeleton className='h-28 w-full rounded-3xl' />
 				</div>
-				<div className='flex min-h-96 flex-col gap-4 rounded-3xl border bg-background/80 p-4'>
+				<div className='flex min-h-96 flex-col gap-4 rounded-xl border bg-background p-4'>
 					<Skeleton className='h-10 w-full rounded-2xl' />
-					<Skeleton className='h-full w-full rounded-[1.75rem]' />
+					<Skeleton className='h-full w-full rounded-xl' />
 				</div>
 			</div>
 		</section>

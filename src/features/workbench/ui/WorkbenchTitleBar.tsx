@@ -24,24 +24,24 @@ function WorkbenchTitleBar({
 	const isSavePending = saveStatus === 'saving' || isFlushing
 
 	return (
-		<header className='flex shrink-0 items-center justify-between gap-4 border-b border-border/60 bg-white/92 px-5 py-3'>
+		<header className='flex shrink-0 items-center justify-between gap-4 border-b bg-background px-5 py-3'>
 			<div className='flex min-w-0 items-center gap-4'>
 				<Button
 					type='button'
 					variant='outline'
-					className='h-9 rounded-xl bg-white px-3 shadow-sm'
+					size='lg'
 					onClick={onBack}>
 					<ArrowLeftIcon data-icon='inline-start' />
 					工作区
 				</Button>
 				<div className='min-w-0'>
-					<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>Workbench</p>
+					<p className='text-xs font-medium uppercase text-muted-foreground'>Workbench</p>
 					<div className='mt-1.5 flex min-w-0 items-center gap-3'>
-						<h2 className='truncate font-[Bahnschrift,"Microsoft_YaHei_UI",sans-serif] text-[1.1rem] leading-none font-bold tracking-[0.02em]'>
+						<h2 className='truncate text-lg leading-none font-semibold'>
 							{isDocumentReady ? documentTitle : '工作台正在准备文档'}
 						</h2>
 						<span
-							className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full px-3 text-[11px] font-medium ${statusMeta.className}`}>
+							className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full px-3 text-xs font-medium ${statusMeta.className}`}>
 							{statusMeta.label}
 						</span>
 					</div>
@@ -49,18 +49,13 @@ function WorkbenchTitleBar({
 			</div>
 
 			<div className='flex min-w-[16rem] flex-1 items-center justify-end gap-2.5'>
-				<div className='inline-flex h-9 items-center rounded-full border border-border/70 bg-[#f6f8fc] px-4 text-sm text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]'>
+				<div className='inline-flex h-9 items-center rounded-full border bg-muted/40 px-4 text-sm text-muted-foreground'>
 					本地版本工作台
 				</div>
 				<Button
 					type='button'
-					variant={saveStatus === 'error' ? 'default' : 'outline'}
-					className={[
-						'h-9 rounded-xl px-4 shadow-sm',
-						saveStatus === 'error'
-							? 'bg-[linear-gradient(135deg,#8f1d1d,#d92d20)] text-white'
-							: 'bg-[linear-gradient(135deg,#1234a8,#1b4dff)] text-white hover:brightness-105',
-					].join(' ')}
+					variant={saveStatus === 'error' ? 'destructive' : 'default'}
+					size='lg'
 					title='保存'
 					disabled={!isDocumentReady || isSavePending}
 					onClick={onSave}>

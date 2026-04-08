@@ -3,15 +3,22 @@ import { DOCUMENT_TAURI_COMMANDS } from '@/features/documents'
 import type { SceneFilePayload } from '@/shared/types'
 import { createScenePayload } from '@/test/fixtures/scene'
 
-const readCurrentMock = vi.fn<(...args: never[]) => Promise<unknown>>()
-const saveCurrentMock = vi.fn<(...args: never[]) => Promise<unknown>>()
-
-vi.mock('@/features/documents', () => ({
-	sceneRepository: {
-		readCurrent: readCurrentMock,
-		saveCurrent: saveCurrentMock,
-	},
+const { readCurrentMock, saveCurrentMock } = vi.hoisted(() => ({
+	readCurrentMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
+	saveCurrentMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
 }))
+
+vi.mock('@/features/documents', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@/features/documents')>()
+
+	return {
+		...actual,
+		sceneRepository: {
+			readCurrent: readCurrentMock,
+			saveCurrent: saveCurrentMock,
+		},
+	}
+})
 
 vi.mock('@/platform/tauri', () => ({
 	createSuccessResult: <TData>(data: TData) => ({ ok: true as const, data }),

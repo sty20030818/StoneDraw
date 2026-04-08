@@ -12,7 +12,7 @@ type EmptyStateProps = {
 
 function EmptyState({ title, description, icon: Icon, actionLabel, onAction }: EmptyStateProps) {
 	return (
-		<Empty className='min-h-72 rounded-3xl border border-dashed border-border/80 bg-card/80 shadow-sm'>
+		<Empty className='min-h-72 rounded-xl border border-dashed bg-card'>
 			<EmptyHeader>
 				<EmptyMedia variant='icon'>
 					<Icon />

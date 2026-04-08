@@ -70,7 +70,7 @@ function WindowChrome() {
 	return (
 		<header
 			className={[
-				'grid shrink-0 border-b border-border/60 bg-[linear-gradient(180deg,rgba(249,251,255,0.96),rgba(244,247,253,0.9))] backdrop-blur supports-backdrop-filter:bg-[linear-gradient(180deg,rgba(249,251,255,0.88),rgba(244,247,253,0.78))]',
+				'grid shrink-0 border-b bg-background',
 				isMacShell ? 'h-12 grid-cols-[5.5rem_minmax(0,1fr)]' : 'h-11 grid-cols-[minmax(0,1fr)_8.5rem]',
 			].join(' ')}>
 			{isMacShell ? (
@@ -100,10 +100,10 @@ function WindowChrome() {
 							type='search'
 							value={chromeSearchDraft}
 							className={[
-								'pl-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)]',
+								'pl-9',
 								isMacShell
-									? 'h-8 rounded-full border-border/65 bg-white/78'
-									: 'h-9 rounded-full border-border/70 bg-[#f6f8fc]',
+									? 'h-8 rounded-full'
+									: 'h-9 rounded-full bg-muted/40',
 							].join(' ')}
 							placeholder='搜索文档标题'
 							onChange={(event) => {
@@ -124,7 +124,7 @@ function WindowChrome() {
 					className='window-chrome-no-drag grid h-full grid-cols-3'>
 					<button
 						type='button'
-						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground'
+						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
 						title='最小化'
 						onClick={() => {
 							void runWindowAction('minimize')
@@ -133,7 +133,7 @@ function WindowChrome() {
 					</button>
 					<button
 						type='button'
-						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground'
+						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
 						title='最大化或还原'
 						onClick={() => {
 							void runWindowAction('toggleMaximize')
@@ -142,7 +142,7 @@ function WindowChrome() {
 					</button>
 					<button
 						type='button'
-						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-[#e81123] hover:text-white'
+						className='grid h-full place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
 						title='关闭'
 						onClick={() => {
 							void runWindowAction('close')

@@ -21,7 +21,6 @@ const {
 	createManualVersionMock,
 	disposeMock,
 	setSelectedDocumentIdMock,
-	syncWorkspaceCollectionsMock,
 	toastMock,
 	tauriWindowMock,
 } = vi.hoisted(() => ({
@@ -33,7 +32,6 @@ const {
 	createManualVersionMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
 	disposeMock: vi.fn<(...args: never[]) => void>(),
 	setSelectedDocumentIdMock: vi.fn<(...args: never[]) => void>(),
-	syncWorkspaceCollectionsMock: vi.fn<(...args: never[]) => void>(),
 	toastMock: vi.fn<(message?: unknown, options?: unknown) => unknown>(),
 	tauriWindowMock: (() => {
 		let closeHandler: ((event: { preventDefault: () => void }) => void | Promise<void>) | null = null
@@ -127,15 +125,9 @@ vi.mock('@/features/documents', () => ({
 	versionService: {
 		createManualVersion: createManualVersionMock,
 	},
-	useDocumentStore: (
-		selector: (state: {
-			setSelectedDocumentId: typeof setSelectedDocumentIdMock
-			syncWorkspaceCollections: typeof syncWorkspaceCollectionsMock
-		}) => unknown,
-	) =>
+	useDocumentStore: (selector: (state: { setSelectedDocumentId: typeof setSelectedDocumentIdMock }) => unknown) =>
 		selector({
 			setSelectedDocumentId: setSelectedDocumentIdMock,
-			syncWorkspaceCollections: syncWorkspaceCollectionsMock,
 		}),
 }))
 
@@ -202,7 +194,6 @@ describe('WorkbenchPage', () => {
 		createManualVersionMock.mockReset()
 		disposeMock.mockReset()
 		setSelectedDocumentIdMock.mockReset()
-		syncWorkspaceCollectionsMock.mockReset()
 		toastMock.mockClear()
 		tauriWindowMock.window.onCloseRequested.mockClear()
 		tauriWindowMock.window.destroy.mockClear()
@@ -218,11 +209,6 @@ describe('WorkbenchPage', () => {
 					documentId: 'doc-editor-1',
 					title: '编辑器文档',
 				}),
-				collections: {
-					documents: [],
-					recentDocuments: [],
-					trashedDocuments: [],
-				},
 			},
 		})
 		initializeMock.mockImplementation(() => {

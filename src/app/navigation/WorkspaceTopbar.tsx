@@ -12,10 +12,10 @@ function WorkspaceTopbar() {
 	const activeItem = WORKSPACE_NAV_ITEMS.find((item) => item.path === location.pathname) ?? WORKSPACE_NAV_ITEMS[0]
 
 	return (
-		<header className='flex shrink-0 items-center justify-between gap-4 border-b border-border/60 bg-white/90 px-6 py-4'>
+		<header className='flex shrink-0 items-center justify-between gap-4 border-b bg-background px-6 py-4'>
 			<div className='min-w-0'>
-				<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>Shell Direction</p>
-				<h2 className='mt-2 truncate font-[Bahnschrift,"Microsoft_YaHei_UI",sans-serif] text-[1.35rem] leading-none font-bold tracking-[0.02em]'>
+				<p className='text-xs font-medium uppercase text-muted-foreground'>Shell Direction</p>
+				<h2 className='mt-2 truncate text-2xl font-semibold leading-none'>
 					{activeItem.label}
 				</h2>
 				<p className='mt-2 text-sm text-muted-foreground'>{activeItem.description}</p>
@@ -24,7 +24,7 @@ function WorkspaceTopbar() {
 				<Button
 					type='button'
 					variant='outline'
-					className='h-9 rounded-xl bg-white px-4 shadow-sm'
+					size='lg'
 					onClick={() => {
 						navigate(APP_ROUTES.WORKSPACE_ARCHIVE)
 					}}>
@@ -33,7 +33,7 @@ function WorkspaceTopbar() {
 				</Button>
 				<Button
 					type='button'
-					className='h-9 rounded-xl bg-[linear-gradient(135deg,#1234a8,#1b4dff)] px-4 text-white shadow-[0_10px_24px_rgba(27,77,255,0.22)] hover:brightness-105'
+					size='lg'
 					onClick={() => {
 						openNewDocumentDialog({
 							source: 'workspace-topbar',
@@ -45,7 +45,7 @@ function WorkspaceTopbar() {
 				<Button
 					type='button'
 					variant='outline'
-					className='h-9 rounded-xl bg-white px-4 shadow-sm'
+					size='lg'
 					onClick={() => {
 						navigate(APP_ROUTES.WORKSPACE_SETTINGS)
 					}}>

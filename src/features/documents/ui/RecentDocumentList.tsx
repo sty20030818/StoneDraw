@@ -13,7 +13,7 @@ function RecentDocumentList({ documents, onOpen }: RecentDocumentListProps) {
 				<button
 					key={document.id}
 					type='button'
-					className='rounded-[1.25rem] border border-border/70 bg-background/88 px-4 py-4 text-left transition-colors hover:bg-background'
+					className='rounded-lg border bg-background px-4 py-4 text-left transition-colors hover:bg-muted/40'
 					onClick={() => {
 						onOpen(document.id)
 					}}>

@@ -102,7 +102,7 @@ function WorkbenchShellContent() {
 	return (
 		<section
 			className={[
-				'grid h-full min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,rgba(244,247,252,0.72),rgba(233,239,248,0.9))]',
+				'grid h-full min-h-0 flex-1 overflow-hidden bg-background',
 				shellGridClass,
 				'grid-rows-[2.75rem_2.625rem_4rem_minmax(0,1fr)_2rem]',
 			].join(' ')}>
@@ -114,11 +114,11 @@ function WorkbenchShellContent() {
 			</div>
 
 			{isSidePanelOpen ? (
-				<aside className='row-span-5 flex min-h-0 flex-col border-r border-border/60 bg-[rgba(250,251,255,0.9)]'>
+				<aside className='row-span-5 flex min-h-0 flex-col border-r bg-card'>
 					<div
 						data-tauri-drag-region
-						className='flex h-[42px] items-center border-b border-border/60 px-4'>
-						<p className='text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground'>
+						className='flex h-[42px] items-center border-b px-4'>
+						<p className='text-xs font-medium uppercase text-muted-foreground'>
 							{activeItem.label}
 						</p>
 					</div>
@@ -152,8 +152,8 @@ function WorkbenchShellContent() {
 				/>
 			</div>
 
-			<div className='col-start-3 row-start-4 min-h-0 overflow-auto bg-[radial-gradient(circle_at_center,rgba(27,77,255,0.08),transparent_34%)]'>
-				<div className='min-h-0 h-full overflow-auto bg-[radial-gradient(rgba(80,101,141,0.14)_1px,transparent_1px)] [background-size:22px_22px]'>
+			<div className='col-start-3 row-start-4 min-h-0 overflow-auto bg-muted/30'>
+				<div className='min-h-0 h-full overflow-auto p-3'>
 					<Outlet />
 				</div>
 			</div>

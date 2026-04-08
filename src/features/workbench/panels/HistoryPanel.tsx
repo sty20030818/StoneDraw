@@ -117,7 +117,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 
 	return (
 		<div className='grid gap-3'>
-			<section className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
+			<section className='rounded-lg border bg-background p-4'>
 				<div className='flex items-start justify-between gap-3'>
 					<div className='min-w-0'>
 						<p className='text-sm font-medium'>History</p>
@@ -126,7 +126,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 						</p>
 					</div>
 					<button
-						className='inline-flex shrink-0 items-center gap-2 rounded-full border border-border/70 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
+						className='inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
 						disabled={!documentId || !isDocumentReady || isCreatingVersion}
 						onClick={() => {
 							void handleCreateVersion()
@@ -142,7 +142,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 				</div>
 			</section>
 
-			<section className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
+			<section className='rounded-lg border bg-background p-4'>
 				<p className='text-sm font-medium'>当前文档</p>
 				<p className='mt-2 truncate text-sm text-foreground'>
 					{isDocumentReady ? documentTitle : '当前还没有可追踪的文档版本上下文'}
@@ -153,11 +153,11 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 				<p className='mt-2 text-xs text-muted-foreground'>保存状态：{saveStatus}</p>
 			</section>
 
-			<section className='rounded-[1.25rem] border border-border/70 bg-background/88 p-4'>
+			<section className='rounded-lg border bg-background p-4'>
 				<div className='flex items-center justify-between gap-3'>
 					<p className='text-sm font-medium'>版本列表</p>
 					<button
-						className='tauri-no-drag inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
+						className='tauri-no-drag inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
 						disabled={!documentId || !isDocumentReady || panelState.status === 'loading'}
 						onClick={() => {
 							void loadVersions()
@@ -169,14 +169,14 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 				</div>
 
 				{panelState.status === 'loading' ? (
-					<div className='mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-border/70 bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
+					<div className='mt-4 flex items-center gap-2 rounded-lg border border-dashed bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
 						<LoaderCircleIcon className='size-4 animate-spin' />
 						<span>正在读取本地版本历史…</span>
 					</div>
 				) : null}
 
 				{panelState.status === 'empty' ? (
-					<div className='mt-4 rounded-2xl border border-dashed border-border/70 bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
+					<div className='mt-4 rounded-lg border border-dashed bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
 						{documentId && isDocumentReady
 							? '当前文档还没有冻结过手动版本。'
 							: '请先打开一个文档，再查看它的历史版本。'}
@@ -193,7 +193,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 					<ul className='mt-4 grid gap-2'>
 						{panelState.versions.map((version) => (
 							<li
-								className='rounded-2xl border border-border/70 bg-background/92 px-3 py-3'
+								className='rounded-lg border bg-card px-3 py-3'
 								key={version.id}>
 								<div className='flex items-start justify-between gap-3'>
 									<div className='min-w-0'>

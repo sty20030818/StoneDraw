@@ -33,7 +33,7 @@ describe('WorkspaceLayout', () => {
 		expect(screen.getByTestId('window-chrome-stub')).toBeInTheDocument()
 	})
 
-	test('mac 平台应给 sidebar 顶部品牌区预留 traffic lights 空间', async () => {
+	test('mac 平台应给左侧导航品牌区预留 traffic lights 空间', async () => {
 		detectDesktopShellPlatformMock.mockReturnValue('mac')
 		const { default: WorkspaceLayout } = await import('./WorkspaceLayout')
 
@@ -43,6 +43,6 @@ describe('WorkspaceLayout', () => {
 			</MemoryRouter>,
 		)
 
-		expect(screen.getByTestId('workspace-sidebar-brand')).toHaveClass('pl-16')
+		expect(screen.getByTestId('workspace-nav-brand')).toHaveClass('pl-16')
 	})
 })

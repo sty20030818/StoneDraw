@@ -16,7 +16,6 @@ export function useWorkbenchDocumentLifecycle({
 	resetShellActions,
 }: UseWorkbenchDocumentLifecycleOptions) {
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
-	const syncWorkspaceCollections = useDocumentStore((state) => state.syncWorkspaceCollections)
 	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
 	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
 	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
@@ -69,9 +68,6 @@ export function useWorkbenchDocumentLifecycle({
 				})
 			}
 
-			// 进入工作台时同步刷新工作区集合，避免最近打开与回收视图滞后。
-			syncWorkspaceCollections(openResult.data.collections)
-
 			setWorkbenchLoadState({
 				status: 'ready',
 				document: openResult.data.document,
@@ -98,7 +94,6 @@ export function useWorkbenchDocumentLifecycle({
 		setDocumentTitle,
 		setSelectedDocumentId,
 		setWorkbenchReady,
-		syncWorkspaceCollections,
 	])
 
 	useEffect(() => {
