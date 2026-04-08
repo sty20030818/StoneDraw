@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { FileStackIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
-import EmptyState from '@/shared/components/EmptyState'
+import { EmptyState, PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
 import { WorkspaceDocumentCards } from '@/features/documents'
 import { useOverlayStore } from '@/features/overlays'
 import { useWorkspaceDocuments } from '@/features/workspace/hooks'
@@ -38,8 +38,11 @@ function DocumentsPage() {
 	const hasSearchQuery = normalizedSearchDraft.length > 0
 
 	return (
-		<div className='grid gap-5'>
-			<section className='rounded-xl border bg-card p-5'>
+		<WorkspacePageShell
+			title='文档库'
+			description='保留现有真实文档打开、重命名与删除链路，只把页面结构迁入统一页面壳。'
+			actions={<span className='text-xs text-muted-foreground'>{documents.length} 个文档</span>}
+			toolbar={
 				<div className='flex flex-wrap items-center justify-between gap-3'>
 					<div className='relative min-w-64 flex-1'>
 						<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
@@ -74,55 +77,63 @@ function DocumentsPage() {
 						</Button>
 					</div>
 				</div>
-			</section>
+			}>
+			<PageSection
+				header={
+					<SectionHeader
+						title='文档结果'
+						description='阶段 B 仅统一页面区块与内容承载，列表优先重构放到阶段 C。'
+					/>
+				}>
 
-			{collectionStatus === 'loading' ? (
-				<div className='rounded-xl border border-dashed bg-card px-6 py-10 text-sm text-muted-foreground'>
-					正在读取 Documents 页面文档列表...
-				</div>
-			) : null}
+				{collectionStatus === 'loading' ? (
+					<div className='rounded-lg border border-dashed bg-card px-6 py-10 text-sm text-muted-foreground'>
+						正在读取 Documents 页面文档列表...
+					</div>
+				) : null}
 
-			{collectionStatus === 'error' ? (
-				<EmptyState
-					title='文档列表读取失败'
-					description={collectionErrorMessage ?? '文档列表读取失败，请重新加载。'}
-					icon={FileStackIcon}
-					actionLabel='重新加载'
-					onAction={() => {
-						void loadWorkspaceData()
-					}}
-				/>
-			) : null}
+				{collectionStatus === 'error' ? (
+					<EmptyState
+						title='文档列表读取失败'
+						description={collectionErrorMessage ?? '文档列表读取失败，请重新加载。'}
+						icon={FileStackIcon}
+						actionLabel='重新加载'
+						onAction={() => {
+							void loadWorkspaceData()
+						}}
+					/>
+				) : null}
 
-			{collectionStatus === 'ready' && filteredDocuments.length === 0 ? (
-				<EmptyState
-					title={hasSearchQuery ? '没有搜索结果' : '还没有文档'}
-					description={
-						hasSearchQuery
-							? '当前搜索条件下没有匹配文档，试试更短的关键词或路径片段。'
-							: 'Documents 页面现在已经成为正式文档主库入口，可以直接从这里创建第一份文档。'
-					}
-					icon={FileStackIcon}
-					actionLabel='新建第一份文档'
-					onAction={() => {
-						openNewDocumentDialog({
-							source: 'workspace-page',
-						})
-					}}
-				/>
-			) : null}
+				{collectionStatus === 'ready' && filteredDocuments.length === 0 ? (
+					<EmptyState
+						title={hasSearchQuery ? '没有搜索结果' : '还没有文档'}
+						description={
+							hasSearchQuery
+								? '当前搜索条件下没有匹配文档，试试更短的关键词或路径片段。'
+								: 'Documents 页面现在已经成为正式文档主库入口，可以直接从这里创建第一份文档。'
+						}
+						icon={FileStackIcon}
+						actionLabel='新建第一份文档'
+						onAction={() => {
+							openNewDocumentDialog({
+								source: 'workspace-page',
+							})
+						}}
+					/>
+				) : null}
 
-			{collectionStatus === 'ready' && filteredDocuments.length > 0 ? (
-				<WorkspaceDocumentCards
-					documents={filteredDocuments}
-					onOpen={(documentId) => {
-						void handleOpenDocument(documentId)
-					}}
-					onRename={handleRenameDocument}
-					onMoveToTrash={handleMoveToTrash}
-				/>
-			) : null}
-		</div>
+				{collectionStatus === 'ready' && filteredDocuments.length > 0 ? (
+					<WorkspaceDocumentCards
+						documents={filteredDocuments}
+						onOpen={(documentId) => {
+							void handleOpenDocument(documentId)
+						}}
+						onRename={handleRenameDocument}
+						onMoveToTrash={handleMoveToTrash}
+					/>
+				) : null}
+			</PageSection>
+		</WorkspacePageShell>
 	)
 }
 

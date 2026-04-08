@@ -48,7 +48,7 @@ describe('HistoryPanel', () => {
 				documentId='doc-history-1'
 				documentTitle='历史文档'
 				isDocumentReady
-				onCreateVersion={vi.fn()}
+				onCreateVersion={vi.fn<() => Promise<null>>()}
 				saveStatus='saved'
 			/>,
 		)
@@ -69,7 +69,7 @@ describe('HistoryPanel', () => {
 				documentId='doc-history-empty'
 				documentTitle='空历史文档'
 				isDocumentReady
-				onCreateVersion={vi.fn()}
+				onCreateVersion={vi.fn<() => Promise<null>>()}
 				saveStatus='saved'
 			/>,
 		)
@@ -94,7 +94,7 @@ describe('HistoryPanel', () => {
 				documentId='doc-history-error'
 				documentTitle='错误历史文档'
 				isDocumentReady
-				onCreateVersion={vi.fn()}
+				onCreateVersion={vi.fn<() => Promise<null>>()}
 				saveStatus='error'
 			/>,
 		)

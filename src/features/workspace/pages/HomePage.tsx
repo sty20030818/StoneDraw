@@ -1,5 +1,5 @@
 import { FolderOpenIcon } from 'lucide-react'
-import EmptyState from '@/shared/components/EmptyState'
+import { EmptyState, PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
 import { HomeQuickActions, RecentDocumentList } from '@/features/documents'
 import { useOverlayStore } from '@/features/overlays'
 import { useWorkspaceDocuments } from '@/features/workspace/hooks'
@@ -12,12 +12,16 @@ function HomePage() {
 	const { handleOpenDocument } = useWorkspaceDocuments()
 
 	return (
-		<div className='grid gap-5'>
-			<section className='rounded-xl border bg-card p-6'>
-				<h3 className='text-lg font-semibold tracking-tight'>继续工作页</h3>
-				<p className='mt-3 text-sm leading-6 text-muted-foreground'>
-					Home 正式承担继续工作与快速开始的入口，直接承接最近文档与新建动作。
-				</p>
+		<WorkspacePageShell
+			title='继续工作'
+			description='在统一页面壳内保留快捷动作与最近打开，作为正式 Workspace 首页的稳定骨架。'>
+			<PageSection
+				header={
+					<SectionHeader
+						title='快捷动作'
+						description='快速新建空白文档，或继续最近一次打开的内容。'
+					/>
+				}>
 				<HomeQuickActions
 					recentDocuments={recentDocuments}
 					onCreate={() => {
@@ -32,19 +36,16 @@ function HomePage() {
 						}
 					}}
 				/>
-			</section>
+			</PageSection>
 
-			<section className='rounded-xl border bg-card p-6'>
-				<div className='flex items-center justify-between gap-3'>
-					<div>
-						<h3 className='text-lg font-semibold tracking-tight'>最近继续工作</h3>
-						<p className='mt-2 text-sm leading-6 text-muted-foreground'>保留最近打开文档作为 Home 的第一批真实内容。</p>
-					</div>
-					<div className='rounded-full border bg-muted/50 px-4 py-2 text-xs text-muted-foreground'>
-						{recentDocuments.length} 条记录
-					</div>
-				</div>
-
+			<PageSection
+				header={
+					<SectionHeader
+						title='最近打开'
+						description='保留最近打开文档，作为继续工作入口。'
+						actions={<span className='text-xs text-muted-foreground'>{recentDocuments.length} 条记录</span>}
+					/>
+				}>
 				{collectionStatus === 'ready' && recentDocuments.length > 0 ? (
 					<RecentDocumentList
 						documents={recentDocuments}
@@ -61,8 +62,8 @@ function HomePage() {
 						/>
 					</div>
 				)}
-			</section>
-		</div>
+			</PageSection>
+		</WorkspacePageShell>
 	)
 }
 

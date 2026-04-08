@@ -11,7 +11,10 @@ import {
 	HistoryPanel,
 	RightPanel,
 	StatusBar,
+	WorkbenchMetaRail,
+	WorkbenchShellFrame,
 	WorkbenchShellProvider,
+	WorkbenchSidePanel,
 	WorkbenchTabs,
 	WorkbenchTitleBar,
 	useWorkbenchShell,
@@ -103,60 +106,57 @@ function WorkbenchShellContent() {
 						onPanelChange={setActivePanel}
 					/>
 					{isSidePanelOpen ? (
-						<aside className='flex min-h-0 w-72 flex-col border-l bg-card'>
-							<div
-								data-tauri-drag-region
-								className='flex h-12 items-center border-b px-4'>
-								<p className='text-xs font-medium uppercase text-muted-foreground'>
-									{activeItem.label}
-								</p>
-							</div>
-							<div className='px-4 pt-3 text-sm text-muted-foreground'>{activeItem.description}</div>
-							<div className='min-h-0 flex-1 overflow-auto px-3 py-3'>{renderSidePanel()}</div>
-						</aside>
+						<WorkbenchSidePanel
+							label={activeItem.label}
+							description={activeItem.description}>
+							{renderSidePanel()}
+						</WorkbenchSidePanel>
 					) : null}
 				</div>
 
-				<div className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-muted/20'>
-					<WorkbenchTabs
-						tabs={tabs}
-						activeTabId={activeTabId}
-						fallbackDocumentId={activeDocumentId}
-						fallbackDocumentTitle={documentTitle}
-						isDocumentReady={isWorkbenchReady}
-						onSelectTab={openDocumentInWorkbench}
-						onCloseTab={handleCloseTab}
-					/>
-					<WorkbenchTitleBar
-						documentTitle={documentTitle}
-						isDocumentReady={isWorkbenchReady}
-						saveStatus={saveStatus}
-						isFlushing={isFlushing}
-						isRightPanelOpen={isRightPanelOpen}
-						onBack={shellState.onBack}
-						onSave={shellState.onSave}
-						onToggleRightPanel={() => {
-							setRightPanelOpen(!isRightPanelOpen)
-						}}
-					/>
-					<div className='min-h-0 flex-1 overflow-hidden px-3 py-3'>
-						<Outlet />
-					</div>
-				</div>
-
-				{isRightPanelOpen ? (
-					<div className='flex min-h-0 w-80 shrink-0 border-l bg-card'>
-						<RightPanel
-							documentId={activeDocumentId}
+				<WorkbenchShellFrame
+					tabs={
+						<WorkbenchTabs
+							tabs={tabs}
+							activeTabId={activeTabId}
+							fallbackDocumentId={activeDocumentId}
+							fallbackDocumentTitle={documentTitle}
+							isDocumentReady={isWorkbenchReady}
+							onSelectTab={openDocumentInWorkbench}
+							onCloseTab={handleCloseTab}
+						/>
+					}
+					titleBar={
+						<WorkbenchTitleBar
 							documentTitle={documentTitle}
 							isDocumentReady={isWorkbenchReady}
 							saveStatus={saveStatus}
-							onClose={() => {
-								setRightPanelOpen(false)
+							isFlushing={isFlushing}
+							isRightPanelOpen={isRightPanelOpen}
+							onBack={shellState.onBack}
+							onSave={shellState.onSave}
+							onToggleRightPanel={() => {
+								setRightPanelOpen(!isRightPanelOpen)
 							}}
 						/>
-					</div>
-				) : null}
+					}
+					canvas={<Outlet />}
+					metaRail={
+						isRightPanelOpen ? (
+							<WorkbenchMetaRail title='Properties'>
+								<RightPanel
+									documentId={activeDocumentId}
+									documentTitle={documentTitle}
+									isDocumentReady={isWorkbenchReady}
+									saveStatus={saveStatus}
+									onClose={() => {
+										setRightPanelOpen(false)
+									}}
+								/>
+							</WorkbenchMetaRail>
+						) : null
+					}
+				/>
 			</div>
 			<div className='min-w-0'>
 				<StatusBar

@@ -192,8 +192,8 @@ describe('scene.adapter', () => {
 			},
 			{ title: '恢复文档' },
 		)
-		const addFiles = vi.fn()
-		const updateScene = vi.fn()
+		const addFiles = vi.fn<(files: { id: string }[]) => void>()
+		const updateScene = vi.fn<(payload: Record<string, unknown>) => void>()
 
 		applySceneToApi(
 			{

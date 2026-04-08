@@ -41,6 +41,26 @@ vi.mock('@/features/workbench', () => ({
 	ActivityBar: () => <div>活动栏</div>,
 	ExplorerPanel: () => <div>资源面板</div>,
 	HistoryPanel: () => <div>历史面板</div>,
+	WorkbenchMetaRail: ({ children }: { children: ReactNode }) => <div data-testid='meta-rail-stub'>{children}</div>,
+	WorkbenchShellFrame: ({
+		tabs,
+		titleBar,
+		canvas,
+		metaRail,
+	}: {
+		tabs: ReactNode
+		titleBar: ReactNode
+		canvas: ReactNode
+		metaRail?: ReactNode
+	}) => (
+		<div data-testid='workbench-shell-frame-stub'>
+			{tabs}
+			{titleBar}
+			{canvas}
+			{metaRail}
+		</div>
+	),
+	WorkbenchSidePanel: ({ children }: { children: ReactNode }) => <div data-testid='side-panel-stub'>{children}</div>,
 	RightPanel: () => <div data-testid='right-panel-stub'>右侧栏</div>,
 	StatusBar: () => <div>状态栏</div>,
 	WorkbenchShellProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -68,6 +88,8 @@ describe('WorkbenchLayout', () => {
 		)
 
 		expect(screen.getByTestId('window-chrome-stub')).toBeInTheDocument()
+		expect(screen.getByTestId('workbench-shell-frame-stub')).toBeInTheDocument()
+		expect(screen.getByTestId('side-panel-stub')).toBeInTheDocument()
 	})
 
 	test('右侧栏默认应保持收起', async () => {

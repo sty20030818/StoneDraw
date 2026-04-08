@@ -13,6 +13,7 @@ export {
 	AlertDialogTrigger,
 } from './alert-dialog'
 export { Button, buttonVariants } from './button'
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card'
 export {
 	Dialog,
 	DialogClose,

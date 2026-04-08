@@ -120,10 +120,8 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 			<section className='rounded-lg border bg-background p-4'>
 				<div className='flex items-start justify-between gap-3'>
 					<div className='min-w-0'>
-						<p className='text-sm font-medium'>版本历史</p>
-						<p className='mt-2 text-xs leading-5 text-muted-foreground'>
-							当前面板只提供手动版本创建与版本列表，聚焦正式主链已经交付的版本能力。
-						</p>
+						<p className='text-sm font-medium'>创建版本</p>
+						<p className='mt-2 text-xs leading-5 text-muted-foreground'>聚焦正式主链已经交付的版本冻结能力。</p>
 					</div>
 					<button
 						className='inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60'

@@ -7,10 +7,16 @@ const { detectDesktopShellPlatformMock } = vi.hoisted(() => ({
 }))
 
 vi.mock('@tauri-apps/api/window', () => ({
-	getCurrentWindow: vi.fn(() => ({
-		minimize: vi.fn(),
-		toggleMaximize: vi.fn(),
-		close: vi.fn(),
+	getCurrentWindow: vi.fn<
+		() => {
+			minimize: () => void
+			toggleMaximize: () => void
+			close: () => void
+		}
+	>(() => ({
+		minimize: vi.fn<() => void>(),
+		toggleMaximize: vi.fn<() => void>(),
+		close: vi.fn<() => void>(),
 	})),
 }))
 
