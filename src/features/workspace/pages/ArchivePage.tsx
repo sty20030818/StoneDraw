@@ -21,40 +21,54 @@ function ArchivePage() {
 				header={
 					<SectionHeader
 						title='回收站'
-						description='统一承接已删除文档的恢复与彻底清理。'
+						description='以列表方式承接已删除文档的恢复与彻底清理。'
 					/>
 				}>
 				{collectionStatus === 'ready' && trashedDocuments.length > 0 ? (
-					<div className='grid gap-3'>
+					<div className='overflow-hidden rounded-lg border bg-card'>
+						<div className='grid gap-3 border-b bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
+							<span>标题</span>
+							<span>删除时间</span>
+							<span className='text-right'>操作</span>
+						</div>
 						{trashedDocuments.map((document) => (
 							<div
 								key={document.id}
-								className='rounded-lg border bg-background px-4 py-4'>
-								<p className='text-sm font-semibold'>{document.title}</p>
-								<p className='mt-2 text-xs text-muted-foreground'>
-									删除时间：{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}
-								</p>
-								<div className='mt-4'>
+								className='grid gap-3 border-t border-border bg-background px-4 py-4 first:border-t-0 md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
+								<p className='truncate text-sm font-semibold'>{document.title}</p>
+								<p className='text-xs text-muted-foreground'>{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}</p>
+								<div className='flex justify-end gap-2'>
 									<Button
 										type='button'
 										variant='outline'
 										onClick={() => {
 											openConfirmDialog({
-												title: '恢复或永久删除',
-												description: `《${document.title}》当前在回收站中。你可以恢复它，或直接永久删除文档目录与元数据。`,
+												title: '恢复文档',
+												description: `确认将《${document.title}》从回收站恢复到文档库吗？`,
 												confirmLabel: '恢复文档',
 												cancelLabel: '取消',
-												secondaryActionLabel: '永久删除',
 												onConfirm: () => {
 													void handleRestoreDocument(document)
 												},
-												onSecondaryAction: () => {
+											})
+										}}>
+										恢复
+									</Button>
+									<Button
+										type='button'
+										variant='destructive'
+										onClick={() => {
+											openConfirmDialog({
+												title: '永久删除',
+												description: `确认永久删除《${document.title}》吗？该操作会清理文档目录与元数据，无法撤销。`,
+												confirmLabel: '永久删除',
+												cancelLabel: '取消',
+												onConfirm: () => {
 													void handlePermanentlyDeleteDocument(document)
 												},
 											})
 										}}>
-										<RotateCcwIcon data-icon='inline-start' />
-										恢复或删除
+										永久删除
 									</Button>
 								</div>
 							</div>

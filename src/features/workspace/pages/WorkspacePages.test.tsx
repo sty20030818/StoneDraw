@@ -29,7 +29,8 @@ const {
 vi.mock('@/features/documents', () => ({
 	HomeQuickActions: () => <div>快捷动作组件</div>,
 	RecentDocumentList: () => <div>最近打开组件</div>,
-	WorkspaceDocumentCards: () => <div>文档卡片组件</div>,
+	DocumentListToolbar: () => <div>文档工具条组件</div>,
+	DocumentListItem: ({ document }: { document: { title: string } }) => <div>{document.title}</div>,
 }))
 
 vi.mock('@/features/overlays', () => ({
@@ -88,6 +89,7 @@ describe('Workspace pages', () => {
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
 		expect(screen.getByText('快捷动作')).toBeInTheDocument()
 		expect(screen.getByText('最近打开')).toBeInTheDocument()
+		expect(screen.getByText('最近活动')).toBeInTheDocument()
 	})
 
 	test('DocumentsPage 应接入统一页面壳与工具区', async () => {
@@ -101,8 +103,9 @@ describe('Workspace pages', () => {
 		)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
-		expect(screen.getByPlaceholderText('搜索文档标题或路径')).toBeInTheDocument()
-		expect(screen.getByText('文档结果')).toBeInTheDocument()
+		expect(screen.getByText('文档工具条组件')).toBeInTheDocument()
+		expect(screen.getByText('文档列表')).toBeInTheDocument()
+		expect(screen.getByText('文档一')).toBeInTheDocument()
 	})
 
 	test('ArchivePage 应接入统一页面壳', async () => {

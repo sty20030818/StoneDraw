@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, LoaderCircleIcon, SaveIcon, SlidersHorizontalIcon } from 'lucide-react'
-import { Button } from '@/shared/ui/button'
+import { Badge, Button } from '@/shared/ui'
 import type { SaveStatus } from '@/shared/types'
 import { resolveSaveStatusMeta } from './save-status'
 
@@ -28,26 +28,26 @@ function WorkbenchTitleBar({
 	const isSavePending = saveStatus === 'saving' || isFlushing
 
 	return (
-		<header className='flex shrink-0 items-center justify-between gap-4 border-b bg-background px-4 py-3'>
-			<div className='flex min-w-0 items-center gap-4'>
+		<header className='flex shrink-0 items-center justify-between gap-4 border-b bg-background px-4 py-2.5'>
+			<div className='flex min-w-0 items-center gap-3'>
 				<Button
 					type='button'
 					variant='outline'
-					size='default'
+					size='sm'
 					onClick={onBack}>
 					<ArrowLeftIcon data-icon='inline-start' />
 					工作区
 				</Button>
 				<div className='min-w-0'>
-					<p className='text-xs font-medium uppercase text-muted-foreground'>Workbench</p>
-					<div className='mt-1.5 flex min-w-0 items-center gap-2.5'>
-						<h2 className='truncate text-base leading-none font-semibold'>
+					<div className='flex min-w-0 items-center gap-2.5'>
+						<h2 className='truncate text-sm leading-none font-semibold'>
 							{isDocumentReady ? documentTitle : '工作台正在准备文档'}
 						</h2>
-						<span
-							className={`inline-flex h-6 shrink-0 items-center justify-center rounded-full px-2.5 text-xs font-medium ${statusMeta.className}`}>
+						<Badge
+							className={statusMeta.className}
+							variant='outline'>
 							{statusMeta.label}
-						</span>
+						</Badge>
 					</div>
 				</div>
 			</div>
@@ -56,7 +56,7 @@ function WorkbenchTitleBar({
 				<Button
 					type='button'
 					variant='ghost'
-					size='default'
+					size='sm'
 					aria-pressed={isRightPanelOpen}
 					title={isRightPanelOpen ? '收起右侧栏' : '展开右侧栏'}
 					onClick={onToggleRightPanel}>
@@ -66,7 +66,7 @@ function WorkbenchTitleBar({
 				<Button
 					type='button'
 					variant={saveStatus === 'error' ? 'destructive' : 'default'}
-					size='default'
+					size='sm'
 					title='保存'
 					disabled={!isDocumentReady || isSavePending}
 					onClick={onSave}>

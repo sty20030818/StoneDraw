@@ -1,10 +1,8 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FileStackIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
+import { FileStackIcon } from 'lucide-react'
 import { EmptyState, PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
-import { WorkspaceDocumentCards } from '@/features/documents'
+import { DocumentListItem, DocumentListToolbar } from '@/features/documents'
 import { useOverlayStore } from '@/features/overlays'
 import { useWorkspaceDocuments } from '@/features/workspace/hooks'
 import { useWorkspaceStore } from '@/features/workspace/state'
@@ -40,52 +38,30 @@ function DocumentsPage() {
 	return (
 		<WorkspacePageShell
 			title='文档库'
-			description='保留现有真实文档打开、重命名与删除链路，只把页面结构迁入统一页面壳。'
+			description='正式管理态主列表页，优先提供搜索、浏览、打开与文档级操作。'
 			actions={<span className='text-xs text-muted-foreground'>{documents.length} 个文档</span>}
 			toolbar={
-				<div className='flex flex-wrap items-center justify-between gap-3'>
-					<div className='relative min-w-64 flex-1'>
-						<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-						<Input
-							type='search'
-							className='pl-9'
-							value={searchDraft}
-							onChange={(event) => {
-								setSearchDraft(event.target.value)
-							}}
-							placeholder='搜索文档标题或路径'
-						/>
-					</div>
-					<div className='flex flex-wrap items-center gap-2'>
-						<Button
-							type='button'
-							variant='outline'
-							onClick={() => {
-								void loadWorkspaceData()
-							}}>
-							<RefreshCwIcon data-icon='inline-start' />
-							刷新列表
-						</Button>
-						<Button
-							type='button'
-							onClick={() => {
-								openNewDocumentDialog({
-									source: 'workspace-page',
-								})
-							}}>
-							新建文档
-						</Button>
-					</div>
-				</div>
+				<DocumentListToolbar
+					documentCount={documents.length}
+					searchDraft={searchDraft}
+					onSearchChange={setSearchDraft}
+					onRefresh={() => {
+						void loadWorkspaceData()
+					}}
+					onCreate={() => {
+						openNewDocumentDialog({
+							source: 'workspace-page',
+						})
+					}}
+				/>
 			}>
 			<PageSection
 				header={
 					<SectionHeader
-						title='文档结果'
-						description='阶段 B 仅统一页面区块与内容承载，列表优先重构放到阶段 C。'
+						title='文档列表'
+						description='列表优先展示标题、更新时间、状态和操作入口。'
 					/>
 				}>
-
 				{collectionStatus === 'loading' ? (
 					<div className='rounded-lg border border-dashed bg-card px-6 py-10 text-sm text-muted-foreground'>
 						正在读取 Documents 页面文档列表...
@@ -123,14 +99,27 @@ function DocumentsPage() {
 				) : null}
 
 				{collectionStatus === 'ready' && filteredDocuments.length > 0 ? (
-					<WorkspaceDocumentCards
-						documents={filteredDocuments}
-						onOpen={(documentId) => {
-							void handleOpenDocument(documentId)
-						}}
-						onRename={handleRenameDocument}
-						onMoveToTrash={handleMoveToTrash}
-					/>
+					<div className='overflow-hidden rounded-lg border bg-card'>
+						<div className='grid gap-3 border-b bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'>
+							<span>文档</span>
+							<span>更新时间</span>
+							<span>状态</span>
+							<span className='text-right'>操作</span>
+						</div>
+						<div className='grid gap-px bg-border'>
+							{filteredDocuments.map((document) => (
+								<DocumentListItem
+									key={document.id}
+									document={document}
+									onOpen={(documentId) => {
+										void handleOpenDocument(documentId)
+									}}
+									onRename={handleRenameDocument}
+									onMoveToTrash={handleMoveToTrash}
+								/>
+							))}
+						</div>
+					</div>
 				) : null}
 			</PageSection>
 		</WorkspacePageShell>

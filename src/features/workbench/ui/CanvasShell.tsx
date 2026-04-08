@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/shared/lib/utils'
 
 type CanvasShellProps = {
 	children: ReactNode
@@ -6,7 +7,7 @@ type CanvasShellProps = {
 }
 
 function CanvasShell({ children, className }: CanvasShellProps) {
-	return <div className={className}>{children}</div>
+	return <div className={cn('h-full min-h-0', className)}>{children}</div>
 }
 
 export default CanvasShell

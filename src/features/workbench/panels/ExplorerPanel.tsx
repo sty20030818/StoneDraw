@@ -17,6 +17,9 @@ function ExplorerPanel({
 }: ExplorerPanelProps) {
 	return (
 		<div className='grid gap-3'>
+			<div className='rounded-lg border border-dashed bg-background px-4 py-3 text-xs leading-5 text-muted-foreground'>
+				从左侧快速切换最近文档，保持主编辑区始终聚焦当前画布。
+			</div>
 			<div className='grid gap-2'>
 				{documents.length > 0 ? (
 					documents.slice(0, 8).map((document) => {

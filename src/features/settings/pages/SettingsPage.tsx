@@ -114,11 +114,11 @@ function SettingsPage() {
 	return (
 		<WorkspacePageShell
 			title='设置与诊断'
-			description='统一设置页壳层，保留当前目录健康、数据库状态和调试信息。'
+			description='正式设置页以概览、目录健康检查和数据库健康检查为主，不新增额外系统能力。'
 			actions={
 				<div className='flex items-center gap-2 text-xs text-muted-foreground'>
 					<BugIcon className='size-3.5' />
-					<span>正式设置页骨架</span>
+					<span>正式设置页</span>
 				</div>
 			}>
 			<PageSection

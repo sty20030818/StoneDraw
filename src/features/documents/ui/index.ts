@@ -1,3 +1,5 @@
+export { default as DocumentListItem } from './DocumentListItem'
+export { default as DocumentListToolbar } from './DocumentListToolbar'
 export { default as HomeQuickActions } from './HomeQuickActions'
 export { default as RecentDocumentList } from './RecentDocumentList'
 export { default as WorkspaceDocumentCards } from './WorkspaceDocumentCards'

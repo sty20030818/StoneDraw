@@ -13,6 +13,7 @@ export {
 	AlertDialogTrigger,
 } from './alert-dialog'
 export { Button, buttonVariants } from './button'
+export { Badge, badgeVariants } from './badge'
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card'
 export {
 	Dialog,
@@ -26,6 +27,15 @@ export {
 	DialogTitle,
 	DialogTrigger,
 } from './dialog'
+export {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuPortal,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from './dropdown-menu'
 export { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from './empty'
 export { Input } from './input'
 export { Separator } from './separator'

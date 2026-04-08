@@ -1,5 +1,5 @@
 import { XIcon } from 'lucide-react'
-import { Button } from '@/shared/ui/button'
+import { Badge, Button } from '@/shared/ui'
 import type { SaveStatus } from '@/shared/types'
 import { resolveSaveStatusMeta } from './save-status'
 
@@ -34,12 +34,18 @@ function RightPanel({ documentId, documentTitle, isDocumentReady, saveStatus, on
 				<p className='mt-2 text-xs text-muted-foreground'>{documentId ? `ID: ${documentId}` : '等待从 Workspace 带入文档上下文'}</p>
 			</div>
 			<div className='rounded-lg border bg-background p-4'>
-				<p className='text-sm font-medium'>保存状态</p>
-				<p className='mt-2 text-sm'>{statusMeta.label}</p>
+				<div className='flex items-center justify-between gap-3'>
+					<p className='text-sm font-medium'>保存状态</p>
+					<Badge
+						className={statusMeta.className}
+						variant='outline'>
+						{statusMeta.label}
+					</Badge>
+				</div>
 				<p className='mt-2 text-xs leading-5 text-muted-foreground'>{statusMeta.summary}</p>
 			</div>
 			<div className='rounded-lg border border-dashed bg-background p-4 text-sm leading-6 text-muted-foreground'>
-				右栏默认收起，仅在需要查看上下文或补充信息时展开。
+				右栏保持轻量元信息定位，本轮不升级为复杂属性编辑器。
 			</div>
 		</div>
 	)
