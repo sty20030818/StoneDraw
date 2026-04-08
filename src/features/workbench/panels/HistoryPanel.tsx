@@ -120,13 +120,13 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 			<section className='rounded-lg border bg-background p-4'>
 				<div className='flex items-start justify-between gap-3'>
 					<div className='min-w-0'>
-						<p className='text-sm font-medium'>History</p>
+						<p className='text-sm font-medium'>版本历史</p>
 						<p className='mt-2 text-xs leading-5 text-muted-foreground'>
 							当前面板只提供手动版本创建与版本列表，聚焦正式主链已经交付的版本能力。
 						</p>
 					</div>
 					<button
-						className='inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
+						className='inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60'
 						disabled={!documentId || !isDocumentReady || isCreatingVersion}
 						onClick={() => {
 							void handleCreateVersion()
@@ -157,7 +157,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 				<div className='flex items-center justify-between gap-3'>
 					<p className='text-sm font-medium'>版本列表</p>
 					<button
-						className='tauri-no-drag inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
+						className='tauri-no-drag inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
 						disabled={!documentId || !isDocumentReady || panelState.status === 'loading'}
 						onClick={() => {
 							void loadVersions()
@@ -184,7 +184,7 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 				) : null}
 
 				{panelState.status === 'error' ? (
-					<div className='mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 px-3 py-4 text-sm text-destructive'>
+					<div className='mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-4 text-sm text-destructive'>
 						读取版本列表失败：{panelState.message}
 					</div>
 				) : null}

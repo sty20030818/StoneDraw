@@ -11,13 +11,13 @@ function WorkspaceNavItem({ item }: WorkspaceNavItemProps) {
 			to={item.path}
 			className={({ isActive }) =>
 				[
-					'rounded-lg border px-4 py-3 text-left transition-colors',
+					'rounded-md border px-3.5 py-3 text-left transition-colors',
 					isActive
-						? 'border-border bg-accent text-foreground'
+						? 'border-border bg-background text-foreground shadow-sm'
 						: 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground',
 				].join(' ')
 			}>
-			<div className='text-sm font-semibold'>{item.label}</div>
+			<div className='text-sm font-medium'>{item.label}</div>
 			<div className='mt-1 text-xs leading-5 text-current/70'>{item.description}</div>
 		</NavLink>
 	)

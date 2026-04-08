@@ -12,19 +12,17 @@ function WorkspaceTopbar() {
 	const activeItem = WORKSPACE_NAV_ITEMS.find((item) => item.path === location.pathname) ?? WORKSPACE_NAV_ITEMS[0]
 
 	return (
-		<header className='flex shrink-0 items-center justify-between gap-4 border-b bg-background px-6 py-4'>
+		<header className='flex shrink-0 items-center justify-between gap-4 border-b bg-card px-6 py-4'>
 			<div className='min-w-0'>
-				<p className='text-xs font-medium uppercase text-muted-foreground'>Shell Direction</p>
-				<h2 className='mt-2 truncate text-2xl font-semibold leading-none'>
-					{activeItem.label}
-				</h2>
-				<p className='mt-2 text-sm text-muted-foreground'>{activeItem.description}</p>
+				<p className='text-xs font-medium uppercase text-muted-foreground'>Workspace</p>
+				<h2 className='mt-1.5 truncate text-xl font-semibold leading-none'>{activeItem.label}</h2>
+				<p className='mt-1.5 text-sm text-muted-foreground'>{activeItem.description}</p>
 			</div>
 			<div className='flex items-center gap-2.5'>
 				<Button
 					type='button'
 					variant='outline'
-					size='lg'
+					size='default'
 					onClick={() => {
 						navigate(APP_ROUTES.WORKSPACE_ARCHIVE)
 					}}>
@@ -33,7 +31,7 @@ function WorkspaceTopbar() {
 				</Button>
 				<Button
 					type='button'
-					size='lg'
+					size='default'
 					onClick={() => {
 						openNewDocumentDialog({
 							source: 'workspace-topbar',
@@ -45,7 +43,7 @@ function WorkspaceTopbar() {
 				<Button
 					type='button'
 					variant='outline'
-					size='lg'
+					size='default'
 					onClick={() => {
 						navigate(APP_ROUTES.WORKSPACE_SETTINGS)
 					}}>

@@ -3,11 +3,11 @@ import WorkspaceNavItem from './WorkspaceNavItem'
 
 const navSections = [
 	{
-		label: '工作空间',
+		label: '浏览',
 		keys: ['home', 'documents'],
 	},
 	{
-		label: '管理',
+		label: '整理',
 		keys: ['archive'],
 	},
 	{
@@ -18,11 +18,11 @@ const navSections = [
 
 function WorkspaceNav() {
 	return (
-		<nav className='mt-2 flex flex-col gap-4'>
+		<nav className='flex flex-col gap-5'>
 			{navSections.map((section) => (
 				<div key={section.label}>
 					<p className='px-3 text-xs font-medium uppercase text-muted-foreground'>{section.label}</p>
-					<div className='mt-2 grid gap-1.5'>
+					<div className='mt-2 grid gap-1'>
 						{WORKSPACE_NAV_ITEMS.filter((item) => section.keys.some((key) => key === item.key)).map((item) => (
 							<WorkspaceNavItem
 								key={item.key}

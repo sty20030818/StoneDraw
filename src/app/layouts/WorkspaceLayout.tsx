@@ -7,36 +7,40 @@ function WorkspaceLayout() {
 	const isMacShell = detectDesktopShellPlatform() === 'mac'
 
 	return (
-		<section className='flex h-full min-h-0 flex-1 overflow-hidden bg-background'>
-			<aside className='flex w-62 shrink-0 flex-col border-r bg-card px-3 pb-4'>
-				<div
-					data-testid='workspace-nav-brand'
-					data-tauri-drag-region
-					className={['px-3 pt-3 pb-3', isMacShell ? 'pl-16' : ''].join(' ')}>
-					<p
+		<section className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background'>
+			<WindowChrome />
+			<div className='flex min-h-0 flex-1 overflow-hidden'>
+				<aside className='flex w-64 shrink-0 flex-col border-r bg-card'>
+					<div
+						data-testid='workspace-nav-brand'
 						data-tauri-drag-region
-						className='text-xs font-medium uppercase text-muted-foreground'>
-						Workspace
-					</p>
-					<h1
-						data-tauri-drag-region
-						className='mt-2 text-base font-semibold text-foreground'>
-						StoneDraw 管理态
-					</h1>
-					<p
-						data-tauri-drag-region
-						className='mt-2 text-sm leading-6 text-muted-foreground'>
-						保持 B 组本地主链路不动，只把导航壳、顶部工具条和页面容器收回正式桌面结构。
-					</p>
-				</div>
-				<WorkspaceNav />
-			</aside>
+						className={['border-b px-4 py-4', isMacShell ? 'pl-16' : ''].join(' ')}>
+						<p
+							data-tauri-drag-region
+							className='text-xs font-medium uppercase text-muted-foreground'>
+							StoneDraw
+						</p>
+						<h1
+							data-tauri-drag-region
+							className='mt-1.5 text-base font-semibold text-foreground'>
+							正式工作区
+						</h1>
+						<p
+							data-tauri-drag-region
+							className='mt-1.5 text-sm leading-6 text-muted-foreground'>
+							统一管理首页、文档、归档与设置。
+						</p>
+					</div>
+					<div className='min-h-0 flex-1 overflow-auto px-3 py-4'>
+						<WorkspaceNav />
+					</div>
+				</aside>
 
-			<div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
-				<WindowChrome />
-				<WorkspaceTopbar />
-				<div className='min-h-0 flex-1 overflow-auto p-6'>
-					<Outlet />
+				<div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+					<WorkspaceTopbar />
+					<div className='min-h-0 flex-1 overflow-auto px-6 py-5'>
+						<Outlet />
+					</div>
 				</div>
 			</div>
 		</section>

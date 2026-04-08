@@ -6,26 +6,23 @@ type StatusBarProps = {
 	activePanel: WorkbenchPanelKey
 	documentId: string | null
 	isDocumentReady: boolean
+	isRightPanelOpen: boolean
 	saveStatus: SaveStatus
 }
 
-function StatusBar({ activePanel, documentId, isDocumentReady, saveStatus }: StatusBarProps) {
+function StatusBar({ activePanel, documentId, isDocumentReady, isRightPanelOpen, saveStatus }: StatusBarProps) {
 	const statusMeta = resolveSaveStatusMeta(saveStatus)
 
 	return (
-		<footer className='flex h-full shrink-0 flex-wrap items-center justify-between gap-3 border-t bg-card px-4 text-xs text-muted-foreground'>
+		<footer className='flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-3 border-t bg-card px-4 py-1.5 text-xs text-muted-foreground'>
 			<div className='flex flex-wrap items-center gap-4'>
-				<span className='inline-flex h-6 items-center rounded-full border bg-background px-3'>活动面板：{activePanel}</span>
-				<span className='inline-flex h-6 items-center rounded-full border bg-background px-3'>保存状态：{statusMeta.label}</span>
-				<span className='inline-flex h-6 items-center rounded-full border bg-background px-3'>
-					{documentId ? `文档 ID：${documentId}` : '未绑定文档'}
-				</span>
+				<span>面板：{activePanel}</span>
+				<span>保存：{statusMeta.label}</span>
+				<span>{documentId ? `文档：${documentId}` : '文档未绑定'}</span>
 			</div>
 			<div className='flex flex-wrap items-center gap-4'>
-				<span className='inline-flex h-6 items-center rounded-full border bg-background px-3'>
-					{isDocumentReady ? '画布已就绪' : '画布准备中'}
-				</span>
-				<span className='inline-flex h-6 items-center rounded-full border bg-background px-3'>本地优先壳层</span>
+				<span>{isDocumentReady ? '画布已就绪' : '画布准备中'}</span>
+				<span>{isRightPanelOpen ? '右栏已展开' : '右栏已收起'}</span>
 			</div>
 		</footer>
 	)

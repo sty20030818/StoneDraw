@@ -18,7 +18,7 @@ function ExplorerPanel({
 	return (
 		<div className='grid gap-3'>
 			<div className='rounded-lg border bg-background p-4'>
-				<p className='text-sm font-medium'>Explorer</p>
+				<p className='text-sm font-medium'>资源浏览</p>
 				<div className='mt-3 grid gap-2'>
 					{documents.length > 0 ? (
 						documents.slice(0, 8).map((document) => {
@@ -28,15 +28,15 @@ function ExplorerPanel({
 								<button
 									type='button'
 									key={document.id}
-									onClick={() => {
-										onSelectDocument(document.id)
-									}}
-									className={[
-										'flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors',
-										isActive
-											? 'border-border bg-accent text-foreground'
-											: 'border-transparent bg-muted/40 text-muted-foreground hover:border-border hover:bg-background',
-									].join(' ')}>
+								onClick={() => {
+									onSelectDocument(document.id)
+								}}
+								className={[
+									'flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition-colors',
+									isActive
+										? 'border-border bg-muted/60 text-foreground'
+										: 'border-transparent bg-muted/30 text-muted-foreground hover:border-border hover:bg-background',
+								].join(' ')}>
 									<span className='truncate text-sm'>{document.title}</span>
 									<span className='ml-3 text-[10px] uppercase'>{isActive ? '当前' : '打开'}</span>
 								</button>

@@ -9,12 +9,10 @@ type AppShellProps = {
 function AppShell({ children }: AppShellProps) {
 	return (
 		<AppProviders>
-			<div className='flex h-screen min-h-0 flex-col overflow-hidden bg-background'>
-				<div
-					data-testid='app-shell-root'
-					className='flex min-h-0 flex-1 flex-col overflow-hidden'>
-					{children}
-				</div>
+			<div
+				data-testid='app-shell-root'
+				className='flex h-screen min-h-0 flex-col overflow-hidden bg-background text-foreground'>
+				{children}
 			</div>
 			<AppToaster />
 		</AppProviders>

@@ -45,7 +45,7 @@ const initialWorkbenchState = {
 	isFlushing: false,
 	activePanel: 'explorer' as WorkbenchPanelKey,
 	isSidePanelOpen: true,
-	isRightPanelOpen: true,
+	isRightPanelOpen: false,
 	tabs: [],
 	activeTabId: null,
 } satisfies Pick<
