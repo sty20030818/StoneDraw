@@ -1,3 +1,4 @@
+import type { SaveStatus } from '@/shared/types'
 import type { WorkbenchTab } from '@/features/workbench/state'
 
 type WorkbenchTabsProps = {
@@ -6,6 +7,7 @@ type WorkbenchTabsProps = {
 	fallbackDocumentId: string | null
 	fallbackDocumentTitle: string
 	isDocumentReady: boolean
+	activeSaveStatus: SaveStatus
 	onSelectTab: (documentId: string) => void
 	onCloseTab: (documentId: string) => void
 }
@@ -16,6 +18,7 @@ function WorkbenchTabs({
 	fallbackDocumentId,
 	fallbackDocumentTitle,
 	isDocumentReady,
+	activeSaveStatus,
 	onSelectTab,
 	onCloseTab,
 }: WorkbenchTabsProps) {
@@ -23,11 +26,12 @@ function WorkbenchTabs({
 
 	return (
 		<div className='scrollbar-hidden flex items-end gap-1.5 overflow-x-auto border-b bg-card px-3 pt-2'>
-			{visibleTabs.map((tab) => {
-				const isActive = tab.id === activeTabId || (tabs.length === 0 && tab.id === 'pending')
+				{visibleTabs.map((tab) => {
+					const isActive = tab.id === activeTabId || (tabs.length === 0 && tab.id === 'pending')
+					const shouldShowUnsavedMarker = isActive && (activeSaveStatus === 'dirty' || activeSaveStatus === 'error')
 
-				return (
-					<button
+					return (
+						<button
 						type='button'
 						key={tab.id}
 						onClick={() => {
@@ -41,15 +45,22 @@ function WorkbenchTabs({
 								? 'border-border bg-background text-foreground shadow-sm'
 								: 'border-transparent bg-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground',
 						].join(' ')}>
-						<div className='min-w-0'>
+						<div className='flex min-w-0 items-center gap-2'>
 							<p className='truncate text-sm font-medium'>
 								{isDocumentReady ? tab.title : fallbackDocumentId ? '正在载入文档...' : '等待文档上下文'}
 							</p>
+							{shouldShowUnsavedMarker ? (
+								<span
+									className='size-2 shrink-0 rounded-full bg-amber-500'
+									title='未保存变更'
+								/>
+							) : null}
 						</div>
 						{tab.id !== 'pending' ? (
 							<span
 								role='button'
 								tabIndex={0}
+								title='关闭标签'
 								onClick={(event) => {
 									event.stopPropagation()
 									onCloseTab(tab.id)
@@ -61,7 +72,7 @@ function WorkbenchTabs({
 										onCloseTab(tab.id)
 									}
 								}}
-								className='rounded-sm px-1 text-xs text-muted-foreground opacity-70 hover:bg-muted hover:text-foreground group-hover:opacity-100'>
+								className='rounded-sm px-1 text-xs text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100'>
 								×
 							</span>
 						) : null}

@@ -48,7 +48,7 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 	return (
 		<div className='rounded-lg border bg-background transition-colors hover:border-border hover:bg-muted/20'>
 			<div
-				className='grid cursor-pointer gap-3 px-4 py-3 md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'
+				className='group/document-row grid cursor-pointer gap-3 px-4 py-3 md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'
 				onClick={() => {
 					if (!isEditing) {
 						void onOpen(document.id)
@@ -81,6 +81,7 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 								type='button'
 								variant='ghost'
 								size='icon-sm'
+								className='opacity-0 transition-opacity group-hover/document-row:opacity-100 group-focus-within/document-row:opacity-100 focus-visible:opacity-100'
 								title='更多操作'
 								disabled={isPending}>
 								<MoreHorizontalIcon />

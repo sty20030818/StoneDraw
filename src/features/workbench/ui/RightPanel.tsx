@@ -1,5 +1,4 @@
-import { XIcon } from 'lucide-react'
-import { Badge, Button } from '@/shared/ui'
+import { Badge } from '@/shared/ui'
 import type { SaveStatus } from '@/shared/types'
 import { resolveSaveStatusMeta } from './save-status'
 
@@ -8,26 +7,15 @@ type RightPanelProps = {
 	documentTitle: string
 	isDocumentReady: boolean
 	saveStatus: SaveStatus
-	onClose: () => void
 }
 
-function RightPanel({ documentId, documentTitle, isDocumentReady, saveStatus, onClose }: RightPanelProps) {
+function RightPanel({ documentId, documentTitle, isDocumentReady, saveStatus }: RightPanelProps) {
 	const statusMeta = resolveSaveStatusMeta(saveStatus)
 
 	return (
 		<div
 			data-testid='workbench-right-panel'
 			className='grid gap-3'>
-			<div className='flex items-center justify-end'>
-				<Button
-					type='button'
-					variant='ghost'
-					size='icon-sm'
-					title='收起右侧栏'
-					onClick={onClose}>
-					<XIcon />
-				</Button>
-			</div>
 			<div className='rounded-lg border bg-background p-4'>
 				<p className='text-sm font-medium'>当前文档</p>
 				<p className='mt-2 text-sm text-muted-foreground'>{isDocumentReady ? documentTitle : '当前还没有可展示的文档标题'}</p>

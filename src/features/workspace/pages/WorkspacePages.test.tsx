@@ -112,10 +112,32 @@ describe('Workspace pages', () => {
 		useWorkspaceStoreMock.mockImplementation((selector) => selector(workspaceState))
 		const { default: ArchivePage } = await import('./ArchivePage')
 
-		render(<ArchivePage />)
+		render(
+			<MemoryRouter initialEntries={['/workspace/archive']}>
+				<ArchivePage />
+			</MemoryRouter>,
+		)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
 		expect(screen.getByText('回收站')).toBeInTheDocument()
+	})
+
+	test('ArchivePage 空态应提供返回文档入口', async () => {
+		useWorkspaceStoreMock.mockImplementation((selector) =>
+			selector({
+				...workspaceState,
+				trashedDocuments: [],
+			}),
+		)
+		const { default: ArchivePage } = await import('./ArchivePage')
+
+		render(
+			<MemoryRouter initialEntries={['/workspace/archive']}>
+				<ArchivePage />
+			</MemoryRouter>,
+		)
+
+		expect(screen.getByText('返回文档库')).toBeInTheDocument()
 	})
 
 	test('SettingsPage 应接入统一页面壳', async () => {
@@ -128,5 +150,39 @@ describe('Workspace pages', () => {
 		expect(screen.getByText('当前会话概览')).toBeInTheDocument()
 		expect(screen.getByText('目录健康检查')).toBeInTheDocument()
 		expect(screen.getByText('数据库健康检查')).toBeInTheDocument()
+	})
+
+	test('DocumentsPage 加载态应渲染统一 skeleton', async () => {
+		useWorkspaceStoreMock.mockImplementation((selector) =>
+			selector({
+				...workspaceState,
+				collectionStatus: 'loading',
+			}),
+		)
+		const { default: DocumentsPage } = await import('./DocumentsPage')
+
+		const { container } = render(
+			<MemoryRouter initialEntries={['/workspace/documents']}>
+				<DocumentsPage />
+			</MemoryRouter>,
+		)
+
+		expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
+	})
+
+	test('SettingsPage 异常状态应展示显式错误提示', async () => {
+		useAppStoreMock.mockImplementation((selector) =>
+			selector({
+				...appState,
+				localDirectoryStatus: 'error',
+				databaseStatus: 'error',
+			}),
+		)
+		const { default: SettingsPage } = await import('@/features/settings/pages/SettingsPage')
+
+		render(<SettingsPage />)
+
+		expect(screen.getByText('目录健康检查异常。请检查本地工作目录初始化结果和启动日志。')).toBeInTheDocument()
+		expect(screen.getByText('数据库健康检查异常。请检查数据库文件、迁移状态和错误日志。')).toBeInTheDocument()
 	})
 })

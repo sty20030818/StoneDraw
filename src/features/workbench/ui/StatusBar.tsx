@@ -4,13 +4,12 @@ import { resolveSaveStatusMeta } from './save-status'
 
 type StatusBarProps = {
 	activePanel: WorkbenchPanelKey
-	documentId: string | null
 	isDocumentReady: boolean
 	isRightPanelOpen: boolean
 	saveStatus: SaveStatus
 }
 
-function StatusBar({ activePanel, documentId, isDocumentReady, isRightPanelOpen, saveStatus }: StatusBarProps) {
+function StatusBar({ activePanel, isDocumentReady, isRightPanelOpen, saveStatus }: StatusBarProps) {
 	const statusMeta = resolveSaveStatusMeta(saveStatus)
 
 	return (
@@ -22,7 +21,6 @@ function StatusBar({ activePanel, documentId, isDocumentReady, isRightPanelOpen,
 			<div className='flex flex-wrap items-center gap-3'>
 				<span>{isDocumentReady ? '画布已就绪' : '画布准备中'}</span>
 				<span>{isRightPanelOpen ? '右栏已展开' : '右栏已收起'}</span>
-				{documentId ? <span>{documentId}</span> : null}
 			</div>
 		</footer>
 	)

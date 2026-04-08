@@ -170,6 +170,11 @@ function SettingsPage() {
 						actions={<StatusBadge status={localDirectoryStatus} />}
 					/>
 				}>
+				{localDirectoryStatus === 'error' ? (
+					<div className='mb-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive'>
+						目录健康检查异常。请检查本地工作目录初始化结果和启动日志。
+					</div>
+				) : null}
 				<DirectoryGrid directories={localDirectories} />
 			</PageSection>
 
@@ -181,6 +186,11 @@ function SettingsPage() {
 						actions={<StatusBadge status={databaseStatus} />}
 					/>
 				}>
+				{databaseStatus === 'error' ? (
+					<div className='mb-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive'>
+						数据库健康检查异常。请检查数据库文件、迁移状态和错误日志。
+					</div>
+				) : null}
 				<DatabasePanel databaseHealth={databaseHealth} />
 			</PageSection>
 		</WorkspacePageShell>

@@ -1,10 +1,12 @@
 import { useCallback } from 'react'
+import { XIcon } from 'lucide-react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { WindowChrome } from '@/app/chrome'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import { APP_ROUTES, buildWorkbenchRoute } from '@/shared/constants/routes'
 import { useDocumentStore } from '@/features/documents'
 import { useWorkspaceStore } from '@/features/workspace/state'
+import { Button } from '@/shared/ui'
 import {
 	ActivityBar,
 	ExplorerPanel,
@@ -122,6 +124,7 @@ function WorkbenchShellContent() {
 							fallbackDocumentId={activeDocumentId}
 							fallbackDocumentTitle={documentTitle}
 							isDocumentReady={isWorkbenchReady}
+							activeSaveStatus={saveStatus}
 							onSelectTab={openDocumentInWorkbench}
 							onCloseTab={handleCloseTab}
 						/>
@@ -141,27 +144,36 @@ function WorkbenchShellContent() {
 						/>
 					}
 					canvas={<Outlet />}
-					metaRail={
-						isRightPanelOpen ? (
-							<WorkbenchMetaRail title='Properties'>
-								<RightPanel
-									documentId={activeDocumentId}
-									documentTitle={documentTitle}
-									isDocumentReady={isWorkbenchReady}
-									saveStatus={saveStatus}
-									onClose={() => {
-										setRightPanelOpen(false)
-									}}
-								/>
-							</WorkbenchMetaRail>
-						) : null
+						metaRail={
+							isRightPanelOpen ? (
+								<WorkbenchMetaRail
+									title='文档元信息'
+									actions={
+										<Button
+											type='button'
+											variant='ghost'
+											size='icon-sm'
+											title='收起右侧栏'
+											onClick={() => {
+												setRightPanelOpen(false)
+											}}>
+											<XIcon />
+										</Button>
+									}>
+									<RightPanel
+										documentId={activeDocumentId}
+										documentTitle={documentTitle}
+										isDocumentReady={isWorkbenchReady}
+										saveStatus={saveStatus}
+									/>
+								</WorkbenchMetaRail>
+							) : null
 					}
 				/>
 			</div>
 			<div className='min-w-0'>
 				<StatusBar
 					activePanel={activePanel}
-					documentId={activeDocumentId}
 					isDocumentReady={isWorkbenchReady}
 					isRightPanelOpen={isRightPanelOpen}
 					saveStatus={saveStatus}

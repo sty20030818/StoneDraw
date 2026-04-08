@@ -4,8 +4,39 @@ import { FileStackIcon } from 'lucide-react'
 import { EmptyState, PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
 import { DocumentListItem, DocumentListToolbar } from '@/features/documents'
 import { useOverlayStore } from '@/features/overlays'
+import { Button, Skeleton } from '@/shared/ui'
 import { useWorkspaceDocuments } from '@/features/workspace/hooks'
 import { useWorkspaceStore } from '@/features/workspace/state'
+
+function DocumentListSkeleton() {
+	return (
+		<div className='overflow-hidden rounded-lg border bg-card'>
+			<div className='grid gap-3 border-b bg-muted/30 px-4 py-3 md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'>
+				<Skeleton className='h-3 w-16' />
+				<Skeleton className='h-3 w-12' />
+				<Skeleton className='h-3 w-10' />
+				<Skeleton className='ml-auto h-3 w-8' />
+			</div>
+			<div className='grid gap-px bg-border'>
+				{Array.from({ length: 5 }).map((_, index) => (
+					<div
+						key={index}
+						className='grid gap-3 bg-background px-4 py-3 md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'>
+						<div className='space-y-2'>
+							<Skeleton className='h-4 w-40 max-w-full' />
+							<Skeleton className='h-3 w-28 max-w-full' />
+						</div>
+						<Skeleton className='h-4 w-24' />
+						<Skeleton className='h-5 w-16 rounded-full' />
+						<div className='flex justify-end'>
+							<Skeleton className='size-7 rounded-lg' />
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	)
+}
 
 function DocumentsPage() {
 	const [searchParams] = useSearchParams()
@@ -40,21 +71,30 @@ function DocumentsPage() {
 			title='文档库'
 			description='正式管理态主列表页，优先提供搜索、浏览、打开与文档级操作。'
 			actions={<span className='text-xs text-muted-foreground'>{documents.length} 个文档</span>}
-			toolbar={
-				<DocumentListToolbar
-					documentCount={documents.length}
-					searchDraft={searchDraft}
+				toolbar={
+					<DocumentListToolbar
+						documentCount={documents.length}
+						searchDraft={searchDraft}
 					onSearchChange={setSearchDraft}
 					onRefresh={() => {
 						void loadWorkspaceData()
 					}}
-					onCreate={() => {
-						openNewDocumentDialog({
-							source: 'workspace-page',
-						})
-					}}
-				/>
-			}>
+						onCreate={() => {
+							openNewDocumentDialog({
+								source: 'workspace-page',
+							})
+						}}
+						viewControl={
+							<Button
+								type='button'
+								variant='outline'
+								size='sm'
+								disabled>
+								列表视图
+							</Button>
+						}
+					/>
+				}>
 			<PageSection
 				header={
 					<SectionHeader
@@ -63,9 +103,7 @@ function DocumentsPage() {
 					/>
 				}>
 				{collectionStatus === 'loading' ? (
-					<div className='rounded-lg border border-dashed bg-card px-6 py-10 text-sm text-muted-foreground'>
-						正在读取 Documents 页面文档列表...
-					</div>
+					<DocumentListSkeleton />
 				) : null}
 
 				{collectionStatus === 'error' ? (

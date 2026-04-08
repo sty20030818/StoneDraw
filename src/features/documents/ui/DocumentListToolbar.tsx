@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { FilterIcon, ListFilterIcon, PlusIcon, RefreshCwIcon, SearchIcon } from 'lucide-react'
 import { Button, Input } from '@/shared/ui'
 
@@ -7,6 +8,7 @@ type DocumentListToolbarProps = {
 	onSearchChange: (value: string) => void
 	onRefresh: () => void
 	onCreate: () => void
+	viewControl?: ReactNode
 }
 
 function DocumentListToolbar({
@@ -15,6 +17,7 @@ function DocumentListToolbar({
 	onSearchChange,
 	onRefresh,
 	onCreate,
+	viewControl,
 }: DocumentListToolbarProps) {
 	return (
 		<div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
@@ -45,6 +48,7 @@ function DocumentListToolbar({
 					<FilterIcon data-icon='inline-start' />
 					全部状态
 				</Button>
+				{viewControl}
 				<span className='px-2 text-xs text-muted-foreground'>{documentCount} 个文档</span>
 				<Button
 					type='button'

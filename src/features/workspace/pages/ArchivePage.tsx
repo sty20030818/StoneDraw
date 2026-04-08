@@ -1,4 +1,6 @@
 import { RotateCcwIcon } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { APP_ROUTES } from '@/shared/constants/routes'
 import { Button } from '@/shared/ui/button'
 import { EmptyState, PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
 import { useOverlayStore } from '@/features/overlays'
@@ -7,6 +9,7 @@ import { useWorkspaceDocuments } from '@/features/workspace/hooks'
 import { useWorkspaceStore } from '@/features/workspace/state'
 
 function ArchivePage() {
+	const navigate = useNavigate()
 	const trashedDocuments = useWorkspaceStore((state) => state.trashedDocuments)
 	const collectionStatus = useWorkspaceStore((state) => state.collectionStatus)
 	const openConfirmDialog = useOverlayStore((state) => state.openConfirmDialog)
@@ -75,13 +78,17 @@ function ArchivePage() {
 						))}
 					</div>
 				) : (
-					<EmptyState
-						title='回收站为空'
-						description='当前没有已删除文档，删除到回收站后的内容会统一在这里恢复或彻底清理。'
-						icon={RotateCcwIcon}
-					/>
-				)}
-			</PageSection>
+						<EmptyState
+							title='回收站为空'
+							description='当前没有已删除文档，删除到回收站后的内容会统一在这里恢复或彻底清理。'
+							icon={RotateCcwIcon}
+							actionLabel='返回文档库'
+							onAction={() => {
+								void navigate(APP_ROUTES.WORKSPACE_DOCUMENTS)
+							}}
+						/>
+					)}
+				</PageSection>
 		</WorkspacePageShell>
 	)
 }
