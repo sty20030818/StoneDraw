@@ -6,7 +6,7 @@ import { resolveSceneByPathname, APP_ROUTES } from '@/shared/constants/routes'
 import { useAppStore } from '@/app/state'
 import { SettingsPage } from '@/features/settings'
 import { WorkbenchPage } from '@/features/workbench'
-import { ArchivePage, DocumentsPage, HomePage } from '@/features/workspace'
+import { ArchivePage, DocumentsPage, HomePage, SearchCenterPage, TeamPage, TemplatesPage } from '@/features/workspace'
 
 function RouteStateSync() {
 	const location = useLocation()
@@ -55,8 +55,20 @@ function AppRouter() {
 						path='documents'
 					/>
 					<Route
+						element={<TemplatesPage />}
+						path='templates'
+					/>
+					<Route
+						element={<SearchCenterPage />}
+						path='search-center'
+					/>
+					<Route
 						element={<ArchivePage />}
 						path='archive'
+					/>
+					<Route
+						element={<TeamPage />}
+						path='team'
 					/>
 					<Route
 						element={<SettingsPage />}

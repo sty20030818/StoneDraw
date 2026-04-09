@@ -29,7 +29,6 @@ const {
 vi.mock('@/features/documents', () => ({
 	HomeQuickActions: () => <div>快捷动作组件</div>,
 	RecentDocumentList: () => <div>最近打开组件</div>,
-	DocumentListToolbar: () => <div>文档工具条组件</div>,
 	DocumentListItem: ({ document }: { document: { title: string } }) => <div>{document.title}</div>,
 }))
 
@@ -110,9 +109,28 @@ describe('Workspace pages', () => {
 		)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
-		expect(screen.getByText('文档工具条组件')).toBeInTheDocument()
-		expect(screen.getByText('文档列表')).toBeInTheDocument()
+		expect(screen.getByText('全部图纸')).toBeInTheDocument()
+		expect(screen.getByText('最近打开')).toBeInTheDocument()
+		expect(screen.getByText('已收藏')).toBeInTheDocument()
 		expect(screen.getByText('文档一')).toBeInTheDocument()
+	})
+
+	test('TemplatesPage / SearchCenterPage / TeamPage 应渲染正式站位页', async () => {
+		const { default: TemplatesPage } = await import('./TemplatesPage')
+		const { default: SearchCenterPage } = await import('./SearchCenterPage')
+		const { default: TeamPage } = await import('./TeamPage')
+
+		render(
+			<>
+				<TemplatesPage />
+				<SearchCenterPage />
+				<TeamPage />
+			</>,
+		)
+
+		expect(screen.getByText('模板与素材')).toBeInTheDocument()
+		expect(screen.getByText('搜索中心')).toBeInTheDocument()
+		expect(screen.getByText('团队与共享')).toBeInTheDocument()
 	})
 
 	test('ArchivePage 应接入统一页面壳', async () => {
@@ -154,7 +172,8 @@ describe('Workspace pages', () => {
 		render(<SettingsPage />)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
-		expect(screen.getByText('当前会话概览')).toBeInTheDocument()
+		expect(screen.getByText('设置中心')).toBeInTheDocument()
+		expect(screen.getByText('诊断与环境')).toBeInTheDocument()
 		expect(screen.getByText('目录健康检查')).toBeInTheDocument()
 		expect(screen.getByText('数据库健康检查')).toBeInTheDocument()
 	})

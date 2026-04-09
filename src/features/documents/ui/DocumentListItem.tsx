@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { MoreHorizontalIcon, PencilLineIcon, Trash2Icon } from 'lucide-react'
+import { Clock3Icon, FileIcon, MoreHorizontalIcon, PencilLineIcon, StarIcon, Trash2Icon } from 'lucide-react'
 import {
 	Badge,
 	Button,
@@ -11,8 +11,8 @@ import {
 	DropdownMenuTrigger,
 	Input,
 } from '@/shared/ui'
-import { formatDateTime } from '@/shared/lib/date'
 import type { DocumentMeta } from '@/shared/types'
+import { formatRelativeTime, resolveDocumentCategory } from './document-ui'
 
 type DocumentListItemProps = {
 	document: DocumentMeta
@@ -54,11 +54,16 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 	const [renameDraft, setRenameDraft] = useState(document.title)
 	const [isPending, setIsPending] = useState(false)
 	const statusMeta = useMemo(() => resolveDocumentStatusVariant(document), [document])
+	const category = useMemo(() => resolveDocumentCategory(document.title), [document.title])
+	const updatedLabel = useMemo(
+		() => formatRelativeTime(document.lastOpenedAt ?? document.updatedAt),
+		[document.lastOpenedAt, document.updatedAt],
+	)
 
 	return (
-		<div className='rounded-md border bg-background transition-colors hover:border-primary/15 hover:bg-primary/5'>
+		<div className='bg-card transition-colors'>
 			<div
-				className='group/document-row grid cursor-pointer gap-3 px-4 py-3 md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'
+				className='group/document-row grid cursor-pointer gap-3 px-4 py-3.5 text-left transition-colors hover:bg-primary/4 md:grid-cols-[2.5rem_minmax(0,1.7fr)_8.5rem_8.5rem_7.5rem_3rem] md:items-center'
 				onClick={() => {
 					if (!isEditing) {
 						void onOpen(document.id)
@@ -72,15 +77,64 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 						void onOpen(document.id)
 					}
 				}}>
-				<div className='min-w-0'>
-					<p className='truncate text-sm font-medium text-foreground'>{document.title}</p>
-					<p className='mt-1 text-xs text-muted-foreground'>
-						最近打开：{document.lastOpenedAt ? formatDateTime(document.lastOpenedAt) : '尚未记录'}
-					</p>
+				<div className='flex items-center justify-center'>
+					<StarIcon className='size-4 text-muted-foreground/45 transition-colors group-hover/document-row:text-muted-foreground' />
 				</div>
-				<div className='text-sm text-muted-foreground'>{formatDateTime(document.updatedAt)}</div>
+				<div className='min-w-0'>
+					<div className='flex min-w-0 items-center gap-3'>
+						<div className='grid size-10 shrink-0 place-items-center rounded-md border bg-background text-muted-foreground transition-colors group-hover/document-row:border-primary/20 group-hover/document-row:bg-primary/8 group-hover/document-row:text-primary'>
+							<FileIcon className='size-4' />
+						</div>
+						<div className='min-w-0'>
+							<p className='truncate text-sm font-medium text-foreground'>
+								{document.title}
+								{document.saveStatus === 'dirty' ? (
+									<span className='ml-2 inline-block size-2 rounded-full bg-primary align-middle' />
+								) : null}
+							</p>
+							<p className='mt-1 text-xs text-muted-foreground'>
+								{document.lastOpenedAt ? `最近打开：${updatedLabel}` : '尚未记录'}
+							</p>
+						</div>
+					</div>
+				</div>
 				<div>
-					<Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+					<Badge
+						variant='secondary'
+						className='border border-border/70 bg-muted/20 text-foreground/75'>
+						{category}
+					</Badge>
+				</div>
+				<div className='flex items-center gap-1.5 text-xs text-muted-foreground md:text-sm'>
+					<Clock3Icon className='size-3.5 text-muted-foreground/80' />
+					<span>{updatedLabel}</span>
+				</div>
+				<div className='text-xs md:text-sm'>
+					<span
+						className={[
+							'inline-flex items-center gap-2 font-medium',
+							statusMeta.variant === 'success'
+								? 'text-emerald-600'
+								: statusMeta.variant === 'warning'
+									? 'text-primary'
+									: statusMeta.variant === 'destructive'
+										? 'text-destructive'
+										: 'text-muted-foreground',
+						].join(' ')}>
+						<span
+							className={[
+								'inline-block size-2 rounded-full',
+								statusMeta.variant === 'success'
+									? 'bg-emerald-500'
+									: statusMeta.variant === 'warning'
+										? 'bg-primary'
+										: statusMeta.variant === 'destructive'
+											? 'bg-destructive'
+											: 'bg-muted-foreground/60',
+							].join(' ')}
+						/>
+						{statusMeta.label === '已保存' ? '已持久化' : statusMeta.label}
+					</span>
 				</div>
 				<div
 					className='flex justify-end'
@@ -130,7 +184,7 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 			</div>
 
 			{isEditing ? (
-				<div className='border-t bg-card/60 px-4 py-3'>
+				<div className='border-t bg-muted/10 px-4 py-3'>
 					<div className='flex flex-col gap-3 md:flex-row md:items-center'>
 						<Input
 							autoFocus

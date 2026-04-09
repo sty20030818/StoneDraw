@@ -105,7 +105,7 @@ function HomePage() {
 					<button
 						type='button'
 						onClick={() => {
-							toast('模板入口还在整理中，下一步会接入真实模板与素材页面。')
+							navigate(APP_ROUTES.WORKSPACE_TEMPLATES)
 						}}
 						className='group rounded-lg border bg-card px-4 py-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
 						<div className='mb-4 flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm'>

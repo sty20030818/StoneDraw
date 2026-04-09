@@ -5,7 +5,10 @@ export const APP_ROUTES = {
 	WORKSPACE: '/workspace',
 	WORKSPACE_HOME: '/workspace/home',
 	WORKSPACE_DOCUMENTS: '/workspace/documents',
+	WORKSPACE_TEMPLATES: '/workspace/templates',
+	WORKSPACE_SEARCH_CENTER: '/workspace/search-center',
 	WORKSPACE_ARCHIVE: '/workspace/archive',
+	WORKSPACE_TEAM: '/workspace/team',
 	WORKSPACE_SETTINGS: '/workspace/settings',
 	WORKBENCH: '/workbench',
 } as const

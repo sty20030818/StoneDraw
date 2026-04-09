@@ -1,6 +1,7 @@
-import { DatabaseIcon, FolderTreeIcon, RouteIcon } from 'lucide-react'
+import { DatabaseIcon, FolderTreeIcon, InfoIcon, KeyboardIcon, PaletteIcon, RouteIcon, Settings2Icon, UploadIcon } from 'lucide-react'
 import { useAppStore } from '@/app/state'
 import { PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/shared/ui'
 import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/shared/types'
 
 type DiagnosticStatus = 'idle' | 'ready' | 'error'
@@ -110,14 +111,74 @@ function SettingsPage() {
 	const databaseReadyAt = useAppStore((state) => state.databaseReadyAt)
 	const activeSceneKey = useAppStore((state) => state.activeSceneKey)
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
+	const settingGroups = [
+		{
+			title: '常规',
+			description: '承接工作区偏好、默认行为和基础使用体验。',
+			icon: Settings2Icon,
+		},
+		{
+			title: '外观',
+			description: '预留主题、密度与视觉偏好设置入口，保持浅色工作流体验。',
+			icon: PaletteIcon,
+		},
+		{
+			title: '存储与数据目录',
+			description: '集中承接工作目录、数据库位置与本地数据结构相关配置。',
+			icon: FolderTreeIcon,
+		},
+		{
+			title: '导出偏好',
+			description: '后续在这里整理导出格式、默认范围和交付习惯设置。',
+			icon: UploadIcon,
+		},
+		{
+			title: '快捷键',
+			description: '预留轻量快捷键说明与后续键位定制入口。',
+			icon: KeyboardIcon,
+		},
+		{
+			title: '关于',
+			description: '承接版本信息、环境信息和产品说明等静态信息。',
+			icon: InfoIcon,
+		},
+	]
 
 	return (
 		<WorkspacePageShell>
 			<PageSection
 				header={
 					<SectionHeader
-						title='当前会话概览'
-						description='保留当前场景、目录初始化和数据库状态摘要。'
+						title='设置中心'
+						description='设置页现在优先承接正式配置分组，诊断能力下沉到后半屏，保持 Workspace 一致的浅色 linear 管理态。'
+					/>
+				}>
+				<section className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+					{settingGroups.map((group) => {
+						const Icon = group.icon
+
+						return (
+							<Card
+								key={group.title}
+								className='rounded-2xl border-border/80 shadow-sm'>
+								<CardHeader className='gap-3'>
+									<div className='flex size-11 items-center justify-center rounded-2xl border bg-card shadow-sm'>
+										<Icon className='size-5 text-muted-foreground' />
+									</div>
+									<CardTitle className='text-base font-semibold tracking-tight'>{group.title}</CardTitle>
+									<CardDescription className='text-sm leading-6'>{group.description}</CardDescription>
+								</CardHeader>
+							</Card>
+						)
+					})}
+				</section>
+			</PageSection>
+
+			<PageSection
+				header={
+					<SectionHeader
+						title='诊断与环境'
+						description='保留当前场景、目录初始化和数据库状态摘要，用于确认本地运行环境是否稳定。'
 					/>
 				}>
 				<section className='grid gap-4 lg:grid-cols-3'>
@@ -158,7 +219,7 @@ function SettingsPage() {
 				header={
 					<SectionHeader
 						title='目录健康检查'
-						description='用于确认本地工作目录是否完整建立。'
+						description='用于确认本地工作目录是否完整建立，并为后续存储配置提供事实依据。'
 						actions={<StatusBadge status={localDirectoryStatus} />}
 					/>
 				}>
@@ -174,7 +235,7 @@ function SettingsPage() {
 				header={
 					<SectionHeader
 						title='数据库健康检查'
-						description='保留 migration 与本地数据库可用性的调试窗口。'
+						description='保留 migration 与本地数据库可用性的诊断窗口，避免设置页丢失环境可观察性。'
 						actions={<StatusBadge status={databaseStatus} />}
 					/>
 				}>

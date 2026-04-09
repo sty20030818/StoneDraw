@@ -31,6 +31,7 @@ describe('DocumentListItem', () => {
 
 		fireEvent.click(screen.getByText('文档一'))
 		expect(onOpen).toHaveBeenCalledWith('doc-1')
+		expect(screen.getByText('已持久化')).toBeInTheDocument()
 	})
 
 	test('更多操作应支持进入重命名', async () => {

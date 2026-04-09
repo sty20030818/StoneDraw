@@ -1,3 +1,6 @@
 export { default as ArchivePage } from './ArchivePage'
 export { default as DocumentsPage } from './DocumentsPage'
 export { default as HomePage } from './HomePage'
+export { default as SearchCenterPage } from './SearchCenterPage'
+export { default as TeamPage } from './TeamPage'
+export { default as TemplatesPage } from './TemplatesPage'

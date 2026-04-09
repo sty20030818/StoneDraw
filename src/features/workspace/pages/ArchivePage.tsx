@@ -2,7 +2,7 @@ import { RotateCcwIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import { Button } from '@/shared/ui/button'
-import { EmptyState, PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
+import { EmptyState, WorkspacePageShell } from '@/shared/components'
 import { useOverlayStore } from '@/features/overlays'
 import { formatDateTime } from '@/shared/lib/date'
 import { useWorkspaceDocuments } from '@/features/workspace/hooks'
@@ -17,26 +17,27 @@ function ArchivePage() {
 
 	return (
 		<WorkspacePageShell>
-			<PageSection
-				header={
-					<SectionHeader
-						title='回收站'
-						description='以列表方式承接已删除文档的恢复与彻底清理。'
-					/>
-				}>
+			<div className='animate-in fade-in duration-300'>
+				<div className='mb-6 space-y-1.5'>
+					<h1 className='text-3xl font-black tracking-tight text-foreground'>回收站</h1>
+					<p className='text-sm text-muted-foreground'>以列表方式承接已删除文档的恢复与彻底清理。</p>
+				</div>
+
 				{collectionStatus === 'ready' && trashedDocuments.length > 0 ? (
-					<div className='overflow-hidden rounded-lg border bg-card'>
-						<div className='grid gap-3 border-b bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
+					<div className='space-y-3'>
+						<div className='hidden gap-3 px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
 							<span>标题</span>
 							<span>删除时间</span>
 							<span className='text-right'>操作</span>
 						</div>
+						<div className='overflow-hidden rounded-lg border bg-card shadow-sm'>
+							<div className='divide-y'>
 						{trashedDocuments.map((document) => (
 							<div
 								key={document.id}
-								className='grid gap-3 border-t border-border bg-background px-4 py-4 first:border-t-0 md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
-								<p className='truncate text-sm font-semibold'>{document.title}</p>
-								<p className='text-xs text-muted-foreground'>
+								className='grid gap-3 bg-card px-4 py-3.5 transition-colors hover:bg-primary/4 md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
+								<p className='truncate text-sm font-medium text-foreground'>{document.title}</p>
+								<p className='text-xs text-muted-foreground md:text-sm'>
 									{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}
 								</p>
 								<div className='flex justify-end gap-2'>
@@ -75,6 +76,8 @@ function ArchivePage() {
 								</div>
 							</div>
 						))}
+							</div>
+						</div>
 					</div>
 				) : (
 					<EmptyState
@@ -87,7 +90,7 @@ function ArchivePage() {
 						}}
 					/>
 				)}
-			</PageSection>
+			</div>
 		</WorkspacePageShell>
 	)
 }

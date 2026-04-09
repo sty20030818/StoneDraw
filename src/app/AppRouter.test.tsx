@@ -15,6 +15,9 @@ vi.mock('@/features/workspace', () => ({
 	ArchivePage: () => <div>归档页面</div>,
 	DocumentsPage: () => <div>文档页面</div>,
 	HomePage: () => <div>首页页面</div>,
+	SearchCenterPage: () => <div>搜索中心页面</div>,
+	TeamPage: () => <div>团队与共享页面</div>,
+	TemplatesPage: () => <div>模板与素材页面</div>,
 }))
 
 vi.mock('@/app/router/NotFoundPage', () => ({
@@ -64,6 +67,14 @@ describe('AppRouter', () => {
 
 		expect(await screen.findByText('设置页面')).toBeInTheDocument()
 		expect(screen.getByText('工作区布局')).toBeInTheDocument()
+	})
+
+	test('Workspace 新增站位页路由应可访问', async () => {
+		setHashRoute('/workspace/templates')
+		const { default: AppRouter } = await import('./AppRouter')
+
+		render(<AppRouter />)
+		expect(await screen.findByText('模板与素材页面')).toBeInTheDocument()
 	})
 
 	test('Workbench 路由应渲染工作台页', async () => {

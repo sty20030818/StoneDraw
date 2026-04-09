@@ -14,7 +14,7 @@ function WindowChromeBrandHeader({ className }: WindowChromeBrandHeaderProps) {
 			data-testid='window-chrome-brand-header'
 			data-tauri-drag-region
 			className={cn(
-				'window-chrome-drag flex h-13 min-h-13 items-center border-b bg-card/90',
+				'window-chrome-drag flex h-13 min-h-13 items-center bg-card/85',
 				isMacShell ? 'pl-20 pr-4' : 'px-4',
 				className,
 			)}>

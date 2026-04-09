@@ -50,4 +50,5 @@ export {
 	SheetTrigger,
 } from './sheet'
 export { Skeleton } from './skeleton'
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs'
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip'

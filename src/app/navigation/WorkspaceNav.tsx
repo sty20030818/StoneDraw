@@ -4,11 +4,11 @@ import WorkspaceNavItem from './WorkspaceNavItem'
 const navSections = [
 	{
 		label: '浏览',
-		keys: ['home', 'documents'],
+		keys: ['home', 'documents', 'templates', 'search-center'],
 	},
 	{
 		label: '整理',
-		keys: ['archive'],
+		keys: ['archive', 'team'],
 	},
 	{
 		label: '系统',
