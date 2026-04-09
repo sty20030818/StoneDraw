@@ -3,9 +3,10 @@ import { cn } from '@/shared/lib/utils'
 
 type WindowChromeBrandHeaderProps = {
 	className?: string
+	showBottomBorder?: boolean
 }
 
-function WindowChromeBrandHeader({ className }: WindowChromeBrandHeaderProps) {
+function WindowChromeBrandHeader({ className, showBottomBorder = false }: WindowChromeBrandHeaderProps) {
 	const shellPlatform = detectDesktopShellPlatform()
 	const isMacShell = shellPlatform === 'mac'
 
@@ -14,7 +15,8 @@ function WindowChromeBrandHeader({ className }: WindowChromeBrandHeaderProps) {
 			data-testid='window-chrome-brand-header'
 			data-tauri-drag-region
 			className={cn(
-				'window-chrome-drag flex h-13 min-h-13 items-center bg-card/85',
+				'window-chrome-drag flex h-14 min-h-14 items-center bg-card/85',
+				showBottomBorder && 'border-b',
 				isMacShell ? 'pl-20 pr-4' : 'px-4',
 				className,
 			)}>

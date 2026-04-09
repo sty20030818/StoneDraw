@@ -102,7 +102,10 @@ function WorkbenchShellContent() {
 	return (
 		<section className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background'>
 			<div className='flex shrink-0'>
-				<WindowChromeBrandHeader className={`${leftShellWidthClass} shrink-0 border-r`} />
+				<WindowChromeBrandHeader
+					className={`${leftShellWidthClass} shrink-0 border-r`}
+					showBottomBorder
+				/>
 				<WindowChrome
 					scene='workbench'
 					className='flex-1'

@@ -111,7 +111,7 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 			data-tauri-drag-region
 			onPointerDownCapture={handleChromePointerDownCapture}
 			className={cn(
-				'window-chrome-drag flex h-13 min-h-13 items-center gap-4 overflow-hidden border-b bg-background/80 backdrop-blur-sm',
+				'window-chrome-drag flex h-14 min-h-14 items-center gap-4 overflow-hidden border-b bg-background/80 backdrop-blur-sm',
 				topbarPaddingClass,
 				className,
 			)}>
@@ -131,7 +131,7 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 							ref={chromeSearchInputRef}
 							type='search'
 							value={chromeSearchDraft}
-							className='h-9 rounded-lg border-border/80 bg-card/95 pl-9 pr-3 shadow-sm'
+							className='h-10 rounded-lg border-border/80 bg-card/95 pl-9 pr-3 shadow-sm'
 							placeholder='搜索文档标题'
 							onChange={(event) => {
 								setChromeSearchDraft(event.target.value)
@@ -153,21 +153,21 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 					type='button'
 					variant='outline'
 					size='sm'
-					className='window-chrome-no-drag h-9 rounded-lg bg-card/95 px-3 shadow-sm'
+					className='window-chrome-no-drag h-10 rounded-lg bg-card/95 px-3 shadow-sm'
 					onClick={handleImportClick}>
-					<DownloadIcon data-icon='inline-start' />
+					<DownloadIcon data-icon='inline-center' />
 					导入
 				</Button>
 				<Button
 					type='button'
 					size='sm'
-					className='window-chrome-no-drag h-9 rounded-lg px-3 shadow-none'
+					className='window-chrome-no-drag h-10 rounded-lg px-3 shadow-none'
 					onClick={() => {
 						openNewDocumentDialog({
 							source: 'window-chrome',
 						})
 					}}>
-					<PlusIcon data-icon='inline-start' />
+					<PlusIcon data-icon='inline-center' />
 					新建文档
 				</Button>
 
@@ -175,7 +175,7 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 					<>
 						<Separator
 							orientation='vertical'
-							className='mx-1 h-4 self-center bg-border/90'
+							className='mx-1 h-5 self-center bg-border/90'
 						/>
 						<div
 							data-testid='windows-window-controls'

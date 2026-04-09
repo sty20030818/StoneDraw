@@ -33,4 +33,13 @@ describe('WindowChromeBrandHeader', () => {
 
 		expect(screen.getByTestId('window-chrome-brand-header')).toHaveClass('px-4')
 	})
+
+	test('workbench 场景可单独开启品牌头下边线', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: WindowChromeBrandHeader } = await import('./WindowChromeBrandHeader')
+
+		render(<WindowChromeBrandHeader showBottomBorder />)
+
+		expect(screen.getByTestId('window-chrome-brand-header')).toHaveClass('border-b')
+	})
 })
