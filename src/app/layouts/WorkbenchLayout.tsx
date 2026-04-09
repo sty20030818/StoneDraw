@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { XIcon } from 'lucide-react'
 import { Outlet, useNavigate } from 'react-router-dom'
-import { WindowChrome } from '@/app/chrome'
+import { WindowChrome, WindowChromeBrandHeader } from '@/app/chrome'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import { APP_ROUTES, buildWorkbenchRoute } from '@/shared/constants/routes'
 import { useDocumentStore } from '@/features/documents'
@@ -42,6 +42,7 @@ function WorkbenchShellContent() {
 	const activateDocumentTab = useWorkbenchStore((state) => state.activateDocumentTab)
 	const closeDocumentTab = useWorkbenchStore((state) => state.closeDocumentTab)
 	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
+	const leftShellWidthClass = isSidePanelOpen ? 'w-[19.5rem]' : 'w-14'
 
 	const openDocumentInWorkbench = useCallback(
 		(documentId: string) => {
@@ -100,9 +101,20 @@ function WorkbenchShellContent() {
 
 	return (
 		<section className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background'>
-			<WindowChrome />
+			<div className='flex shrink-0'>
+				<WindowChromeBrandHeader className={`${leftShellWidthClass} shrink-0 border-r`} />
+				<WindowChrome
+					scene='workbench'
+					className='flex-1'
+				/>
+			</div>
 			<div className='flex min-h-0 flex-1 overflow-hidden'>
-				<div className='flex min-h-0 shrink-0 border-r bg-card'>
+				<div
+					className={[
+						'flex min-h-0 shrink-0 bg-card',
+						leftShellWidthClass,
+						isSidePanelOpen ? 'divide-x divide-border' : 'border-r',
+					].join(' ')}>
 					<ActivityBar
 						activePanel={activePanel}
 						onPanelChange={setActivePanel}

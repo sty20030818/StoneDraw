@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { useAppStore } from '@/app/state'
 
@@ -52,9 +52,8 @@ describe('WindowChrome', () => {
 		detectDesktopShellPlatformMock.mockReturnValue('windows')
 		const { default: WindowChrome } = await import('./WindowChrome')
 
-		render(<WindowChrome />)
+		render(<WindowChrome scene='workspace' />)
 
-		expect(screen.getByText('StoneDraw')).toBeInTheDocument()
 		expect(screen.getByTestId('windows-window-controls')).toBeInTheDocument()
 		expect(screen.getByTestId('window-chrome-root')).toHaveAttribute('data-tauri-drag-region')
 	})
@@ -63,7 +62,7 @@ describe('WindowChrome', () => {
 		detectDesktopShellPlatformMock.mockReturnValue('windows')
 		const { default: WindowChrome } = await import('./WindowChrome')
 
-		render(<WindowChrome />)
+		render(<WindowChrome scene='workspace' />)
 
 		expect(screen.getByTestId('window-chrome-center-actions')).toBeInTheDocument()
 		expect(screen.getByPlaceholderText('搜索文档标题')).toHaveClass('h-9')
@@ -75,7 +74,7 @@ describe('WindowChrome', () => {
 		detectDesktopShellPlatformMock.mockReturnValue('windows')
 		const { default: WindowChrome } = await import('./WindowChrome')
 
-		render(<WindowChrome />)
+		render(<WindowChrome scene='workspace' />)
 
 		expect(screen.getByTitle('最小化')).toHaveClass('hover:bg-foreground/8', 'hover:text-foreground')
 		expect(screen.getByTitle('最大化或还原')).toHaveClass('hover:bg-foreground/8', 'hover:text-foreground')
@@ -86,10 +85,38 @@ describe('WindowChrome', () => {
 		detectDesktopShellPlatformMock.mockReturnValue('mac')
 		const { default: WindowChrome } = await import('./WindowChrome')
 
-		render(<WindowChrome />)
+		render(<WindowChrome scene='workbench' />)
 
-		expect(screen.getByTestId('mac-window-controls-spacer')).toBeInTheDocument()
-		expect(screen.getByText('StoneDraw')).toBeInTheDocument()
+		expect(screen.getByTestId('window-chrome-search')).toBeInTheDocument()
 		expect(screen.queryByTestId('windows-window-controls')).not.toBeInTheDocument()
+	})
+
+	test('搜索框聚焦后点击顶栏拖拽区应取消高亮', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: WindowChrome } = await import('./WindowChrome')
+
+		render(<WindowChrome scene='workspace' />)
+
+		const searchInput = screen.getByPlaceholderText('搜索文档标题')
+		const chromeRoot = screen.getByTestId('window-chrome-root')
+
+		searchInput.focus()
+		expect(searchInput).toHaveFocus()
+
+		fireEvent.pointerDown(chromeRoot)
+
+		expect(searchInput).not.toHaveFocus()
+	})
+
+	test('除搜索与业务按钮外，顶栏其余区域应保持拖拽能力', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: WindowChrome } = await import('./WindowChrome')
+
+		render(<WindowChrome scene='workspace' />)
+
+		expect(screen.getByTestId('window-chrome-search')).toHaveClass('window-chrome-no-drag')
+		expect(screen.getByRole('button', { name: '导入' })).toHaveClass('window-chrome-no-drag')
+		expect(screen.getByRole('button', { name: '新建文档' })).toHaveClass('window-chrome-no-drag')
+		expect(screen.getByTestId('window-chrome-center-actions')).toHaveClass('window-chrome-drag')
 	})
 })

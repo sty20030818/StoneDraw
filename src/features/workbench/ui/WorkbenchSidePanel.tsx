@@ -13,7 +13,7 @@ function WorkbenchSidePanel({ label, description, children, className }: Workben
 	return (
 		<aside
 			data-testid='workbench-side-panel'
-			className={cn('flex min-h-0 w-64 flex-col border-l bg-card', className)}>
+			className={cn('flex min-h-0 w-64 flex-col border-r bg-card', className)}>
 			<div className='flex h-12 items-center px-3.5'>
 				<p className='text-xs font-medium uppercase text-muted-foreground'>{label}</p>
 			</div>

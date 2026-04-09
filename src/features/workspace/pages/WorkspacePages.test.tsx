@@ -84,7 +84,11 @@ describe('Workspace pages', () => {
 		useWorkspaceStoreMock.mockImplementation((selector) => selector(workspaceState))
 		const { default: HomePage } = await import('./HomePage')
 
-		render(<HomePage />)
+		render(
+			<MemoryRouter initialEntries={['/workspace/home']}>
+				<HomePage />
+			</MemoryRouter>,
+		)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
 		expect(screen.getByText(/石头鱼/)).toBeInTheDocument()

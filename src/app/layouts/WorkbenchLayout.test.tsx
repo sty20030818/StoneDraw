@@ -21,6 +21,7 @@ const workbenchState = {
 
 vi.mock('@/app/chrome', () => ({
 	WindowChrome: () => <div data-testid='window-chrome-stub'>窗口顶栏</div>,
+	WindowChromeBrandHeader: () => <div data-testid='window-chrome-brand-header-stub'>品牌头</div>,
 }))
 
 vi.mock('@/features/documents', () => ({
@@ -87,6 +88,7 @@ describe('WorkbenchLayout', () => {
 			</MemoryRouter>,
 		)
 
+		expect(screen.getByTestId('window-chrome-brand-header-stub')).toBeInTheDocument()
 		expect(screen.getByTestId('window-chrome-stub')).toBeInTheDocument()
 		expect(screen.getByTestId('workbench-shell-frame-stub')).toBeInTheDocument()
 		expect(screen.getByTestId('side-panel-stub')).toBeInTheDocument()

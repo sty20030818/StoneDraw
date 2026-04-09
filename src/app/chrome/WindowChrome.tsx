@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DownloadIcon, MinusIcon, PlusIcon, SearchIcon, SquareIcon, XIcon } from 'lucide-react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/features/overlays'
 import { Input } from '@/shared/ui/input'
 import { Button } from '@/shared/ui/button'
+import { Separator } from '@/shared/ui/separator'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import { useAppStore } from '@/app/state'
+import { cn } from '@/shared/lib/utils'
 import { detectDesktopShellPlatform } from './platform-shell'
 
 async function runWindowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
@@ -45,17 +47,24 @@ function readWorkspaceSearchQuery() {
 	return searchParams.get('q') ?? ''
 }
 
-function WindowChrome() {
+type WindowChromeProps = {
+	scene: 'workspace' | 'workbench'
+	className?: string
+}
+
+function WindowChrome({ scene, className }: WindowChromeProps) {
 	const shellPlatform = detectDesktopShellPlatform()
 	const isMacShell = shellPlatform === 'mac'
-	const activeSceneKey = useAppStore((state) => state.activeSceneKey)
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
 	const openNewDocumentDialog = useOverlayStore((state) => state.openNewDocumentDialog)
 	const [chromeSearchDraft, setChromeSearchDraft] = useState('')
-	const isWorkspaceScene = activeSceneKey === 'workspace'
+	const chromeSearchInputRef = useRef<HTMLInputElement | null>(null)
 	const windowsWindowControlButtonBaseClass = 'grid h-full place-items-center text-muted-foreground transition-colors'
 	const windowsWindowControlButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-foreground/8 hover:text-foreground`
 	const windowsWindowCloseButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-destructive hover:text-primary-foreground`
+	const searchFlexClass = 'min-w-[24rem] max-w-[40rem] basis-[32rem] flex-[1_1_auto]'
+	const topbarPaddingClass =
+		scene === 'workspace' ? (isMacShell ? 'pl-8 pr-3' : 'pl-8 pr-0') : isMacShell ? 'pl-5 pr-3' : 'pl-4 pr-0'
 
 	useEffect(() => {
 		setChromeSearchDraft(readWorkspaceSearchQuery())
@@ -80,142 +89,128 @@ function WindowChrome() {
 		toast('导入能力还在接入中，下一步会补上真实文件导入链路。')
 	}
 
+	function handleChromePointerDownCapture(event: React.PointerEvent<HTMLElement>) {
+		const eventTarget = event.target
+
+		if (!(eventTarget instanceof HTMLElement)) {
+			return
+		}
+
+		if (eventTarget.closest('[data-window-chrome-search-root="true"]')) {
+			return
+		}
+
+		if (document.activeElement === chromeSearchInputRef.current) {
+			chromeSearchInputRef.current?.blur()
+		}
+	}
+
 	return (
 		<header
 			data-testid='window-chrome-root'
 			data-tauri-drag-region
-			className={[
-				'window-chrome-drag grid shrink-0 items-center border-b bg-background',
-				isMacShell
-					? 'h-12 min-h-12 grid-cols-[5.5rem_minmax(0,12rem)_minmax(0,1fr)]'
-					: isWorkspaceScene
-						? 'h-12 min-h-12 grid-cols-[14rem_minmax(0,1fr)_8.5rem]'
-						: 'h-12 min-h-12 grid-cols-[minmax(0,12rem)_minmax(0,1fr)_8.5rem]',
-			].join(' ')}>
-			{isMacShell ? (
-				<div
-					data-testid='mac-window-controls-spacer'
-					data-tauri-drag-region
-					className='window-chrome-drag h-full'
-				/>
-			) : null}
-
+			onPointerDownCapture={handleChromePointerDownCapture}
+			className={cn(
+				'window-chrome-drag flex h-13 min-h-13 items-center gap-4 overflow-hidden border-b bg-background/80 backdrop-blur-sm',
+				topbarPaddingClass,
+				className,
+			)}>
 			<div
-				data-tauri-drag-region
-				className={['window-chrome-drag flex h-full items-center gap-2', isMacShell ? 'pr-4' : 'px-5'].join(' ')}>
-				<div
-					data-tauri-drag-region
-					className='window-chrome-drag flex items-center gap-2'>
-					<div
-						data-tauri-drag-region
-						className='window-chrome-drag flex size-7 items-center justify-center rounded-md border bg-card text-foreground'>
-						<img
-							src='/favicon.svg'
-							alt='StoneDraw 图标'
-							draggable={false}
-							className='size-5'
+				data-testid='window-chrome-search'
+				data-window-chrome-search-root='true'
+				className='window-chrome-no-drag flex min-w-0 flex-1 items-center'>
+				<form
+					className={cn('flex min-w-0 items-center', searchFlexClass)}
+					onSubmit={(event) => {
+						event.preventDefault()
+						submitChromeSearch()
+					}}>
+					<div className='relative w-full'>
+						<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
+						<Input
+							ref={chromeSearchInputRef}
+							type='search'
+							value={chromeSearchDraft}
+							className='h-9 rounded-lg border-border/80 bg-card/95 pl-9 pr-3 shadow-sm'
+							placeholder='搜索文档标题'
+							onChange={(event) => {
+								setChromeSearchDraft(event.target.value)
+							}}
 						/>
 					</div>
-					<div
-						data-tauri-drag-region
-						className='window-chrome-drag min-w-0'>
-						<p
-							data-tauri-drag-region
-							className='window-chrome-drag truncate text-md font-semibold text-foreground'>
-							StoneDraw
-						</p>
-					</div>
-				</div>
+				</form>
 			</div>
 
 			<div
 				data-tauri-drag-region
-				className={[
-					'window-chrome-drag flex h-full items-center',
-					isMacShell ? 'justify-center pr-4' : isWorkspaceScene ? 'justify-start px-8' : 'justify-center px-4',
-				].join(' ')}>
-				<div
-					data-testid='window-chrome-center-actions'
-					className={[
-						'window-chrome-no-drag inline-flex max-w-full items-center gap-3 py-0.5',
-						isWorkspaceScene ? 'justify-start' : 'max-w-3xl justify-center',
-					].join(' ')}>
-					<form
-						className='flex min-w-0 w-lg max-w-full items-center'
-						onSubmit={(event) => {
-							event.preventDefault()
-							submitChromeSearch()
-						}}>
-						<div className='relative w-full'>
-							<SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground' />
-							<Input
-								type='search'
-								value={chromeSearchDraft}
-								className={['h-9 bg-card pl-9 pr-3', isMacShell ? 'rounded-md' : 'rounded-md'].join(' ')}
-								placeholder='搜索文档标题'
-								onChange={(event) => {
-									setChromeSearchDraft(event.target.value)
-								}}
-							/>
-						</div>
-					</form>
-					<Button
-						type='button'
-						size='default'
-						className='h-9 shrink-0 px-3'
-						onClick={() => {
-							openNewDocumentDialog({
-								source: 'window-chrome',
-							})
-						}}>
-						<PlusIcon data-icon='inline-start' />
-						新建文档
-					</Button>
-					<Button
-						type='button'
-						variant='outline'
-						size='default'
-						className='h-9 shrink-0 bg-card px-3'
-						onClick={handleImportClick}>
-						<DownloadIcon data-icon='inline-start' />
-						导入
-					</Button>
-				</div>
-			</div>
+				className='window-chrome-drag min-w-0 flex-[999_1_0%] self-stretch'
+			/>
 
-			{isMacShell ? null : (
-				<div
-					data-testid='windows-window-controls'
-					className='window-chrome-no-drag grid h-full grid-cols-3'>
-					<button
-						type='button'
-						className={windowsWindowControlButtonClass}
-						title='最小化'
-						onClick={() => {
-							void runWindowAction('minimize')
-						}}>
-						<MinusIcon className='size-4' />
-					</button>
-					<button
-						type='button'
-						className={windowsWindowControlButtonClass}
-						title='最大化或还原'
-						onClick={() => {
-							void runWindowAction('toggleMaximize')
-						}}>
-						<SquareIcon className='size-3.5' />
-					</button>
-					<button
-						type='button'
-						className={windowsWindowCloseButtonClass}
-						title='关闭'
-						onClick={() => {
-							void runWindowAction('close')
-						}}>
-						<XIcon className='size-4' />
-					</button>
-				</div>
-			)}
+			<div
+				data-testid='window-chrome-center-actions'
+				className={cn('window-chrome-drag flex h-full shrink-0 items-center gap-2', isMacShell ? 'pr-2' : 'pr-0')}>
+				<Button
+					type='button'
+					variant='outline'
+					size='sm'
+					className='window-chrome-no-drag h-9 rounded-lg bg-card/95 px-3 shadow-sm'
+					onClick={handleImportClick}>
+					<DownloadIcon data-icon='inline-start' />
+					导入
+				</Button>
+				<Button
+					type='button'
+					size='sm'
+					className='window-chrome-no-drag h-9 rounded-lg px-3 shadow-none'
+					onClick={() => {
+						openNewDocumentDialog({
+							source: 'window-chrome',
+						})
+					}}>
+					<PlusIcon data-icon='inline-start' />
+					新建文档
+				</Button>
+
+				{isMacShell ? null : (
+					<>
+						<Separator
+							orientation='vertical'
+							className='mx-1 h-4 self-center bg-border/90'
+						/>
+						<div
+							data-testid='windows-window-controls'
+							className='window-chrome-no-drag grid h-full grid-cols-3'>
+							<button
+								type='button'
+								className={windowsWindowControlButtonClass}
+								title='最小化'
+								onClick={() => {
+									void runWindowAction('minimize')
+								}}>
+								<MinusIcon className='size-4' />
+							</button>
+							<button
+								type='button'
+								className={windowsWindowControlButtonClass}
+								title='最大化或还原'
+								onClick={() => {
+									void runWindowAction('toggleMaximize')
+								}}>
+								<SquareIcon className='size-3.5' />
+							</button>
+							<button
+								type='button'
+								className={windowsWindowCloseButtonClass}
+								title='关闭'
+								onClick={() => {
+									void runWindowAction('close')
+								}}>
+								<XIcon className='size-4' />
+							</button>
+						</div>
+					</>
+				)}
+			</div>
 		</header>
 	)
 }
