@@ -144,30 +144,30 @@ function WorkbenchShellContent() {
 						/>
 					}
 					canvas={<Outlet />}
-						metaRail={
-							isRightPanelOpen ? (
-								<WorkbenchMetaRail
-									title='文档元信息'
-									actions={
-										<Button
-											type='button'
-											variant='ghost'
-											size='icon-sm'
-											title='收起右侧栏'
-											onClick={() => {
-												setRightPanelOpen(false)
-											}}>
-											<XIcon />
-										</Button>
-									}>
-									<RightPanel
-										documentId={activeDocumentId}
-										documentTitle={documentTitle}
-										isDocumentReady={isWorkbenchReady}
-										saveStatus={saveStatus}
-									/>
-								</WorkbenchMetaRail>
-							) : null
+					metaRail={
+						isRightPanelOpen ? (
+							<WorkbenchMetaRail
+								title='文档元信息'
+								actions={
+									<Button
+										type='button'
+										variant='ghost'
+										size='icon-sm'
+										title='收起右侧栏'
+										onClick={() => {
+											setRightPanelOpen(false)
+										}}>
+										<XIcon />
+									</Button>
+								}>
+								<RightPanel
+									documentId={activeDocumentId}
+									documentTitle={documentTitle}
+									isDocumentReady={isWorkbenchReady}
+									saveStatus={saveStatus}
+								/>
+							</WorkbenchMetaRail>
+						) : null
 					}
 				/>
 			</div>

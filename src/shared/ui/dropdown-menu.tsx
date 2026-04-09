@@ -3,15 +3,30 @@ import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 import { cn } from '@/shared/lib/utils'
 
 function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-	return <DropdownMenuPrimitive.Root data-slot='dropdown-menu' {...props} />
+	return (
+		<DropdownMenuPrimitive.Root
+			data-slot='dropdown-menu'
+			{...props}
+		/>
+	)
 }
 
 function DropdownMenuTrigger({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
-	return <DropdownMenuPrimitive.Trigger data-slot='dropdown-menu-trigger' {...props} />
+	return (
+		<DropdownMenuPrimitive.Trigger
+			data-slot='dropdown-menu-trigger'
+			{...props}
+		/>
+	)
 }
 
 function DropdownMenuPortal({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) {
-	return <DropdownMenuPrimitive.Portal data-slot='dropdown-menu-portal' {...props} />
+	return (
+		<DropdownMenuPrimitive.Portal
+			data-slot='dropdown-menu-portal'
+			{...props}
+		/>
+	)
 }
 
 function DropdownMenuContent({
@@ -34,7 +49,11 @@ function DropdownMenuContent({
 	)
 }
 
-function DropdownMenuItem({ className, inset, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & { inset?: boolean }) {
+function DropdownMenuItem({
+	className,
+	inset,
+	...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & { inset?: boolean }) {
 	return (
 		<DropdownMenuPrimitive.Item
 			data-slot='dropdown-menu-item'
@@ -58,7 +77,11 @@ function DropdownMenuSeparator({ className, ...props }: React.ComponentProps<typ
 	)
 }
 
-function DropdownMenuLabel({ className, inset, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & { inset?: boolean }) {
+function DropdownMenuLabel({
+	className,
+	inset,
+	...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & { inset?: boolean }) {
 	return (
 		<DropdownMenuPrimitive.Label
 			data-slot='dropdown-menu-label'

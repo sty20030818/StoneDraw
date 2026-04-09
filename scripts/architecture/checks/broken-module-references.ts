@@ -1,8 +1,7 @@
 import { srcRoot, type Violation } from '../config'
 import { collectSourceFiles, normalizePath, readSourceFile, resolveModuleReference } from '../collect'
 
-const staticModuleReferencePattern =
-	/(?:import|export)\s+(?:type\s+)?(?:[^'"]*?)from\s+['"](\.[^'"]+)['"]/g
+const staticModuleReferencePattern = /(?:import|export)\s+(?:type\s+)?(?:[^'"]*?)from\s+['"](\.[^'"]+)['"]/g
 const dynamicModuleReferencePattern = /import\(\s*['"](\.[^'"]+)['"]\s*\)/g
 
 export function collectViolationsForBrokenModuleReferences(): Violation[] {

@@ -108,10 +108,12 @@ describe('HistoryPanel', () => {
 			id: 'ver-history-create',
 			label: '手动版本 1',
 		})
-		const onCreateVersionMock = vi.fn<() => Promise<TauriCommandResult<DocumentVersionMeta> | null>>().mockResolvedValue({
-			ok: true,
-			data: createdVersion,
-		})
+		const onCreateVersionMock = vi
+			.fn<() => Promise<TauriCommandResult<DocumentVersionMeta> | null>>()
+			.mockResolvedValue({
+				ok: true,
+				data: createdVersion,
+			})
 
 		listDocumentVersionsMock
 			.mockResolvedValueOnce({
@@ -148,16 +150,18 @@ describe('HistoryPanel', () => {
 
 	test('创建版本失败时应提示错误且不刷新列表', async () => {
 		const user = userEvent.setup()
-		const onCreateVersionMock = vi.fn<() => Promise<TauriCommandResult<DocumentVersionMeta> | null>>().mockResolvedValue({
-			ok: false,
-			error: createAppError({
-				code: 'DB_ERROR',
-				message: '创建版本失败',
-				details: 'versions insert failed',
-				module: 'version-service',
-				operation: 'createManualVersion',
-			}),
-		})
+		const onCreateVersionMock = vi
+			.fn<() => Promise<TauriCommandResult<DocumentVersionMeta> | null>>()
+			.mockResolvedValue({
+				ok: false,
+				error: createAppError({
+					code: 'DB_ERROR',
+					message: '创建版本失败',
+					details: 'versions insert failed',
+					module: 'version-service',
+					operation: 'createManualVersion',
+				}),
+			})
 
 		listDocumentVersionsMock.mockResolvedValue({
 			ok: true,

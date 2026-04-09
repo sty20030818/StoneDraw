@@ -10,8 +10,7 @@ import { useWorkbenchLeaveGuard } from './hooks/useWorkbenchLeaveGuard'
 import { useWorkbenchPersistenceActions } from './hooks/useWorkbenchPersistenceActions'
 import { useWorkbenchSaveFeedback } from './hooks/useWorkbenchSaveFeedback'
 
-const CANVAS_CARD_CLASS =
-	'flex h-full min-h-0 flex-1 overflow-hidden rounded-xl border bg-background'
+const CANVAS_CARD_CLASS = 'flex h-full min-h-0 flex-1 overflow-hidden rounded-xl border bg-background'
 
 function WorkbenchLoadingCanvas() {
 	return (

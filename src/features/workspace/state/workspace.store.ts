@@ -23,11 +23,7 @@ const initialWorkspaceState = {
 	collectionErrorMessage: null,
 } satisfies Pick<
 	WorkspaceStoreState,
-	| 'documents'
-	| 'recentDocuments'
-	| 'trashedDocuments'
-	| 'collectionStatus'
-	| 'collectionErrorMessage'
+	'documents' | 'recentDocuments' | 'trashedDocuments' | 'collectionStatus' | 'collectionErrorMessage'
 >
 
 // Workspace store 只承接工作区读模型，不再把文档集合状态塞进 documents 领域状态。

@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react'
+import { ArchiveIcon, FileTextIcon, HomeIcon, Settings2Icon } from 'lucide-react'
 import { APP_ROUTES, type AppRoutePath } from '@/shared/constants/routes'
 
 export type WorkspaceNavItem = {
@@ -5,6 +7,7 @@ export type WorkspaceNavItem = {
 	label: string
 	path: AppRoutePath
 	description: string
+	icon: LucideIcon
 }
 
 export type WorkbenchActivityItem = {
@@ -19,24 +22,28 @@ export const WORKSPACE_NAV_ITEMS: WorkspaceNavItem[] = [
 		label: '首页',
 		path: APP_ROUTES.WORKSPACE_HOME,
 		description: '快捷动作与最近打开',
+		icon: HomeIcon,
 	},
 	{
 		key: 'documents',
 		label: '文档',
 		path: APP_ROUTES.WORKSPACE_DOCUMENTS,
 		description: '列表优先的正式文档库',
+		icon: FileTextIcon,
 	},
 	{
 		key: 'archive',
 		label: '归档',
 		path: APP_ROUTES.WORKSPACE_ARCHIVE,
 		description: '回收与恢复管理',
+		icon: ArchiveIcon,
 	},
 	{
 		key: 'settings',
 		label: '设置',
 		path: APP_ROUTES.WORKSPACE_SETTINGS,
 		description: '应用设置与诊断信息',
+		icon: Settings2Icon,
 	},
 ]
 

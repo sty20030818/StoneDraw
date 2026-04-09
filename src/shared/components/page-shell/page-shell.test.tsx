@@ -6,7 +6,7 @@ import SectionHeader from './SectionHeader'
 import WorkspacePageShell from './WorkspacePageShell'
 
 describe('page-shell components', () => {
-	test('WorkspacePageShell 应渲染标题、说明、动作与工具区', () => {
+	test('WorkspacePageShell 应保留工具区与页面内容，但不再渲染页面头', () => {
 		render(
 			<WorkspacePageShell
 				title='文档库'
@@ -18,11 +18,11 @@ describe('page-shell components', () => {
 		)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
-		expect(screen.getByText('文档库')).toBeInTheDocument()
-		expect(screen.getByText('页面壳描述')).toBeInTheDocument()
-		expect(screen.getByRole('button', { name: '主动作' })).toBeInTheDocument()
 		expect(screen.getByText('工具区内容')).toBeInTheDocument()
 		expect(screen.getByText('页面内容')).toBeInTheDocument()
+		expect(screen.queryByText('文档库')).not.toBeInTheDocument()
+		expect(screen.queryByText('页面壳描述')).not.toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: '主动作' })).not.toBeInTheDocument()
 	})
 
 	test('PageSection 与 SectionHeader 应渲染统一区块头', () => {

@@ -1,4 +1,4 @@
-import { BugIcon, DatabaseIcon, FolderTreeIcon, RouteIcon } from 'lucide-react'
+import { DatabaseIcon, FolderTreeIcon, RouteIcon } from 'lucide-react'
 import { useAppStore } from '@/app/state'
 import { PageSection, SectionHeader, WorkspacePageShell } from '@/shared/components'
 import type { DatabaseHealthPayload, LocalDirectoriesPayload } from '@/shared/types'
@@ -112,15 +112,7 @@ function SettingsPage() {
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
 
 	return (
-		<WorkspacePageShell
-			title='设置与诊断'
-			description='正式设置页以概览、目录健康检查和数据库健康检查为主，不新增额外系统能力。'
-			actions={
-				<div className='flex items-center gap-2 text-xs text-muted-foreground'>
-					<BugIcon className='size-3.5' />
-					<span>正式设置页</span>
-				</div>
-			}>
+		<WorkspacePageShell>
 			<PageSection
 				header={
 					<SectionHeader

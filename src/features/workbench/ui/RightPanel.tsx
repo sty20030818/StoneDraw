@@ -18,8 +18,12 @@ function RightPanel({ documentId, documentTitle, isDocumentReady, saveStatus }: 
 			className='grid gap-3'>
 			<div className='rounded-lg border bg-background p-4'>
 				<p className='text-sm font-medium'>当前文档</p>
-				<p className='mt-2 text-sm text-muted-foreground'>{isDocumentReady ? documentTitle : '当前还没有可展示的文档标题'}</p>
-				<p className='mt-2 text-xs text-muted-foreground'>{documentId ? `ID: ${documentId}` : '等待从 Workspace 带入文档上下文'}</p>
+				<p className='mt-2 text-sm text-muted-foreground'>
+					{isDocumentReady ? documentTitle : '当前还没有可展示的文档标题'}
+				</p>
+				<p className='mt-2 text-xs text-muted-foreground'>
+					{documentId ? `ID: ${documentId}` : '等待从 Workspace 带入文档上下文'}
+				</p>
 			</div>
 			<div className='rounded-lg border bg-background p-4'>
 				<div className='flex items-center justify-between gap-3'>

@@ -2,7 +2,12 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { APP_ROUTES } from '@/shared/constants/routes'
-import { WorkbenchShellProvider, useWorkbenchShell, type WorkbenchShellState, useWorkbenchStore } from '@/features/workbench'
+import {
+	WorkbenchShellProvider,
+	useWorkbenchShell,
+	type WorkbenchShellState,
+	useWorkbenchStore,
+} from '@/features/workbench'
 import { createAppError } from '@/test/fixtures/error'
 import { createDocumentMeta } from '@/test/fixtures/document'
 import { createScenePayload } from '@/test/fixtures/scene'

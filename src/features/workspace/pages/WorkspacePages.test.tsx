@@ -80,16 +80,19 @@ const appState = {
 }
 
 describe('Workspace pages', () => {
-	test('HomePage 应接入统一页面壳', async () => {
+	test('HomePage 应渲染原型化首页骨架', async () => {
 		useWorkspaceStoreMock.mockImplementation((selector) => selector(workspaceState))
 		const { default: HomePage } = await import('./HomePage')
 
 		render(<HomePage />)
 
 		expect(screen.getByTestId('workspace-page-shell')).toBeInTheDocument()
-		expect(screen.getByText('快捷动作')).toBeInTheDocument()
-		expect(screen.getByText('最近打开')).toBeInTheDocument()
-		expect(screen.getByText('最近活动')).toBeInTheDocument()
+		expect(screen.getByText(/石头鱼/)).toBeInTheDocument()
+		expect(screen.getByText('新建空白文档')).toBeInTheDocument()
+		expect(screen.getByText('从模板新建')).toBeInTheDocument()
+		expect(screen.getByText('导入文件')).toBeInTheDocument()
+		expect(screen.getByText('近期活动')).toBeInTheDocument()
+		expect(screen.getByText('查看全部')).toBeInTheDocument()
 	})
 
 	test('DocumentsPage 应接入统一页面壳与工具区', async () => {

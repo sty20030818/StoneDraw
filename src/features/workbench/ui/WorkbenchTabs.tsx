@@ -26,12 +26,12 @@ function WorkbenchTabs({
 
 	return (
 		<div className='scrollbar-hidden flex items-end gap-1.5 overflow-x-auto border-b bg-card px-3 pt-2'>
-				{visibleTabs.map((tab) => {
-					const isActive = tab.id === activeTabId || (tabs.length === 0 && tab.id === 'pending')
-					const shouldShowUnsavedMarker = isActive && (activeSaveStatus === 'dirty' || activeSaveStatus === 'error')
+			{visibleTabs.map((tab) => {
+				const isActive = tab.id === activeTabId || (tabs.length === 0 && tab.id === 'pending')
+				const shouldShowUnsavedMarker = isActive && (activeSaveStatus === 'dirty' || activeSaveStatus === 'error')
 
-					return (
-						<button
+				return (
+					<button
 						type='button'
 						key={tab.id}
 						onClick={() => {

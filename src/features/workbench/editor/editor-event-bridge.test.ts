@@ -13,11 +13,7 @@ describe('workbench.editor-event-bridge', () => {
 			'file-1': { id: 'file-1' },
 		} as unknown as BinaryFiles
 
-		bridge.handleContentChange(
-			elements,
-			{ viewBackgroundColor: '#fff' } as never,
-			files,
-		)
+		bridge.handleContentChange(elements, { viewBackgroundColor: '#fff' } as never, files)
 
 		expect(onContentChange).toHaveBeenCalledTimes(1)
 		expect(onContentChange).toHaveBeenCalledWith({

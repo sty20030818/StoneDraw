@@ -1,5 +1,10 @@
 import { createFailureResult, createSuccessResult } from '@/platform/tauri'
-import type { CreateDocumentSuccessPayload, DocumentMeta, OpenDocumentSuccessPayload, TauriCommandResult } from '@/shared/types'
+import type {
+	CreateDocumentSuccessPayload,
+	DocumentMeta,
+	OpenDocumentSuccessPayload,
+	TauriCommandResult,
+} from '@/shared/types'
 import { documentRepository, sceneRepository } from '../api'
 
 export const documentService = {

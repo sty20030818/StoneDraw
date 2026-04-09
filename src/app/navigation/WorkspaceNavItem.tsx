@@ -6,19 +6,27 @@ type WorkspaceNavItemProps = {
 }
 
 function WorkspaceNavItem({ item }: WorkspaceNavItemProps) {
+	const Icon = item.icon
+
 	return (
 		<NavLink
 			to={item.path}
 			className={({ isActive }) =>
 				[
-					'rounded-md border px-3.5 py-3 text-left transition-colors',
+					'flex items-center gap-3 rounded-lg border px-2.5 py-2 text-left transition-colors',
 					isActive
-						? 'border-border bg-background text-foreground shadow-sm'
-						: 'border-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground',
+						? 'border-primary/15 bg-primary/12 text-primary shadow-sm'
+						: 'border-transparent bg-transparent text-foreground/72 hover:border-primary/10 hover:bg-primary/6 hover:text-foreground',
 				].join(' ')
 			}>
-			<div className='text-sm font-medium'>{item.label}</div>
-			<div className='mt-1 text-xs leading-5 text-current/70'>{item.description}</div>
+			<span
+				className={[
+					'grid size-8 shrink-0 place-items-center rounded-md border transition-colors',
+					'border-current/10 bg-background/80',
+				].join(' ')}>
+				<Icon className='size-4' />
+			</span>
+			<div className='min-w-0 text-sm font-medium'>{item.label}</div>
 		</NavLink>
 	)
 }

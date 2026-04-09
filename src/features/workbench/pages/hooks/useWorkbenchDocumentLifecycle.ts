@@ -11,10 +11,7 @@ type UseWorkbenchDocumentLifecycleOptions = {
 	resetShellActions: () => void
 }
 
-export function useWorkbenchDocumentLifecycle({
-	documentId,
-	resetShellActions,
-}: UseWorkbenchDocumentLifecycleOptions) {
+export function useWorkbenchDocumentLifecycle({ documentId, resetShellActions }: UseWorkbenchDocumentLifecycleOptions) {
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
 	const setActiveDocumentId = useWorkbenchStore((state) => state.setActiveDocumentId)
 	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
@@ -87,14 +84,7 @@ export function useWorkbenchDocumentLifecycle({
 			setSelectedDocumentId(null)
 			resetShellActions()
 		}
-	}, [
-		documentId,
-		resetShellActions,
-		setActiveDocumentId,
-		setDocumentTitle,
-		setSelectedDocumentId,
-		setWorkbenchReady,
-	])
+	}, [documentId, resetShellActions, setActiveDocumentId, setDocumentTitle, setSelectedDocumentId, setWorkbenchReady])
 
 	useEffect(() => {
 		if (workbenchLoadState.status !== 'ready') {
@@ -110,7 +100,14 @@ export function useWorkbenchDocumentLifecycle({
 			title: workbenchLoadState.document.title,
 		})
 		documentPersistenceSession.initialize(workbenchLoadState.scene)
-	}, [setActiveDocumentId, setDocumentTitle, setSelectedDocumentId, setWorkbenchReady, syncDocumentTab, workbenchLoadState])
+	}, [
+		setActiveDocumentId,
+		setDocumentTitle,
+		setSelectedDocumentId,
+		setWorkbenchReady,
+		syncDocumentTab,
+		workbenchLoadState,
+	])
 
 	return {
 		workbenchLoadState,

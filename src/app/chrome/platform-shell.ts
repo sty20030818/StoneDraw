@@ -12,9 +12,7 @@ export function detectDesktopShellPlatform(): DesktopShellPlatform {
 	}
 
 	const platformCandidate =
-		navigatorWithUserAgentData.userAgentData?.platform ??
-		navigator.platform ??
-		navigator.userAgent
+		navigatorWithUserAgentData.userAgentData?.platform ?? navigator.platform ?? navigator.userAgent
 
 	const normalizedPlatform = platformCandidate.toLowerCase()
 

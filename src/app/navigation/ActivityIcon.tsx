@@ -14,13 +14,13 @@ function ActivityIcon({ icon: Icon, isActive, label, onClick }: ActivityIconProp
 			className={[
 				'relative grid size-10 place-items-center rounded-lg border transition-colors',
 				isActive
-					? 'border-border bg-accent text-foreground'
-					: 'border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
+					? 'border-primary/15 bg-primary/12 text-primary'
+					: 'border-transparent bg-transparent text-muted-foreground hover:bg-primary/8 hover:text-foreground',
 			].join(' ')}
 			title={label}
 			onClick={onClick}>
 			{isActive ? (
-				<span className='absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-full bg-foreground/40' />
+				<span className='absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary/80' />
 			) : null}
 			<Icon />
 		</button>

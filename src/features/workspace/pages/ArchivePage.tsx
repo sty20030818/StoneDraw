@@ -16,10 +16,7 @@ function ArchivePage() {
 	const { handleRestoreDocument, handlePermanentlyDeleteDocument } = useWorkspaceDocuments()
 
 	return (
-		<WorkspacePageShell
-			title='回收与归档'
-			description='统一回收站页面壳，保留恢复与永久删除链路，内容重排留到后续阶段。'
-			actions={<span className='text-xs text-muted-foreground'>{trashedDocuments.length} 个已删除</span>}>
+		<WorkspacePageShell>
 			<PageSection
 				header={
 					<SectionHeader
@@ -39,7 +36,9 @@ function ArchivePage() {
 								key={document.id}
 								className='grid gap-3 border-t border-border bg-background px-4 py-4 first:border-t-0 md:grid-cols-[minmax(0,1.8fr)_11rem_14rem] md:items-center'>
 								<p className='truncate text-sm font-semibold'>{document.title}</p>
-								<p className='text-xs text-muted-foreground'>{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}</p>
+								<p className='text-xs text-muted-foreground'>
+									{document.deletedAt ? formatDateTime(document.deletedAt) : '未记录'}
+								</p>
 								<div className='flex justify-end gap-2'>
 									<Button
 										type='button'
@@ -78,17 +77,17 @@ function ArchivePage() {
 						))}
 					</div>
 				) : (
-						<EmptyState
-							title='回收站为空'
-							description='当前没有已删除文档，删除到回收站后的内容会统一在这里恢复或彻底清理。'
-							icon={RotateCcwIcon}
-							actionLabel='返回文档库'
-							onAction={() => {
-								void navigate(APP_ROUTES.WORKSPACE_DOCUMENTS)
-							}}
-						/>
-					)}
-				</PageSection>
+					<EmptyState
+						title='回收站为空'
+						description='当前没有已删除文档，删除到回收站后的内容会统一在这里恢复或彻底清理。'
+						icon={RotateCcwIcon}
+						actionLabel='返回文档库'
+						onAction={() => {
+							void navigate(APP_ROUTES.WORKSPACE_DOCUMENTS)
+						}}
+					/>
+				)}
+			</PageSection>
 		</WorkspacePageShell>
 	)
 }

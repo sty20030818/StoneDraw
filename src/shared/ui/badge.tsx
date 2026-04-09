@@ -2,21 +2,24 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type * as React from 'react'
 import { cn } from '@/shared/lib/utils'
 
-const badgeVariants = cva('inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap', {
-	variants: {
-		variant: {
-			default: 'border-transparent bg-primary text-primary-foreground',
-			secondary: 'border-transparent bg-secondary text-secondary-foreground',
-			outline: 'border-border bg-background text-foreground',
-			success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
-			warning: 'border-amber-500/20 bg-amber-500/10 text-amber-700',
-			destructive: 'border-rose-500/20 bg-rose-500/10 text-rose-700',
+const badgeVariants = cva(
+	'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
+	{
+		variants: {
+			variant: {
+				default: 'border-transparent bg-primary text-primary-foreground',
+				secondary: 'border-transparent bg-secondary text-secondary-foreground',
+				outline: 'border-border bg-background text-foreground',
+				success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700',
+				warning: 'border-amber-500/20 bg-amber-500/10 text-amber-700',
+				destructive: 'border-rose-500/20 bg-rose-500/10 text-rose-700',
+			},
+		},
+		defaultVariants: {
+			variant: 'secondary',
 		},
 	},
-	defaultVariants: {
-		variant: 'secondary',
-	},
-})
+)
 
 function Badge({ className, variant, ...props }: React.ComponentProps<'span'> & VariantProps<typeof badgeVariants>) {
 	return (

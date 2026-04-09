@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react'
 import { MoreHorizontalIcon, PencilLineIcon, Trash2Icon } from 'lucide-react'
-import { Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Input } from '@/shared/ui'
+import {
+	Badge,
+	Button,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+	Input,
+} from '@/shared/ui'
 import { formatDateTime } from '@/shared/lib/date'
 import type { DocumentMeta } from '@/shared/types'
 
@@ -46,7 +56,7 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 	const statusMeta = useMemo(() => resolveDocumentStatusVariant(document), [document])
 
 	return (
-		<div className='rounded-lg border bg-background transition-colors hover:border-border hover:bg-muted/20'>
+		<div className='rounded-md border bg-background transition-colors hover:border-primary/15 hover:bg-primary/5'>
 			<div
 				className='group/document-row grid cursor-pointer gap-3 px-4 py-3 md:grid-cols-[minmax(0,1.8fr)_10rem_6.5rem_3rem] md:items-center'
 				onClick={() => {
@@ -64,7 +74,9 @@ function DocumentListItem({ document, onOpen, onRename, onMoveToTrash }: Documen
 				}}>
 				<div className='min-w-0'>
 					<p className='truncate text-sm font-medium text-foreground'>{document.title}</p>
-					<p className='mt-1 text-xs text-muted-foreground'>最近打开：{document.lastOpenedAt ? formatDateTime(document.lastOpenedAt) : '尚未记录'}</p>
+					<p className='mt-1 text-xs text-muted-foreground'>
+						最近打开：{document.lastOpenedAt ? formatDateTime(document.lastOpenedAt) : '尚未记录'}
+					</p>
 				</div>
 				<div className='text-sm text-muted-foreground'>{formatDateTime(document.updatedAt)}</div>
 				<div>

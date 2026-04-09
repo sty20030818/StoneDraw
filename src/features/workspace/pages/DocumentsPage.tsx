@@ -68,33 +68,30 @@ function DocumentsPage() {
 
 	return (
 		<WorkspacePageShell
-			title='文档库'
-			description='正式管理态主列表页，优先提供搜索、浏览、打开与文档级操作。'
-			actions={<span className='text-xs text-muted-foreground'>{documents.length} 个文档</span>}
-				toolbar={
-					<DocumentListToolbar
-						documentCount={documents.length}
-						searchDraft={searchDraft}
+			toolbar={
+				<DocumentListToolbar
+					documentCount={documents.length}
+					searchDraft={searchDraft}
 					onSearchChange={setSearchDraft}
 					onRefresh={() => {
 						void loadWorkspaceData()
 					}}
-						onCreate={() => {
-							openNewDocumentDialog({
-								source: 'workspace-page',
-							})
-						}}
-						viewControl={
-							<Button
-								type='button'
-								variant='outline'
-								size='sm'
-								disabled>
-								列表视图
-							</Button>
-						}
-					/>
-				}>
+					onCreate={() => {
+						openNewDocumentDialog({
+							source: 'workspace-page',
+						})
+					}}
+					viewControl={
+						<Button
+							type='button'
+							variant='outline'
+							size='sm'
+							disabled>
+							列表视图
+						</Button>
+					}
+				/>
+			}>
 			<PageSection
 				header={
 					<SectionHeader
@@ -102,9 +99,7 @@ function DocumentsPage() {
 						description='列表优先展示标题、更新时间、状态和操作入口。'
 					/>
 				}>
-				{collectionStatus === 'loading' ? (
-					<DocumentListSkeleton />
-				) : null}
+				{collectionStatus === 'loading' ? <DocumentListSkeleton /> : null}
 
 				{collectionStatus === 'error' ? (
 					<EmptyState
