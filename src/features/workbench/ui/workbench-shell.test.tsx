@@ -23,16 +23,14 @@ describe('workbench shell components', () => {
 	test('WorkbenchShellFrame 应渲染中央插槽与右侧 meta rail', () => {
 		render(
 			<WorkbenchShellFrame
-				tabs={<div>标签栏</div>}
-				titleBar={<div>标题栏</div>}
+				header={<div>头部栏</div>}
 				canvas={<div>画布容器</div>}
 				metaRail={<WorkbenchMetaRail title='Properties'>右栏内容</WorkbenchMetaRail>}
 			/>,
 		)
 
 		expect(screen.getByTestId('workbench-shell-frame')).toBeInTheDocument()
-		expect(screen.getByText('标签栏')).toBeInTheDocument()
-		expect(screen.getByText('标题栏')).toBeInTheDocument()
+		expect(screen.getByText('头部栏')).toBeInTheDocument()
 		expect(screen.getByText('画布容器')).toBeInTheDocument()
 		expect(screen.getByTestId('workbench-meta-rail')).toBeInTheDocument()
 		expect(screen.getByText('右栏内容')).toBeInTheDocument()

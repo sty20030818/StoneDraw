@@ -111,7 +111,7 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 			data-tauri-drag-region
 			onPointerDownCapture={handleChromePointerDownCapture}
 			className={cn(
-				'window-chrome-drag flex h-14 min-h-14 items-center gap-4 overflow-hidden border-b bg-background/80 backdrop-blur-sm',
+				'window-chrome-drag flex h-14 min-h-14 items-center gap-4 overflow-hidden border-b bg-card',
 				topbarPaddingClass,
 				className,
 			)}>

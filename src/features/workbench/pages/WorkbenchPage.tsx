@@ -10,14 +10,12 @@ import { useWorkbenchLeaveGuard } from './hooks/useWorkbenchLeaveGuard'
 import { useWorkbenchPersistenceActions } from './hooks/useWorkbenchPersistenceActions'
 import { useWorkbenchSaveFeedback } from './hooks/useWorkbenchSaveFeedback'
 
-const CANVAS_CARD_CLASS = 'flex h-full min-h-0 flex-1 overflow-hidden rounded-xl border bg-background'
+const CANVAS_SURFACE_CLASS = 'flex h-full min-h-0 flex-1 overflow-hidden bg-background'
 
 function WorkbenchLoadingCanvas() {
 	return (
-		<div className={CANVAS_CARD_CLASS}>
-			<div className='flex h-full min-h-0 w-full p-4 md:p-5'>
-				<div className='h-full w-full rounded-lg border bg-card' />
-			</div>
+		<div className={CANVAS_SURFACE_CLASS}>
+			<div className='h-full w-full bg-card/40' />
 		</div>
 	)
 }
@@ -76,7 +74,7 @@ function WorkbenchPage() {
 	}
 
 	return (
-		<CanvasShell className={CANVAS_CARD_CLASS}>
+		<CanvasShell className={CANVAS_SURFACE_CLASS}>
 			<ExcalidrawHost
 				scene={workbenchLoadState.scene}
 				onContentChange={handleContentChange}

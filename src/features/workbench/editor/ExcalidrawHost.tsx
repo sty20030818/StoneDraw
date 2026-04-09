@@ -28,10 +28,44 @@ const EXCALIDRAW_UI_OPTIONS = {
 
 function ExcalidrawHost({ scene, onContentChange, onReadyChange }: ExcalidrawHostProps) {
 	const apiRef = useRef<ExcalidrawImperativeAPI | null>(null)
+	const hostRef = useRef<HTMLDivElement | null>(null)
 	const lastAppliedSceneKeyRef = useRef<string | null>(null)
 	const initialData = useMemo(() => createWorkbenchInitialSceneData(scene), [scene])
 	const sceneRestoreKey = useMemo(() => `${scene.documentId}:${scene.updatedAt}`, [scene.documentId, scene.updatedAt])
 	const eventBridge = useMemo(() => createEditorEventBridge({ onContentChange }), [onContentChange])
+
+	useEffect(() => {
+		const hostElement = hostRef.current
+
+		if (!hostElement) {
+			return
+		}
+
+		const hideWorkbenchChrome = () => {
+			hostElement
+				.querySelectorAll<HTMLElement>('.main-menu-trigger, .default-sidebar-trigger, .help-icon')
+				.forEach((element) => {
+					element.style.setProperty('display', 'none', 'important')
+				})
+		}
+
+		hideWorkbenchChrome()
+
+		// Excalidraw 会在交互过程中重建按钮节点，这里用 observer 保证隐藏状态持续生效。
+		const observer = new MutationObserver(() => {
+			hideWorkbenchChrome()
+		})
+
+		observer.observe(hostElement, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+		})
+
+		return () => {
+			observer.disconnect()
+		}
+	}, [])
 
 	useEffect(() => {
 		const api = apiRef.current
@@ -52,7 +86,9 @@ function ExcalidrawHost({ scene, onContentChange, onReadyChange }: ExcalidrawHos
 	}, [onReadyChange])
 
 	return (
-		<div className='h-full min-h-0 w-full [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
+		<div
+			ref={hostRef}
+			className='h-full min-h-0 w-full [&_.App-menu_top]:rounded-none [&_.excalidraw]:h-full'>
 			<Excalidraw
 				UIOptions={EXCALIDRAW_UI_OPTIONS}
 				excalidrawAPI={(api) => {

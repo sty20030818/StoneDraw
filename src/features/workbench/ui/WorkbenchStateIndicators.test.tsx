@@ -13,8 +13,10 @@ describe('Workbench 状态表现', () => {
 				fallbackDocumentTitle='文档一'
 				isDocumentReady
 				activeSaveStatus='dirty'
+				isRightPanelOpen={false}
 				onSelectTab={vi.fn<(documentId: string) => void>()}
 				onCloseTab={vi.fn<(documentId: string) => void>()}
+				onToggleRightPanel={vi.fn<() => void>()}
 			/>,
 		)
 

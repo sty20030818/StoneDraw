@@ -65,6 +65,7 @@ describe('WindowChrome', () => {
 		render(<WindowChrome scene='workspace' />)
 
 		expect(screen.getByTestId('window-chrome-center-actions')).toBeInTheDocument()
+		expect(screen.getByTestId('window-chrome-root')).toHaveClass('bg-card')
 		expect(screen.getByPlaceholderText('搜索文档标题')).toHaveClass('h-10')
 		expect(screen.getByRole('button', { name: '导入' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: '新建文档' })).toBeInTheDocument()

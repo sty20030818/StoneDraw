@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Separator } from '@/shared/ui/separator'
 import { cn } from '@/shared/lib/utils'
 
 type WorkbenchMetaRailProps = {
@@ -18,7 +17,6 @@ function WorkbenchMetaRail({ title, actions, children, className }: WorkbenchMet
 				<p className='text-xs font-medium uppercase text-muted-foreground'>{title}</p>
 				{actions ? <div className='flex items-center gap-1'>{actions}</div> : null}
 			</div>
-			<Separator />
 			<div className='scrollbar-hidden min-h-0 flex-1 overflow-auto p-4'>{children}</div>
 		</aside>
 	)

@@ -32,6 +32,7 @@ describe('WindowChromeBrandHeader', () => {
 		render(<WindowChromeBrandHeader />)
 
 		expect(screen.getByTestId('window-chrome-brand-header')).toHaveClass('px-4')
+		expect(screen.getByTestId('window-chrome-brand-header')).toHaveClass('bg-card')
 	})
 
 	test('workbench 场景可单独开启品牌头下边线', async () => {

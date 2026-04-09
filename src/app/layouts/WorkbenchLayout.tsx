@@ -18,7 +18,6 @@ import {
 	WorkbenchShellProvider,
 	WorkbenchSidePanel,
 	WorkbenchTabs,
-	WorkbenchTitleBar,
 	useWorkbenchShell,
 	useWorkbenchStore,
 } from '@/features/workbench'
@@ -32,7 +31,6 @@ function WorkbenchShellContent() {
 	const documentTitle = useWorkbenchStore((state) => state.documentTitle)
 	const isWorkbenchReady = useWorkbenchStore((state) => state.isWorkbenchReady)
 	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
-	const isFlushing = useWorkbenchStore((state) => state.isFlushing)
 	const activePanel = useWorkbenchStore((state) => state.activePanel)
 	const tabs = useWorkbenchStore((state) => state.tabs)
 	const activeTabId = useWorkbenchStore((state) => state.activeTabId)
@@ -120,6 +118,7 @@ function WorkbenchShellContent() {
 					].join(' ')}>
 					<ActivityBar
 						activePanel={activePanel}
+						onBack={shellState.onBack}
 						onPanelChange={setActivePanel}
 					/>
 					{isSidePanelOpen ? (
@@ -132,7 +131,7 @@ function WorkbenchShellContent() {
 				</div>
 
 				<WorkbenchShellFrame
-					tabs={
+					header={
 						<WorkbenchTabs
 							tabs={tabs}
 							activeTabId={activeTabId}
@@ -140,19 +139,9 @@ function WorkbenchShellContent() {
 							fallbackDocumentTitle={documentTitle}
 							isDocumentReady={isWorkbenchReady}
 							activeSaveStatus={saveStatus}
+							isRightPanelOpen={isRightPanelOpen}
 							onSelectTab={openDocumentInWorkbench}
 							onCloseTab={handleCloseTab}
-						/>
-					}
-					titleBar={
-						<WorkbenchTitleBar
-							documentTitle={documentTitle}
-							isDocumentReady={isWorkbenchReady}
-							saveStatus={saveStatus}
-							isFlushing={isFlushing}
-							isRightPanelOpen={isRightPanelOpen}
-							onBack={shellState.onBack}
-							onSave={shellState.onSave}
 							onToggleRightPanel={() => {
 								setRightPanelOpen(!isRightPanelOpen)
 							}}

@@ -8,7 +8,6 @@ const workbenchState = {
 	documentTitle: '测试文档',
 	isWorkbenchReady: true,
 	saveStatus: 'saved' as const,
-	isFlushing: false,
 	activePanel: 'explorer' as const,
 	tabs: [],
 	activeTabId: 'doc-1',
@@ -44,19 +43,16 @@ vi.mock('@/features/workbench', () => ({
 	HistoryPanel: () => <div>历史面板</div>,
 	WorkbenchMetaRail: ({ children }: { children: ReactNode }) => <div data-testid='meta-rail-stub'>{children}</div>,
 	WorkbenchShellFrame: ({
-		tabs,
-		titleBar,
+		header,
 		canvas,
 		metaRail,
 	}: {
-		tabs: ReactNode
-		titleBar: ReactNode
+		header: ReactNode
 		canvas: ReactNode
 		metaRail?: ReactNode
 	}) => (
 		<div data-testid='workbench-shell-frame-stub'>
-			{tabs}
-			{titleBar}
+			{header}
 			{canvas}
 			{metaRail}
 		</div>
@@ -66,7 +62,6 @@ vi.mock('@/features/workbench', () => ({
 	StatusBar: () => <div>状态栏</div>,
 	WorkbenchShellProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 	WorkbenchTabs: () => <div>标签栏</div>,
-	WorkbenchTitleBar: () => <div>标题栏</div>,
 	useWorkbenchShell: () => ({
 		shellState: {
 			onBack: vi.fn<() => void>(),

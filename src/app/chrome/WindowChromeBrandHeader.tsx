@@ -15,7 +15,7 @@ function WindowChromeBrandHeader({ className, showBottomBorder = false }: Window
 			data-testid='window-chrome-brand-header'
 			data-tauri-drag-region
 			className={cn(
-				'window-chrome-drag flex h-14 min-h-14 items-center bg-card/85',
+				'window-chrome-drag flex h-14 min-h-14 items-center bg-card',
 				showBottomBorder && 'border-b',
 				isMacShell ? 'pl-20 pr-4' : 'px-4',
 				className,
