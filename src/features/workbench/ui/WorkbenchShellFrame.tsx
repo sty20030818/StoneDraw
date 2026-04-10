@@ -12,7 +12,7 @@ function WorkbenchShellFrame({ header, canvas, metaRail, className }: WorkbenchS
 	return (
 		<div
 			data-testid='workbench-shell-frame'
-			className={cn('flex min-h-0 min-w-0 flex-1 overflow-hidden', className)}>
+			className={cn('flex h-full w-full min-h-0 min-w-0 flex-1 overflow-hidden', className)}>
 			<div className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background'>
 				<div>{header}</div>
 				<div className='min-h-0 flex-1 overflow-hidden'>{canvas}</div>

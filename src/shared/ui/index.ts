@@ -38,6 +38,7 @@ export {
 } from './dropdown-menu'
 export { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from './empty'
 export { Input } from './input'
+export { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './resizable'
 export { Separator } from './separator'
 export {
 	Sheet,

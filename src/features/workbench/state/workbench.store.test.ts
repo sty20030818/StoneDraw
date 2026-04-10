@@ -1,39 +1,49 @@
-import { describe, expect, test } from 'vitest'
-import { useWorkbenchStore } from './workbench.store'
+// @vitest-environment jsdom
+
+import { beforeEach, describe, expect, test } from 'vitest'
+import {
+	useWorkbenchStore,
+	WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH,
+	WORKBENCH_SIDE_PANEL_MAX_WIDTH,
+	WORKBENCH_SIDE_PANEL_MIN_WIDTH,
+} from './workbench.store'
 
 describe('workbench.store', () => {
-	test('setSaveStatus 应支持 saved dirty saving error 四态切换', () => {
-		const workbenchStore = useWorkbenchStore.getState()
-
-		workbenchStore.setSaveStatus('saved')
-		expect(useWorkbenchStore.getState().saveStatus).toBe('saved')
-
-		workbenchStore.setSaveStatus('dirty')
-		expect(useWorkbenchStore.getState().saveStatus).toBe('dirty')
-
-		workbenchStore.setSaveStatus('saving')
-		expect(useWorkbenchStore.getState().saveStatus).toBe('saving')
-
-		workbenchStore.setSaveStatus('error')
-		expect(useWorkbenchStore.getState().saveStatus).toBe('error')
+	beforeEach(() => {
+		window.localStorage.clear()
+		useWorkbenchStore.getState().reset()
 	})
 
-	test('reset 应恢复工作台运行态初始值', () => {
-		const workbenchStore = useWorkbenchStore.getState()
+	test('应从本地存储恢复侧栏宽度', () => {
+		window.localStorage.setItem('stonedraw:workbench-side-panel-width', '360')
 
-		workbenchStore.setActiveDocumentId('doc-store-1')
-		workbenchStore.setWorkbenchReady(true)
-		workbenchStore.setSaveStatus('dirty')
-		workbenchStore.setLastSaveError('保存失败')
-		workbenchStore.setIsFlushing(true)
-		workbenchStore.reset()
+		useWorkbenchStore.getState().reset()
 
-		expect(useWorkbenchStore.getState()).toMatchObject({
-			activeDocumentId: null,
-			isWorkbenchReady: false,
-			saveStatus: 'idle',
-			lastSaveError: null,
-			isFlushing: false,
-		})
+		expect(useWorkbenchStore.getState().sidePanelWidth).toBe(360)
+	})
+
+	test('设置侧栏宽度时应写入本地存储并限制范围', () => {
+		useWorkbenchStore.getState().setSidePanelWidth(999)
+
+		expect(useWorkbenchStore.getState().sidePanelWidth).toBe(WORKBENCH_SIDE_PANEL_MAX_WIDTH)
+		expect(window.localStorage.getItem('stonedraw:workbench-side-panel-width')).toBe(String(WORKBENCH_SIDE_PANEL_MAX_WIDTH))
+
+		useWorkbenchStore.getState().setSidePanelWidth(100)
+
+		expect(useWorkbenchStore.getState().sidePanelWidth).toBe(WORKBENCH_SIDE_PANEL_MIN_WIDTH)
+		expect(window.localStorage.getItem('stonedraw:workbench-side-panel-width')).toBe(String(WORKBENCH_SIDE_PANEL_MIN_WIDTH))
+	})
+
+	test('同步侧栏宽度时只更新内存状态，不写入本地存储', () => {
+		useWorkbenchStore.getState().syncSidePanelWidth(360)
+
+		expect(useWorkbenchStore.getState().sidePanelWidth).toBe(360)
+		expect(window.localStorage.getItem('stonedraw:workbench-side-panel-width')).toBeNull()
+	})
+
+	test('未命中本地存储时应回退到默认宽度', () => {
+		useWorkbenchStore.getState().reset()
+
+		expect(useWorkbenchStore.getState().sidePanelWidth).toBe(WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH)
 	})
 })

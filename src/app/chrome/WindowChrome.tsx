@@ -50,9 +50,10 @@ function readWorkspaceSearchQuery() {
 type WindowChromeProps = {
 	scene: 'workspace' | 'workbench'
 	className?: string
+	pageCenterOffset?: string
 }
 
-function WindowChrome({ scene, className }: WindowChromeProps) {
+function WindowChrome({ scene, className, pageCenterOffset = '0px' }: WindowChromeProps) {
 	const shellPlatform = detectDesktopShellPlatform()
 	const isMacShell = shellPlatform === 'mac'
 	const activeRoutePath = useAppStore((state) => state.activeRoutePath)
@@ -62,7 +63,7 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 	const windowsWindowControlButtonBaseClass = 'grid h-full place-items-center text-muted-foreground transition-colors'
 	const windowsWindowControlButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-foreground/8 hover:text-foreground`
 	const windowsWindowCloseButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-destructive hover:text-primary-foreground`
-	const searchFlexClass = 'min-w-[24rem] max-w-[40rem] basis-[32rem] flex-[1_1_auto]'
+	const searchShellClass = 'w-full'
 	const topbarPaddingClass =
 		scene === 'workspace' ? (isMacShell ? 'pl-8 pr-3' : 'pl-8 pr-0') : isMacShell ? 'pl-5 pr-3' : 'pl-4 pr-0'
 
@@ -111,16 +112,24 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 			data-tauri-drag-region
 			onPointerDownCapture={handleChromePointerDownCapture}
 			className={cn(
-				'window-chrome-drag flex h-14 min-h-14 items-center gap-4 overflow-hidden border-b bg-card',
+				'window-chrome-drag relative flex h-14 min-h-14 items-center gap-4 overflow-hidden border-b bg-card',
 				topbarPaddingClass,
 				className,
 			)}>
 			<div
+				data-tauri-drag-region
+				className='window-chrome-drag min-w-0 flex-1 self-stretch'
+			/>
+			<div
 				data-testid='window-chrome-search'
 				data-window-chrome-search-root='true'
-				className='window-chrome-no-drag flex min-w-0 flex-1 items-center'>
+				className='window-chrome-no-drag absolute top-1/2 z-10 w-[min(40rem,calc(100%-2rem))] min-w-0'
+				style={{
+					left: `calc(50% - ${pageCenterOffset})`,
+					transform: 'translate(-50%, -50%)',
+				}}>
 				<form
-					className={cn('flex min-w-0 items-center', searchFlexClass)}
+					className={cn('flex min-w-0 items-center', searchShellClass)}
 					onSubmit={(event) => {
 						event.preventDefault()
 						submitChromeSearch()
@@ -143,12 +152,11 @@ function WindowChrome({ scene, className }: WindowChromeProps) {
 
 			<div
 				data-tauri-drag-region
-				className='window-chrome-drag min-w-0 flex-[999_1_0%] self-stretch'
-			/>
-
-			<div
 				data-testid='window-chrome-center-actions'
-				className={cn('window-chrome-drag flex h-full shrink-0 items-center gap-2', isMacShell ? 'pr-2' : 'pr-0')}>
+				className={cn(
+					'window-chrome-drag ml-auto flex h-full min-w-0 items-center gap-2',
+					isMacShell ? 'pr-2' : 'pr-0',
+				)}>
 				<Button
 					type='button'
 					variant='outline'

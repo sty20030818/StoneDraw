@@ -2,6 +2,7 @@ import { Clock3Icon, FilesIcon, HomeIcon } from 'lucide-react'
 import { ActivityIcon } from '@/app/navigation'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import type { WorkbenchPanelKey } from '@/features/workbench/state'
+import { cn } from '@/shared/lib/utils'
 
 const panelIcons = {
 	explorer: FilesIcon,
@@ -12,11 +13,19 @@ type ActivityBarProps = {
 	activePanel: WorkbenchPanelKey
 	onBack: () => void
 	onPanelChange: (panel: WorkbenchPanelKey) => void
+	showRightBorder?: boolean
+	highlightActive?: boolean
 }
 
-function ActivityBar({ activePanel, onBack, onPanelChange }: ActivityBarProps) {
+function ActivityBar({
+	activePanel,
+	onBack,
+	onPanelChange,
+	showRightBorder = false,
+	highlightActive = true,
+}: ActivityBarProps) {
 	return (
-		<aside className='flex h-full w-14 shrink-0 flex-col bg-card'>
+		<aside className={cn('flex h-full w-14 shrink-0 flex-col bg-card', showRightBorder && 'border-r')}>
 			<div className='relative flex h-12 shrink-0 items-center justify-center px-2'>
 				<ActivityIcon
 					icon={HomeIcon}
@@ -28,7 +37,7 @@ function ActivityBar({ activePanel, onBack, onPanelChange }: ActivityBarProps) {
 			<div className='flex flex-1 flex-col items-center gap-2 px-2 py-3'>
 				{WORKBENCH_ACTIVITY_ITEMS.map((item) => {
 					const Icon = panelIcons[item.key]
-					const isActive = item.key === activePanel
+					const isActive = highlightActive && item.key === activePanel
 
 					return (
 						<ActivityIcon

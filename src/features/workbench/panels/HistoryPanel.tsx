@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Clock3Icon, HistoryIcon, LoaderCircleIcon, RefreshCcwIcon } from 'lucide-react'
+import { LoaderCircleIcon } from 'lucide-react'
+import { formatRelativeTime } from '@/features/documents/ui/document-ui'
 import { toast } from 'sonner'
 import { versionService } from '@/features/documents'
-import type { DocumentVersionMeta, SaveStatus, TauriCommandResult } from '@/shared/types'
+import type { DocumentVersionMeta, TauriCommandResult } from '@/shared/types'
 
 type HistoryPanelProps = {
 	documentId: string | null
-	documentTitle: string
 	isDocumentReady: boolean
-	saveStatus: SaveStatus
 	onCreateVersion: () => Promise<TauriCommandResult<DocumentVersionMeta> | null>
 }
 
@@ -28,19 +27,11 @@ type HistoryPanelState =
 			message: string
 	  }
 
-const versionTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
-	month: '2-digit',
-	day: '2-digit',
-	hour: '2-digit',
-	minute: '2-digit',
-	hour12: false,
-})
-
-function formatVersionTime(timestamp: number) {
-	return versionTimeFormatter.format(new Date(timestamp))
+function resolveVersionKindLabel() {
+	return '版本'
 }
 
-function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, onCreateVersion }: HistoryPanelProps) {
+function HistoryPanel({ documentId, isDocumentReady, onCreateVersion }: HistoryPanelProps) {
 	const [panelState, setPanelState] = useState<HistoryPanelState>({
 		status: 'empty',
 	})
@@ -116,101 +107,52 @@ function HistoryPanel({ documentId, documentTitle, isDocumentReady, saveStatus, 
 	}, [documentId, isCreatingVersion, isDocumentReady, loadVersions, onCreateVersion])
 
 	return (
-		<div className='grid gap-3'>
-			<section className='rounded-lg border bg-background p-4'>
-				<div className='flex items-start justify-between gap-3'>
-					<div className='min-w-0'>
-						<p className='text-sm font-medium'>创建版本</p>
-						<p className='mt-2 text-xs leading-5 text-muted-foreground'>聚焦正式主链已经交付的版本冻结能力。</p>
-					</div>
-					<button
-						className='inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60'
-						disabled={!documentId || !isDocumentReady || isCreatingVersion}
-						onClick={() => {
-							void handleCreateVersion()
-						}}
-						type='button'>
-						{isCreatingVersion ? (
-							<LoaderCircleIcon className='size-3.5 animate-spin' />
-						) : (
-							<HistoryIcon className='size-3.5' />
-						)}
-						创建版本
-					</button>
+		<div className='flex w-full min-w-0 flex-col gap-3 overflow-x-hidden'>
+			<button
+				className='inline-flex w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60'
+				disabled={!documentId || !isDocumentReady || isCreatingVersion}
+				onClick={() => {
+					void handleCreateVersion()
+				}}
+				type='button'>
+				{isCreatingVersion ? <LoaderCircleIcon className='size-4 animate-spin' /> : null}
+				{isCreatingVersion ? '创建中…' : '创建版本'}
+			</button>
+
+			{panelState.status === 'loading' ? (
+				<div className='flex w-full items-center gap-2 px-3 py-4 text-sm text-muted-foreground'>
+					<LoaderCircleIcon className='size-4 animate-spin' />
+					<span>正在读取本地版本历史…</span>
 				</div>
-			</section>
+			) : null}
 
-			<section className='rounded-lg border bg-background p-4'>
-				<p className='text-sm font-medium'>当前文档</p>
-				<p className='mt-2 truncate text-sm text-foreground'>
-					{isDocumentReady ? documentTitle : '当前还没有可追踪的文档版本上下文'}
-				</p>
-				<p className='mt-2 text-xs text-muted-foreground'>
-					{documentId ? `ID: ${documentId}` : '等待 Workbench 注入 active document'}
-				</p>
-				<p className='mt-2 text-xs text-muted-foreground'>保存状态：{saveStatus}</p>
-			</section>
-
-			<section className='rounded-lg border bg-background p-4'>
-				<div className='flex items-center justify-between gap-3'>
-					<p className='text-sm font-medium'>版本列表</p>
-					<button
-						className='tauri-no-drag inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60'
-						disabled={!documentId || !isDocumentReady || panelState.status === 'loading'}
-						onClick={() => {
-							void loadVersions()
-						}}
-						type='button'>
-						<RefreshCcwIcon className={`size-3 ${panelState.status === 'loading' ? 'animate-spin' : ''}`} />
-						刷新
-					</button>
+			{panelState.status === 'empty' ? (
+				<div className='w-full px-3 py-4 text-sm text-muted-foreground'>
+					{documentId && isDocumentReady ? '当前文档还没有冻结过手动版本。' : '请先打开一个文档，再查看它的历史版本。'}
 				</div>
+			) : null}
 
-				{panelState.status === 'loading' ? (
-					<div className='mt-4 flex items-center gap-2 rounded-lg border border-dashed bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
-						<LoaderCircleIcon className='size-4 animate-spin' />
-						<span>正在读取本地版本历史…</span>
-					</div>
-				) : null}
+			{panelState.status === 'error' ? (
+				<div className='w-full px-3 py-4 text-sm text-destructive'>读取版本列表失败：{panelState.message}</div>
+			) : null}
 
-				{panelState.status === 'empty' ? (
-					<div className='mt-4 rounded-lg border border-dashed bg-muted/35 px-3 py-4 text-sm text-muted-foreground'>
-						{documentId && isDocumentReady
-							? '当前文档还没有冻结过手动版本。'
-							: '请先打开一个文档，再查看它的历史版本。'}
-					</div>
-				) : null}
-
-				{panelState.status === 'error' ? (
-					<div className='mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-4 text-sm text-destructive'>
-						读取版本列表失败：{panelState.message}
-					</div>
-				) : null}
-
-				{panelState.status === 'ready' ? (
-					<ul className='mt-4 grid gap-2'>
-						{panelState.versions.map((version) => (
-							<li
-								className='rounded-lg border bg-card px-3 py-3'
-								key={version.id}>
-								<div className='flex items-start justify-between gap-3'>
-									<div className='min-w-0'>
-										<p className='truncate text-sm font-medium text-foreground'>{version.label}</p>
-										<p className='mt-1 text-xs text-muted-foreground'>
-											版本 #{version.versionNumber} · {version.versionKind}
-										</p>
-									</div>
-									<div className='flex shrink-0 items-center gap-1 text-xs text-muted-foreground'>
-										<Clock3Icon className='size-3' />
-										<span>{formatVersionTime(version.createdAt)}</span>
-									</div>
+			{panelState.status === 'ready' ? (
+				<ul className='m-0 flex w-full min-w-0 list-none flex-col gap-1 overflow-x-hidden p-0'>
+					{panelState.versions.map((version) => (
+						<li
+							key={version.id}
+							className='w-full min-w-0'>
+							<div className='flex min-w-0 w-full flex-col gap-1 overflow-hidden rounded-md px-3 py-2 text-left text-foreground transition-colors hover:bg-muted/60'>
+								<p className='w-full truncate text-sm font-medium'>{version.label}</p>
+								<div className='flex min-w-0 items-center justify-between gap-3 text-xs text-muted-foreground'>
+									<span className='min-w-0 truncate'>{formatRelativeTime(version.createdAt)}</span>
+									<span className='shrink-0'>{resolveVersionKindLabel()}</span>
 								</div>
-								<p className='mt-2 truncate text-xs text-muted-foreground'>{version.snapshotPath}</p>
-							</li>
-						))}
-					</ul>
-				) : null}
-			</section>
+							</div>
+						</li>
+					))}
+				</ul>
+			) : null}
 		</div>
 	)
 }

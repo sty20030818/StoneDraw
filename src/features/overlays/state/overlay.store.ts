@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 
-type OverlaySource = 'workspace-topbar' | 'workspace-page' | 'home-page' | 'window-chrome' | 'archive-page'
+type OverlaySource =
+	| 'workspace-topbar'
+	| 'workspace-page'
+	| 'home-page'
+	| 'window-chrome'
+	| 'archive-page'
+	| 'workbench-side-panel'
 
 type NewDocumentOverlay = {
 	kind: 'new-document'

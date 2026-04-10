@@ -4,6 +4,44 @@ import type { SaveStatus } from '@/shared/types'
 
 type WorkbenchPanelKey = 'explorer' | 'history'
 
+const WORKBENCH_SIDE_PANEL_WIDTH_STORAGE_KEY = 'stonedraw:workbench-side-panel-width'
+const WORKBENCH_ACTIVITY_BAR_WIDTH = 56
+const WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH = 256
+const WORKBENCH_SIDE_PANEL_MIN_WIDTH = 240
+const WORKBENCH_SIDE_PANEL_MAX_WIDTH = 420
+
+function clampSidePanelWidth(width: number) {
+	return Math.min(WORKBENCH_SIDE_PANEL_MAX_WIDTH, Math.max(WORKBENCH_SIDE_PANEL_MIN_WIDTH, width))
+}
+
+function readPersistedSidePanelWidth() {
+	if (typeof window === 'undefined') {
+		return WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH
+	}
+
+	const rawValue = window.localStorage.getItem(WORKBENCH_SIDE_PANEL_WIDTH_STORAGE_KEY)
+
+	if (rawValue === null) {
+		return WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH
+	}
+
+	const parsedValue = Number(rawValue)
+
+	if (!Number.isFinite(parsedValue)) {
+		return WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH
+	}
+
+	return clampSidePanelWidth(parsedValue)
+}
+
+function persistSidePanelWidth(width: number) {
+	if (typeof window === 'undefined') {
+		return
+	}
+
+	window.localStorage.setItem(WORKBENCH_SIDE_PANEL_WIDTH_STORAGE_KEY, String(clampSidePanelWidth(width)))
+}
+
 type WorkbenchTab = {
 	id: string
 	title: string
@@ -17,6 +55,7 @@ type WorkbenchStoreState = {
 	lastSaveError: string | null
 	isFlushing: boolean
 	activePanel: WorkbenchPanelKey
+	sidePanelWidth: number
 	isSidePanelOpen: boolean
 	isRightPanelOpen: boolean
 	tabs: WorkbenchTab[]
@@ -28,6 +67,8 @@ type WorkbenchStoreState = {
 	setLastSaveError: (error: string | null) => void
 	setIsFlushing: (isFlushing: boolean) => void
 	setActivePanel: (panel: WorkbenchPanelKey) => void
+	syncSidePanelWidth: (width: number) => void
+	setSidePanelWidth: (width: number) => void
 	setSidePanelOpen: (isOpen: boolean) => void
 	setRightPanelOpen: (isOpen: boolean) => void
 	syncDocumentTab: (payload: { id: string; title: string }) => void
@@ -36,36 +77,61 @@ type WorkbenchStoreState = {
 	reset: () => void
 }
 
-const initialWorkbenchState = {
-	activeDocumentId: null,
-	documentTitle: '未选择文档',
-	isWorkbenchReady: false,
-	saveStatus: SAVE_STATUSES.IDLE,
-	lastSaveError: null,
-	isFlushing: false,
-	activePanel: 'explorer' as WorkbenchPanelKey,
-	isSidePanelOpen: true,
-	isRightPanelOpen: false,
-	tabs: [],
-	activeTabId: null,
-} satisfies Pick<
-	WorkbenchStoreState,
-	| 'activeDocumentId'
-	| 'documentTitle'
-	| 'isWorkbenchReady'
-	| 'saveStatus'
-	| 'lastSaveError'
-	| 'isFlushing'
-	| 'activePanel'
-	| 'isSidePanelOpen'
-	| 'isRightPanelOpen'
-	| 'tabs'
-	| 'activeTabId'
->
+function applySidePanelWidth(
+	width: number,
+	options?: {
+		shouldPersist?: boolean
+	},
+) {
+	const clampedWidth = clampSidePanelWidth(width)
+
+	return (state: Pick<WorkbenchStoreState, 'sidePanelWidth'>) => {
+		if (options?.shouldPersist) {
+			persistSidePanelWidth(clampedWidth)
+		}
+
+		if (state.sidePanelWidth === clampedWidth) {
+			return state
+		}
+
+		return { sidePanelWidth: clampedWidth }
+	}
+}
+
+function createInitialWorkbenchState() {
+	return {
+		activeDocumentId: null,
+		documentTitle: '未选择文档',
+		isWorkbenchReady: false,
+		saveStatus: SAVE_STATUSES.IDLE,
+		lastSaveError: null,
+		isFlushing: false,
+		activePanel: 'explorer' as WorkbenchPanelKey,
+		sidePanelWidth: readPersistedSidePanelWidth(),
+		isSidePanelOpen: true,
+		isRightPanelOpen: false,
+		tabs: [],
+		activeTabId: null,
+	} satisfies Pick<
+		WorkbenchStoreState,
+		| 'activeDocumentId'
+		| 'documentTitle'
+		| 'isWorkbenchReady'
+		| 'saveStatus'
+		| 'lastSaveError'
+		| 'isFlushing'
+		| 'activePanel'
+		| 'sidePanelWidth'
+		| 'isSidePanelOpen'
+		| 'isRightPanelOpen'
+		| 'tabs'
+		| 'activeTabId'
+	>
+}
 
 // 工作台 store 只保留可序列化 UI 与会话状态，页面动作通过局部控制层提供。
 export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
-	...initialWorkbenchState,
+	...createInitialWorkbenchState(),
 	setActiveDocumentId: (activeDocumentId) => set({ activeDocumentId }),
 	setDocumentTitle: (documentTitle) => set({ documentTitle }),
 	setWorkbenchReady: (isWorkbenchReady) => set({ isWorkbenchReady }),
@@ -73,6 +139,8 @@ export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
 	setLastSaveError: (lastSaveError) => set({ lastSaveError }),
 	setIsFlushing: (isFlushing) => set({ isFlushing }),
 	setActivePanel: (activePanel) => set({ activePanel }),
+	syncSidePanelWidth: (sidePanelWidth) => set(applySidePanelWidth(sidePanelWidth)),
+	setSidePanelWidth: (sidePanelWidth) => set(applySidePanelWidth(sidePanelWidth, { shouldPersist: true })),
 	setSidePanelOpen: (isSidePanelOpen) => set({ isSidePanelOpen }),
 	setRightPanelOpen: (isRightPanelOpen) => set({ isRightPanelOpen }),
 	syncDocumentTab: ({ id, title }) =>
@@ -121,7 +189,13 @@ export const useWorkbenchStore = create<WorkbenchStoreState>((set, get) => ({
 
 		return nextActiveDocumentId
 	},
-	reset: () => set(initialWorkbenchState),
+	reset: () => set(createInitialWorkbenchState()),
 }))
 
+export {
+	WORKBENCH_ACTIVITY_BAR_WIDTH,
+	WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH,
+	WORKBENCH_SIDE_PANEL_MAX_WIDTH,
+	WORKBENCH_SIDE_PANEL_MIN_WIDTH,
+}
 export type { WorkbenchPanelKey, WorkbenchTab }

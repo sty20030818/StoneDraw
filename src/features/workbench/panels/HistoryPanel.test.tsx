@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { DocumentVersionMeta, TauriCommandResult } from '@/shared/types'
@@ -46,15 +46,14 @@ describe('HistoryPanel', () => {
 		render(
 			<HistoryPanel
 				documentId='doc-history-1'
-				documentTitle='历史文档'
 				isDocumentReady
 				onCreateVersion={vi.fn<() => Promise<null>>()}
-				saveStatus='saved'
 			/>,
 		)
 
-		expect(await screen.findByText('手动版本 3')).toBeInTheDocument()
-		expect(screen.getByText('版本 #3 · manual')).toBeInTheDocument()
+		const versionTitle = await screen.findByText('手动版本 3')
+		expect(versionTitle).toBeInTheDocument()
+		expect(within(versionTitle.closest('li') ?? document.body).getByText('版本')).toBeInTheDocument()
 		expect(listDocumentVersionsMock).toHaveBeenCalledWith('doc-history-1')
 	})
 
@@ -67,10 +66,8 @@ describe('HistoryPanel', () => {
 		render(
 			<HistoryPanel
 				documentId='doc-history-empty'
-				documentTitle='空历史文档'
 				isDocumentReady
 				onCreateVersion={vi.fn<() => Promise<null>>()}
-				saveStatus='saved'
 			/>,
 		)
 
@@ -92,10 +89,8 @@ describe('HistoryPanel', () => {
 		render(
 			<HistoryPanel
 				documentId='doc-history-error'
-				documentTitle='错误历史文档'
 				isDocumentReady
 				onCreateVersion={vi.fn<() => Promise<null>>()}
-				saveStatus='error'
 			/>,
 		)
 
@@ -128,10 +123,8 @@ describe('HistoryPanel', () => {
 		render(
 			<HistoryPanel
 				documentId='doc-history-create'
-				documentTitle='创建历史文档'
 				isDocumentReady
 				onCreateVersion={onCreateVersionMock}
-				saveStatus='saved'
 			/>,
 		)
 
@@ -171,10 +164,8 @@ describe('HistoryPanel', () => {
 		render(
 			<HistoryPanel
 				documentId='doc-history-create-failure'
-				documentTitle='失败历史文档'
 				isDocumentReady
 				onCreateVersion={onCreateVersionMock}
-				saveStatus='error'
 			/>,
 		)
 

@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, test, vi } from 'vitest'
+
+const setActivePanelMock = vi.fn<(panel: 'explorer' | 'history') => void>()
+const setSidePanelOpenMock = vi.fn<(isOpen: boolean) => void>()
+const syncSidePanelWidthMock = vi.fn<(width: number) => void>()
+const setSidePanelWidthMock = vi.fn<(width: number) => void>()
 
 const workbenchState = {
 	activeDocumentId: 'doc-1',
@@ -9,10 +15,14 @@ const workbenchState = {
 	isWorkbenchReady: true,
 	saveStatus: 'saved' as const,
 	activePanel: 'explorer' as const,
+	sidePanelWidth: 256,
 	tabs: [],
 	activeTabId: 'doc-1',
 	isSidePanelOpen: true,
 	isRightPanelOpen: false,
+	syncSidePanelWidth: syncSidePanelWidthMock,
+	setSidePanelWidth: setSidePanelWidthMock,
+	setSidePanelOpen: setSidePanelOpenMock,
 	setRightPanelOpen: vi.fn<(isOpen: boolean) => void>(),
 	activateDocumentTab: vi.fn<(documentId: string) => void>(),
 	closeDocumentTab: vi.fn<(documentId: string) => string | null>(() => null),
@@ -37,8 +47,40 @@ vi.mock('@/features/workspace/state', () => ({
 		}),
 }))
 
+vi.mock('@/shared/ui', async () => {
+	const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui')
+
+	return {
+		...actual,
+		ResizablePanelGroup: ({ children }: { children: ReactNode }) => <div data-testid='resizable-group-stub'>{children}</div>,
+		ResizablePanel: ({ children }: { children: ReactNode }) => <div data-testid='resizable-panel-stub'>{children}</div>,
+		ResizableHandle: () => <div data-testid='resizable-handle-stub' />,
+	}
+})
+
 vi.mock('@/features/workbench', () => ({
-	ActivityBar: () => <div>活动栏</div>,
+	WORKBENCH_ACTIVITY_BAR_WIDTH: 56,
+	WORKBENCH_SIDE_PANEL_DEFAULT_WIDTH: 256,
+	WORKBENCH_SIDE_PANEL_MAX_WIDTH: 420,
+	WORKBENCH_SIDE_PANEL_MIN_WIDTH: 240,
+	ActivityBar: ({ onPanelChange }: { onPanelChange: (panel: 'explorer' | 'history') => void }) => (
+		<div>
+			<button
+				type='button'
+				onClick={() => {
+					onPanelChange('explorer')
+				}}>
+				切换资源
+			</button>
+			<button
+				type='button'
+				onClick={() => {
+					onPanelChange('history')
+				}}>
+				切换历史
+			</button>
+		</div>
+	),
 	ExplorerPanel: () => <div>资源面板</div>,
 	HistoryPanel: () => <div>历史面板</div>,
 	WorkbenchMetaRail: ({ children }: { children: ReactNode }) => <div data-testid='meta-rail-stub'>{children}</div>,
@@ -68,13 +110,57 @@ vi.mock('@/features/workbench', () => ({
 			onSave: vi.fn<() => void>(),
 			onCreateVersion: vi.fn<() => Promise<null>>(),
 		},
-		setActivePanel: vi.fn<(panel: 'explorer' | 'history') => void>(),
+		setActivePanel: setActivePanelMock,
 	}),
 	useWorkbenchStore: (selector: (state: typeof workbenchState) => unknown) => selector(workbenchState),
 }))
 
 describe('WorkbenchLayout', () => {
+	test('再次点击当前面板时应折叠侧栏', async () => {
+		const user = userEvent.setup()
+		setActivePanelMock.mockReset()
+		setSidePanelOpenMock.mockReset()
+		syncSidePanelWidthMock.mockReset()
+		setSidePanelWidthMock.mockReset()
+		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
+
+		render(
+			<MemoryRouter initialEntries={['/workbench?documentId=doc-1']}>
+				<WorkbenchLayout />
+			</MemoryRouter>,
+		)
+
+		await user.click(screen.getByRole('button', { name: '切换资源' }))
+
+		expect(setSidePanelOpenMock).toHaveBeenCalledWith(false)
+		expect(setActivePanelMock).not.toHaveBeenCalled()
+	})
+
+	test('点击其他面板时应切换并展开侧栏', async () => {
+		const user = userEvent.setup()
+		setActivePanelMock.mockReset()
+		setSidePanelOpenMock.mockReset()
+		syncSidePanelWidthMock.mockReset()
+		setSidePanelWidthMock.mockReset()
+		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
+
+		render(
+			<MemoryRouter initialEntries={['/workbench?documentId=doc-1']}>
+				<WorkbenchLayout />
+			</MemoryRouter>,
+		)
+
+		await user.click(screen.getByRole('button', { name: '切换历史' }))
+
+		expect(setActivePanelMock).toHaveBeenCalledWith('history')
+		expect(setSidePanelOpenMock).toHaveBeenCalledWith(true)
+	})
+
 	test('workbench 应在整页顶部渲染窗口顶栏', async () => {
+		setActivePanelMock.mockReset()
+		setSidePanelOpenMock.mockReset()
+		syncSidePanelWidthMock.mockReset()
+		setSidePanelWidthMock.mockReset()
 		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
 
 		render(
@@ -90,6 +176,10 @@ describe('WorkbenchLayout', () => {
 	})
 
 	test('右侧栏默认应保持收起', async () => {
+		setActivePanelMock.mockReset()
+		setSidePanelOpenMock.mockReset()
+		syncSidePanelWidthMock.mockReset()
+		setSidePanelWidthMock.mockReset()
 		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
 
 		render(

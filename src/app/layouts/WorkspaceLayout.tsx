@@ -10,6 +10,7 @@ function WorkspaceLayout() {
 				<WindowChrome
 					scene='workspace'
 					className='flex-1'
+					pageCenterOffset='9rem'
 				/>
 			</div>
 			<div className='flex min-h-0 flex-1 overflow-hidden'>
