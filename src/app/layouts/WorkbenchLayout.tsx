@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { PlusIcon, XIcon } from 'lucide-react'
 import { Outlet, useNavigate } from 'react-router-dom'
-import { WindowChrome, WindowChromeBrandHeader } from '@/app/chrome'
+import { AppShellHeader } from '@/app/shell'
 import { WORKBENCH_ACTIVITY_ITEMS } from '@/app/router'
 import { APP_ROUTES, buildWorkbenchRoute } from '@/shared/constants/routes'
 import { useDocumentStore } from '@/features/documents'
@@ -49,7 +49,6 @@ function WorkbenchShellContent() {
 	const activateDocumentTab = useWorkbenchStore((state) => state.activateDocumentTab)
 	const closeDocumentTab = useWorkbenchStore((state) => state.closeDocumentTab)
 	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
-	const brandHeaderWidthClass = 'w-[19.5rem]'
 
 	useEffect(() => {
 		rehydrateSidePanelWidth()
@@ -168,17 +167,7 @@ function WorkbenchShellContent() {
 
 	return (
 		<section className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background'>
-			<div className='flex shrink-0'>
-				<WindowChromeBrandHeader
-					className={`${brandHeaderWidthClass} shrink-0`}
-					showBottomBorder
-				/>
-				<WindowChrome
-					scene='workbench'
-					className='flex-1'
-					pageCenterOffset='9.75rem'
-				/>
-			</div>
+			<AppShellHeader scene='workbench' />
 			<div className='flex min-h-0 flex-1 overflow-hidden'>
 				<ActivityBar
 					activePanel={activePanel}

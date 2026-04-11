@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { detectDesktopShellPlatform } from './platform-shell'
+import { detectDesktopShellPlatform } from './desktop-shell'
 
 function mockNavigatorPlatform(value: string) {
 	Object.defineProperty(globalThis.navigator, 'platform', {
@@ -10,7 +10,7 @@ function mockNavigatorPlatform(value: string) {
 	})
 }
 
-describe('platform-shell', () => {
+describe('desktop-shell', () => {
 	const originalPlatform = globalThis.navigator.platform
 
 	afterEach(() => {

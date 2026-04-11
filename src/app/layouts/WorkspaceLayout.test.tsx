@@ -2,9 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('@/app/chrome', () => ({
-	WindowChrome: () => <div data-testid='window-chrome-stub'>顶栏搜索条</div>,
-	WindowChromeBrandHeader: () => <div data-testid='window-chrome-brand-header-stub'>品牌头</div>,
+vi.mock('@/app/shell', () => ({
+	AppShellHeader: () => <div data-testid='app-shell-header-stub'>顶栏搜索条</div>,
 }))
 
 vi.mock('@/app/navigation', () => ({
@@ -12,7 +11,7 @@ vi.mock('@/app/navigation', () => ({
 }))
 
 describe('WorkspaceLayout', () => {
-	test('workspace 应渲染左侧品牌头与右侧共享 topbar', async () => {
+	test('workspace 应渲染统一应用顶栏', async () => {
 		const { default: WorkspaceLayout } = await import('./WorkspaceLayout')
 
 		render(
@@ -21,8 +20,7 @@ describe('WorkspaceLayout', () => {
 			</MemoryRouter>,
 		)
 
-		expect(screen.getByTestId('window-chrome-brand-header-stub')).toBeInTheDocument()
-		expect(screen.getByTestId('window-chrome-stub')).toBeInTheDocument()
+		expect(screen.getByTestId('app-shell-header-stub')).toBeInTheDocument()
 	})
 
 	test('workspace 左侧栏应继续渲染导航内容', async () => {

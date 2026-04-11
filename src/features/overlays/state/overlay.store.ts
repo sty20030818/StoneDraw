@@ -4,7 +4,7 @@ type OverlaySource =
 	| 'workspace-topbar'
 	| 'workspace-page'
 	| 'home-page'
-	| 'window-chrome'
+	| 'app-shell-header'
 	| 'archive-page'
 	| 'workbench-side-panel'
 

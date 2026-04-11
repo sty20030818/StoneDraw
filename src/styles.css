@@ -83,15 +83,15 @@
 		display: none;
 	}
 
-	.window-chrome-no-drag {
-		-webkit-app-region: no-drag;
-		app-region: no-drag;
-	}
+		.app-shell-no-drag {
+			-webkit-app-region: no-drag;
+			app-region: no-drag;
+		}
 
-	.window-chrome-drag {
-		-webkit-app-region: drag;
-		app-region: drag;
-	}
+		.app-shell-drag {
+			-webkit-app-region: drag;
+			app-region: drag;
+		}
 
 	.tauri-no-drag {
 		-webkit-app-region: no-drag;
