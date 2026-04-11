@@ -6,8 +6,8 @@ import { describe, expect, test, vi } from 'vitest'
 
 const setActivePanelMock = vi.fn<(panel: 'explorer' | 'history') => void>()
 const setSidePanelOpenMock = vi.fn<(isOpen: boolean) => void>()
-const syncSidePanelWidthMock = vi.fn<(width: number) => void>()
 const setSidePanelWidthMock = vi.fn<(width: number) => void>()
+const rehydrateSidePanelWidthMock = vi.fn<() => void>()
 
 const workbenchState = {
 	activeDocumentId: 'doc-1',
@@ -20,8 +20,8 @@ const workbenchState = {
 	activeTabId: 'doc-1',
 	isSidePanelOpen: true,
 	isRightPanelOpen: false,
-	syncSidePanelWidth: syncSidePanelWidthMock,
 	setSidePanelWidth: setSidePanelWidthMock,
+	rehydrateSidePanelWidth: rehydrateSidePanelWidthMock,
 	setSidePanelOpen: setSidePanelOpenMock,
 	setRightPanelOpen: vi.fn<(isOpen: boolean) => void>(),
 	activateDocumentTab: vi.fn<(documentId: string) => void>(),
@@ -52,7 +52,9 @@ vi.mock('@/shared/ui', async () => {
 
 	return {
 		...actual,
-		ResizablePanelGroup: ({ children }: { children: ReactNode }) => <div data-testid='resizable-group-stub'>{children}</div>,
+		ResizablePanelGroup: ({ children }: { children: ReactNode }) => (
+			<div data-testid='resizable-group-stub'>{children}</div>
+		),
 		ResizablePanel: ({ children }: { children: ReactNode }) => <div data-testid='resizable-panel-stub'>{children}</div>,
 		ResizableHandle: () => <div data-testid='resizable-handle-stub' />,
 	}
@@ -84,6 +86,12 @@ vi.mock('@/features/workbench', () => ({
 	ExplorerPanel: () => <div>资源面板</div>,
 	HistoryPanel: () => <div>历史面板</div>,
 	WorkbenchMetaRail: ({ children }: { children: ReactNode }) => <div data-testid='meta-rail-stub'>{children}</div>,
+	WorkbenchResizableShell: ({ sidebar, main }: { sidebar: ReactNode; main: ReactNode }) => (
+		<div data-testid='resizable-shell-stub'>
+			{sidebar}
+			{main}
+		</div>
+	),
 	WorkbenchShellFrame: ({
 		header,
 		canvas,
@@ -120,8 +128,8 @@ describe('WorkbenchLayout', () => {
 		const user = userEvent.setup()
 		setActivePanelMock.mockReset()
 		setSidePanelOpenMock.mockReset()
-		syncSidePanelWidthMock.mockReset()
 		setSidePanelWidthMock.mockReset()
+		rehydrateSidePanelWidthMock.mockReset()
 		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
 
 		render(
@@ -140,8 +148,8 @@ describe('WorkbenchLayout', () => {
 		const user = userEvent.setup()
 		setActivePanelMock.mockReset()
 		setSidePanelOpenMock.mockReset()
-		syncSidePanelWidthMock.mockReset()
 		setSidePanelWidthMock.mockReset()
+		rehydrateSidePanelWidthMock.mockReset()
 		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
 
 		render(
@@ -159,8 +167,8 @@ describe('WorkbenchLayout', () => {
 	test('workbench 应在整页顶部渲染窗口顶栏', async () => {
 		setActivePanelMock.mockReset()
 		setSidePanelOpenMock.mockReset()
-		syncSidePanelWidthMock.mockReset()
 		setSidePanelWidthMock.mockReset()
+		rehydrateSidePanelWidthMock.mockReset()
 		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
 
 		render(
@@ -178,8 +186,8 @@ describe('WorkbenchLayout', () => {
 	test('右侧栏默认应保持收起', async () => {
 		setActivePanelMock.mockReset()
 		setSidePanelOpenMock.mockReset()
-		syncSidePanelWidthMock.mockReset()
 		setSidePanelWidthMock.mockReset()
+		rehydrateSidePanelWidthMock.mockReset()
 		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
 
 		render(
@@ -189,5 +197,26 @@ describe('WorkbenchLayout', () => {
 		)
 
 		expect(screen.queryByTestId('right-panel-stub')).not.toBeInTheDocument()
+	})
+
+	test('侧栏收起时仍应保留 workbench 主框架', async () => {
+		workbenchState.isSidePanelOpen = false
+		setActivePanelMock.mockReset()
+		setSidePanelOpenMock.mockReset()
+		setSidePanelWidthMock.mockReset()
+		rehydrateSidePanelWidthMock.mockReset()
+		const { default: WorkbenchLayout } = await import('./WorkbenchLayout')
+
+		render(
+			<MemoryRouter initialEntries={['/workbench?documentId=doc-1']}>
+				<WorkbenchLayout />
+			</MemoryRouter>,
+		)
+
+		expect(screen.getByTestId('workbench-shell-frame-stub')).toBeInTheDocument()
+		expect(screen.getByTestId('resizable-shell-stub')).toBeInTheDocument()
+		expect(screen.queryByTestId('side-panel-stub')).not.toBeInTheDocument()
+
+		workbenchState.isSidePanelOpen = true
 	})
 })

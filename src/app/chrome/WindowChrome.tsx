@@ -60,7 +60,7 @@ function WindowChrome({ scene, className, pageCenterOffset = '0px' }: WindowChro
 	const openNewDocumentDialog = useOverlayStore((state) => state.openNewDocumentDialog)
 	const [chromeSearchDraft, setChromeSearchDraft] = useState('')
 	const chromeSearchInputRef = useRef<HTMLInputElement | null>(null)
-	const windowsWindowControlButtonBaseClass = 'grid h-full place-items-center text-muted-foreground transition-colors'
+	const windowsWindowControlButtonBaseClass = 'grid h-full w-full min-w-0 place-items-center text-muted-foreground transition-colors'
 	const windowsWindowControlButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-foreground/8 hover:text-foreground`
 	const windowsWindowCloseButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-destructive hover:text-primary-foreground`
 	const searchShellClass = 'w-full'
@@ -183,11 +183,11 @@ function WindowChrome({ scene, className, pageCenterOffset = '0px' }: WindowChro
 					<>
 						<Separator
 							orientation='vertical'
-							className='mx-1 h-5 self-center bg-border/90'
+							className='mx-1 my-3 bg-border/90'
 						/>
 						<div
 							data-testid='windows-window-controls'
-							className='window-chrome-no-drag grid h-full grid-cols-3'>
+							className='window-chrome-no-drag grid h-full w-[8.625rem] shrink-0 grid-cols-3'>
 							<button
 								type='button'
 								className={windowsWindowControlButtonClass}

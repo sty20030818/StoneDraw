@@ -6,6 +6,7 @@ import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import type { SceneFilePayload } from '@/shared/types'
 import { createEditorEventBridge, type EditorContentChangePayload } from './editor-event-bridge'
 import { clearEditorApi, setEditorApi } from './editor-runtime'
+import { bindWorkbenchExcalidrawUiCompat } from './excalidraw-ui-compat'
 import { createWorkbenchInitialSceneData, restoreSceneToWorkbench } from './scene-restore-bridge'
 
 type ExcalidrawHostProps = {
@@ -41,30 +42,7 @@ function ExcalidrawHost({ scene, onContentChange, onReadyChange }: ExcalidrawHos
 			return
 		}
 
-		const hideWorkbenchChrome = () => {
-			hostElement
-				.querySelectorAll<HTMLElement>('.main-menu-trigger, .default-sidebar-trigger, .help-icon')
-				.forEach((element) => {
-					element.style.setProperty('display', 'none', 'important')
-				})
-		}
-
-		hideWorkbenchChrome()
-
-		// Excalidraw 会在交互过程中重建按钮节点，这里用 observer 保证隐藏状态持续生效。
-		const observer = new MutationObserver(() => {
-			hideWorkbenchChrome()
-		})
-
-		observer.observe(hostElement, {
-			childList: true,
-			subtree: true,
-			attributes: true,
-		})
-
-		return () => {
-			observer.disconnect()
-		}
+		return bindWorkbenchExcalidrawUiCompat(hostElement)
 	}, [])
 
 	useEffect(() => {

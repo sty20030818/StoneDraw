@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { PanelImperativeHandle } from 'react-resizable-panels'
+import { useCallback, useEffect } from 'react'
 import { PlusIcon, XIcon } from 'lucide-react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { WindowChrome, WindowChromeBrandHeader } from '@/app/chrome'
@@ -8,8 +7,7 @@ import { APP_ROUTES, buildWorkbenchRoute } from '@/shared/constants/routes'
 import { useDocumentStore } from '@/features/documents'
 import { useOverlayStore } from '@/features/overlays'
 import { useWorkspaceStore } from '@/features/workspace/state'
-import { Button, ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/shared/ui'
-import { cn } from '@/shared/lib/utils'
+import { Button } from '@/shared/ui'
 import {
 	ActivityBar,
 	ExplorerPanel,
@@ -19,6 +17,7 @@ import {
 	WORKBENCH_SIDE_PANEL_MAX_WIDTH,
 	WORKBENCH_SIDE_PANEL_MIN_WIDTH,
 	WorkbenchMetaRail,
+	WorkbenchResizableShell,
 	WorkbenchShellFrame,
 	WorkbenchShellProvider,
 	WorkbenchSidePanel,
@@ -27,14 +26,9 @@ import {
 	useWorkbenchStore,
 } from '@/features/workbench'
 
-const WORKBENCH_SIDEBAR_PANEL_ID = 'workbench-sidebar-panel'
-const WORKBENCH_CANVAS_PANEL_ID = 'workbench-canvas-panel'
-
 function WorkbenchShellContent() {
 	const navigate = useNavigate()
 	const { shellState, setActivePanel } = useWorkbenchShell()
-	const panelHostRef = useRef<HTMLDivElement | null>(null)
-	const leftPanelRef = useRef<PanelImperativeHandle | null>(null)
 	const documents = useWorkspaceStore((state) => state.documents)
 	const setSelectedDocumentId = useDocumentStore((state) => state.setSelectedDocumentId)
 	const openNewDocumentDialog = useOverlayStore((state) => state.openNewDocumentDialog)
@@ -48,17 +42,18 @@ function WorkbenchShellContent() {
 	const activeTabId = useWorkbenchStore((state) => state.activeTabId)
 	const isSidePanelOpen = useWorkbenchStore((state) => state.isSidePanelOpen)
 	const isRightPanelOpen = useWorkbenchStore((state) => state.isRightPanelOpen)
-	const hasSyncedPanelStateRef = useRef(false)
-	const previousSidePanelOpenRef = useRef(isSidePanelOpen)
-	const syncSidePanelWidth = useWorkbenchStore((state) => state.syncSidePanelWidth)
 	const setSidePanelWidth = useWorkbenchStore((state) => state.setSidePanelWidth)
+	const rehydrateSidePanelWidth = useWorkbenchStore((state) => state.rehydrateSidePanelWidth)
 	const setSidePanelOpen = useWorkbenchStore((state) => state.setSidePanelOpen)
 	const setRightPanelOpen = useWorkbenchStore((state) => state.setRightPanelOpen)
 	const activateDocumentTab = useWorkbenchStore((state) => state.activateDocumentTab)
 	const closeDocumentTab = useWorkbenchStore((state) => state.closeDocumentTab)
 	const activeItem = WORKBENCH_ACTIVITY_ITEMS.find((item) => item.key === activePanel) ?? WORKBENCH_ACTIVITY_ITEMS[0]
 	const brandHeaderWidthClass = 'w-[19.5rem]'
-	const [panelHostWidth, setPanelHostWidth] = useState(0)
+
+	useEffect(() => {
+		rehydrateSidePanelWidth()
+	}, [rehydrateSidePanelWidth])
 
 	const openDocumentInWorkbench = useCallback(
 		(documentId: string) => {
@@ -101,61 +96,6 @@ function WorkbenchShellContent() {
 		},
 		[activePanel, isSidePanelOpen, setActivePanel, setSidePanelOpen],
 	)
-
-	useEffect(() => {
-		const hostElement = panelHostRef.current
-
-		if (!hostElement) {
-			return
-		}
-
-		const syncPanelHostWidth = () => {
-			setPanelHostWidth(hostElement.clientWidth)
-		}
-
-		syncPanelHostWidth()
-
-		if (typeof ResizeObserver === 'undefined') {
-			window.addEventListener('resize', syncPanelHostWidth)
-
-			return () => {
-				window.removeEventListener('resize', syncPanelHostWidth)
-			}
-		}
-
-		const observer = new ResizeObserver(() => {
-			syncPanelHostWidth()
-		})
-
-		observer.observe(hostElement)
-
-		return () => {
-			observer.disconnect()
-		}
-	}, [])
-
-	useEffect(() => {
-		if (!leftPanelRef.current) {
-			return
-		}
-
-		const didOpenStateChange = previousSidePanelOpenRef.current !== isSidePanelOpen
-		previousSidePanelOpenRef.current = isSidePanelOpen
-
-		if (!hasSyncedPanelStateRef.current) {
-			hasSyncedPanelStateRef.current = true
-		}
-		else if (!didOpenStateChange) {
-			return
-		}
-
-		if (isSidePanelOpen) {
-			leftPanelRef.current.resize(sidePanelWidth)
-			return
-		}
-
-		leftPanelRef.current.collapse()
-	}, [isSidePanelOpen, sidePanelWidth])
 
 	function renderSidePanel() {
 		switch (activePanel) {
@@ -226,8 +166,6 @@ function WorkbenchShellContent() {
 		/>
 	)
 
-	const rightPanelDefaultWidth = Math.max(0, panelHostWidth - (isSidePanelOpen ? sidePanelWidth + 1 : 0))
-
 	return (
 		<section className='flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background'>
 			<div className='flex shrink-0'>
@@ -241,8 +179,7 @@ function WorkbenchShellContent() {
 					pageCenterOffset='9.75rem'
 				/>
 			</div>
-			<div
-				className='flex min-h-0 flex-1 overflow-hidden'>
+			<div className='flex min-h-0 flex-1 overflow-hidden'>
 				<ActivityBar
 					activePanel={activePanel}
 					onBack={shellState.onBack}
@@ -250,114 +187,42 @@ function WorkbenchShellContent() {
 					showRightBorder
 					highlightActive={isSidePanelOpen}
 				/>
-				<div
-					ref={panelHostRef}
-					className='min-h-0 min-w-0 flex-1 overflow-hidden'>
-					{panelHostWidth > 0 ? (
-						<ResizablePanelGroup
-							orientation='horizontal'
-							className='min-h-0'
-							onLayoutChanged={() => {
-								if (!isSidePanelOpen) {
-									return
-								}
-
-								if (!leftPanelRef.current || leftPanelRef.current.isCollapsed()) {
-									return
-								}
-
-								setSidePanelWidth(leftPanelRef.current.getSize().inPixels)
-							}}>
-							<ResizablePanel
-								id={WORKBENCH_SIDEBAR_PANEL_ID}
-								panelRef={leftPanelRef}
-								defaultSize={sidePanelWidth}
-								minSize={WORKBENCH_SIDE_PANEL_MIN_WIDTH}
-								maxSize={WORKBENCH_SIDE_PANEL_MAX_WIDTH}
-								collapsible
-								collapsedSize={0}
-								onResize={(panelSize, _panelId, prevPanelSize) => {
-									if (!isSidePanelOpen || prevPanelSize === undefined) {
-										return
-									}
-
-									syncSidePanelWidth(panelSize.inPixels)
-								}}
-								className='min-w-0'>
-								<div
-									className='flex h-full min-w-0 overflow-hidden bg-card'
-									data-sidebar-open={isSidePanelOpen ? 'true' : 'false'}>
-									{isSidePanelOpen ? (
-										<WorkbenchSidePanel
-											label={activeItem.label}
-											actions={
-												activePanel === 'explorer' ? (
-													<Button
-														type='button'
-														variant='ghost'
-														size='icon-sm'
-														title='新建文档'
-														onClick={() => {
-															openNewDocumentDialog({
-																source: 'workbench-side-panel',
-															})
-														}}>
-														<PlusIcon />
-													</Button>
-												) : null
-											}>
-											{renderSidePanel()}
-										</WorkbenchSidePanel>
-									) : null}
-								</div>
-							</ResizablePanel>
-							<ResizableHandle
-								withHandle={isSidePanelOpen}
-								disabled={!isSidePanelOpen}
-								className={cn(
-									'transition-[width,opacity,background-color]',
-									isSidePanelOpen ? 'w-px bg-border/80 hover:bg-border' : 'hidden',
-								)}
-							/>
-							<ResizablePanel
-								id={WORKBENCH_CANVAS_PANEL_ID}
-								defaultSize={rightPanelDefaultWidth}
-								className='min-w-0'>
-								{workbenchFrame}
-							</ResizablePanel>
-						</ResizablePanelGroup>
-					) : (
-						<div className='flex min-h-0 flex-1 overflow-hidden'>
+				<WorkbenchResizableShell
+					isSidePanelOpen={isSidePanelOpen}
+					sidePanelWidth={sidePanelWidth}
+					minSidePanelWidth={WORKBENCH_SIDE_PANEL_MIN_WIDTH}
+					maxSidePanelWidth={WORKBENCH_SIDE_PANEL_MAX_WIDTH}
+					onSidePanelWidthCommit={setSidePanelWidth}
+					sidebar={
+						<div
+							className='flex h-full min-w-0 overflow-hidden bg-card'
+							data-sidebar-open={isSidePanelOpen ? 'true' : 'false'}>
 							{isSidePanelOpen ? (
-								<div
-									className='flex min-h-0 shrink-0 overflow-hidden bg-card'
-									style={{ width: `${sidePanelWidth}px` }}>
-									<WorkbenchSidePanel
-										label={activeItem.label}
-										actions={
-											activePanel === 'explorer' ? (
-												<Button
-													type='button'
-													variant='ghost'
-													size='icon-sm'
-													title='新建文档'
-													onClick={() => {
-														openNewDocumentDialog({
-															source: 'workbench-side-panel',
-														})
-													}}>
-													<PlusIcon />
-												</Button>
-											) : null
-										}>
-										{renderSidePanel()}
-									</WorkbenchSidePanel>
-								</div>
+								<WorkbenchSidePanel
+									label={activeItem.label}
+									actions={
+										activePanel === 'explorer' ? (
+											<Button
+												type='button'
+												variant='ghost'
+												size='icon-sm'
+												title='新建文档'
+												onClick={() => {
+													openNewDocumentDialog({
+														source: 'workbench-side-panel',
+													})
+												}}>
+												<PlusIcon />
+											</Button>
+										) : null
+									}>
+									{renderSidePanel()}
+								</WorkbenchSidePanel>
 							) : null}
-							{workbenchFrame}
 						</div>
-					)}
-				</div>
+					}
+					main={workbenchFrame}
+				/>
 			</div>
 			<div className='min-w-0'>
 				<StatusBar

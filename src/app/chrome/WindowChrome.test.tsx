@@ -58,6 +58,30 @@ describe('WindowChrome', () => {
 		expect(screen.getByTestId('window-chrome-root')).toHaveAttribute('data-tauri-drag-region')
 	})
 
+	test('windows 右上角窗口控制区应保留固定宽度，避免三个图标挤压', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: WindowChrome } = await import('./WindowChrome')
+
+		render(<WindowChrome scene='workspace' />)
+
+		expect(screen.getByTestId('windows-window-controls')).toHaveClass('w-[8.625rem]', 'shrink-0')
+		expect(screen.getByTitle('最小化')).toHaveClass('w-full', 'min-w-0')
+		expect(screen.getByTitle('最大化或还原')).toHaveClass('w-full', 'min-w-0')
+		expect(screen.getByTitle('关闭')).toHaveClass('w-full', 'min-w-0')
+	})
+
+	test('windows 控制区前的分割线应保留纵向拉伸并只做上下留白', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: WindowChrome } = await import('./WindowChrome')
+
+		render(<WindowChrome scene='workspace' />)
+
+		const separator = screen.getByTestId('windows-window-controls').previousElementSibling
+
+		expect(separator).toHaveClass('my-3')
+		expect(separator).not.toHaveClass('h-5', 'self-center')
+	})
+
 	test('windowchrome 中间操作组应包含搜索、导入和新建文档按钮', async () => {
 		detectDesktopShellPlatformMock.mockReturnValue('windows')
 		const { default: WindowChrome } = await import('./WindowChrome')
