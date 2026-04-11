@@ -2,30 +2,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 
+use crate::error::{AppError, AppResult};
+
 pub mod database;
 pub mod documents;
 pub mod files;
 pub mod logs;
 pub mod system;
-
-const DEFAULT_NATIVE_LAYER: &str = "native-command";
-const DEFAULT_STORAGE_LAYER: &str = "storage";
-const DEFAULT_NATIVE_MODULE: &str = "native-command";
-const DEFAULT_STORAGE_MODULE: &str = "storage";
-const UNKNOWN_OPERATION: &str = "unknown";
-
-#[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum CommandErrorCode {
-    IoError,
-    DbError,
-    InvalidArgument,
-    NotFound,
-    NotInitialized,
-    UnimplementedCommand,
-    UnknownError,
-}
+pub use crate::error::AppErrorCode as CommandErrorCode;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -47,60 +31,42 @@ pub struct CommandSuccess<T: Serialize> {
     pub data: T,
 }
 
-pub type CommandResult<T> = Result<CommandSuccess<T>, CommandError>;
+pub type CommandResult<T> = Result<CommandSuccess<T>, Box<CommandError>>;
 
 pub fn command_result<T: Serialize>(
     command: &str,
     module: &str,
     operation: &str,
-    result: Result<T, CommandError>,
+    result: AppResult<T>,
 ) -> CommandResult<T> {
     result
         .map(|data| CommandSuccess { data })
-        .map_err(|error| error.attach_command_context(command, module, operation))
+        .map_err(|error| map_command_error(command, module, operation, error))
+}
+
+pub fn map_command_error(
+    command: &str,
+    module: &str,
+    operation: &str,
+    error: impl Into<Box<AppError>>,
+) -> Box<CommandError> {
+    let error = *error.into();
+    Box::new(CommandError::from_app_error(error).attach_command_context(command, module, operation))
 }
 
 impl CommandError {
-    fn new(
-        code: CommandErrorCode,
-        message: impl Into<String>,
-        layer: impl Into<String>,
-        module: impl Into<String>,
-        operation: impl Into<String>,
-    ) -> Self {
+    fn from_app_error(error: AppError) -> Self {
         Self {
-            code,
-            message: message.into(),
-            details: None,
+            code: error.code,
+            message: error.message,
+            details: error.details,
             command: None,
-            layer: layer.into(),
-            module: module.into(),
-            operation: operation.into(),
+            layer: error.layer.to_string(),
+            module: error.module.to_string(),
+            operation: error.operation.to_string(),
             correlation_id: create_correlation_id(),
-            object_id: None,
+            object_id: error.object_id,
         }
-    }
-
-    pub fn with_details(mut self, details: impl Into<String>) -> Self {
-        self.details = Some(details.into());
-        self
-    }
-
-    pub fn with_object_id(mut self, object_id: impl Into<String>) -> Self {
-        self.object_id = Some(object_id.into());
-        self
-    }
-
-    pub fn with_context(
-        mut self,
-        layer: impl Into<String>,
-        module: impl Into<String>,
-        operation: impl Into<String>,
-    ) -> Self {
-        self.layer = layer.into();
-        self.module = module.into();
-        self.operation = operation.into();
-        self
     }
 
     pub fn attach_command_context(mut self, command: &str, module: &str, operation: &str) -> Self {
@@ -108,69 +74,15 @@ impl CommandError {
             self.command = Some(command.to_string());
         }
 
-        if self.module == DEFAULT_NATIVE_MODULE {
+        if self.module == "native-command" {
             self.module = module.to_string();
         }
 
-        if self.operation == UNKNOWN_OPERATION {
+        if self.operation == "unknown" {
             self.operation = operation.to_string();
         }
 
         self
-    }
-
-    pub fn db(message: impl Into<String>, details: impl Into<String>) -> Self {
-        Self::new(
-            CommandErrorCode::DbError,
-            message,
-            DEFAULT_STORAGE_LAYER,
-            DEFAULT_STORAGE_MODULE,
-            UNKNOWN_OPERATION,
-        )
-        .with_details(details)
-    }
-
-    pub fn io(message: impl Into<String>, details: impl Into<String>) -> Self {
-        Self::new(
-            CommandErrorCode::IoError,
-            message,
-            DEFAULT_STORAGE_LAYER,
-            DEFAULT_STORAGE_MODULE,
-            UNKNOWN_OPERATION,
-        )
-        .with_details(details)
-    }
-
-    pub fn not_initialized(message: impl Into<String>, details: impl Into<String>) -> Self {
-        Self::new(
-            CommandErrorCode::NotInitialized,
-            message,
-            DEFAULT_STORAGE_LAYER,
-            DEFAULT_STORAGE_MODULE,
-            UNKNOWN_OPERATION,
-        )
-        .with_details(details)
-    }
-
-    pub fn invalid_argument(message: impl Into<String>) -> Self {
-        Self::new(
-            CommandErrorCode::InvalidArgument,
-            message,
-            DEFAULT_NATIVE_LAYER,
-            DEFAULT_NATIVE_MODULE,
-            UNKNOWN_OPERATION,
-        )
-    }
-
-    pub fn not_found(message: impl Into<String>, details: impl Into<String>) -> Self {
-        Self::new(
-            CommandErrorCode::NotFound,
-            message,
-            DEFAULT_STORAGE_LAYER,
-            DEFAULT_STORAGE_MODULE,
-            UNKNOWN_OPERATION,
-        )
-        .with_details(details)
     }
 }
 

@@ -1,6 +1,6 @@
 use tauri::AppHandle;
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 use crate::storage::directories::resolve_root_dir;
 use crate::storage::documents::{
     create_document_from_root, create_document_version_from_root,
@@ -19,7 +19,7 @@ use crate::storage::documents::{
 pub(crate) fn create_document(
     app: &AppHandle,
     title: Option<String>,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     create_document_from_root(&root_dir, title.as_deref())
 }
@@ -27,26 +27,26 @@ pub(crate) fn create_document(
 pub(crate) fn get_document_by_id(
     app: &AppHandle,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     get_document_by_id_from_root(&root_dir, document_id)
 }
 
-pub(crate) fn list_documents(app: &AppHandle) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+pub(crate) fn list_documents(app: &AppHandle) -> AppResult<Vec<DocumentMetaPayload>> {
     let root_dir = resolve_root_dir(app)?;
     list_documents_from_root(&root_dir)
 }
 
 pub(crate) fn list_recent_documents(
     app: &AppHandle,
-) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Vec<DocumentMetaPayload>> {
     let root_dir = resolve_root_dir(app)?;
     list_recent_documents_from_root(&root_dir)
 }
 
 pub(crate) fn list_trashed_documents(
     app: &AppHandle,
-) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Vec<DocumentMetaPayload>> {
     let root_dir = resolve_root_dir(app)?;
     list_trashed_documents_from_root(&root_dir)
 }
@@ -55,7 +55,7 @@ pub(crate) fn rename_document(
     app: &AppHandle,
     document_id: &str,
     title: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     rename_document_from_root(&root_dir, document_id, title)
 }
@@ -63,7 +63,7 @@ pub(crate) fn rename_document(
 pub(crate) fn move_document_to_trash(
     app: &AppHandle,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     let existing_document = get_document_by_id_any_from_root(&root_dir, document_id)?;
 
@@ -78,7 +78,7 @@ pub(crate) fn move_document_to_trash(
 pub(crate) fn restore_document(
     app: &AppHandle,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     let existing_document = get_document_by_id_any_from_root(&root_dir, document_id)?;
 
@@ -93,7 +93,7 @@ pub(crate) fn restore_document(
 pub(crate) fn open_document(
     app: &AppHandle,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     let document_meta = get_document_by_id_from_root(&root_dir, document_id)?;
     ensure_document_scene_ready(&root_dir, &document_meta)?;
@@ -104,16 +104,17 @@ pub(crate) fn open_document(
 pub(crate) fn permanently_delete_document(
     app: &AppHandle,
     document_id: &str,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let root_dir = resolve_root_dir(app)?;
     let document_dir = delete_document_records_from_root(&root_dir, document_id)?;
 
     if std::path::Path::new(&document_dir).exists() {
         std::fs::remove_dir_all(&document_dir).map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "删除文档目录失败",
                 format!("documentId={document_id}, path={document_dir}, error={error}"),
             )
+            .boxed()
         })?;
     }
 
@@ -123,7 +124,7 @@ pub(crate) fn permanently_delete_document(
 pub(crate) fn open_document_scene(
     app: &AppHandle,
     document_id: &str,
-) -> Result<SceneFilePayload, CommandError> {
+) -> AppResult<SceneFilePayload> {
     let root_dir = resolve_root_dir(app)?;
     open_document_scene_from_root(&root_dir, document_id)
 }
@@ -131,7 +132,7 @@ pub(crate) fn open_document_scene(
 pub(crate) fn save_document_scene(
     app: &AppHandle,
     scene_payload: SceneFilePayload,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let root_dir = resolve_root_dir(app)?;
     let write_result = write_document_scene_from_root(&root_dir, scene_payload)?;
 
@@ -146,12 +147,13 @@ pub(crate) fn save_document_scene(
         };
 
         return Err(
-            error
+            (*error)
                 .with_object_id(write_result.document_id.clone())
                 .with_details(format!(
                     "documentId={}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
                     write_result.document_id, write_result.scene_path
-                )),
+                ))
+                .boxed(),
         );
     }
 
@@ -161,7 +163,7 @@ pub(crate) fn save_document_scene(
 pub(crate) fn create_document_version(
     app: &AppHandle,
     document_id: &str,
-) -> Result<DocumentVersionPayload, CommandError> {
+) -> AppResult<DocumentVersionPayload> {
     let root_dir = resolve_root_dir(app)?;
     create_document_version_from_root(&root_dir, document_id)
 }
@@ -169,7 +171,7 @@ pub(crate) fn create_document_version(
 pub(crate) fn list_document_versions(
     app: &AppHandle,
     document_id: &str,
-) -> Result<Vec<DocumentVersionPayload>, CommandError> {
+) -> AppResult<Vec<DocumentVersionPayload>> {
     let root_dir = resolve_root_dir(app)?;
     list_document_versions_from_root(&root_dir, document_id)
 }

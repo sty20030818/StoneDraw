@@ -6,7 +6,7 @@ use std::fs;
 use rusqlite::{params, Connection, OptionalExtension, Row};
 use serde::{Deserialize, Serialize};
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 use crate::storage::database::open_ready_connection;
 use crate::storage::directories::document_path_layout;
 
@@ -46,7 +46,7 @@ pub(super) enum DocumentFilter {
 pub fn create_document_from_root(
     root_dir_path: &Path,
     title: Option<&str>,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let now = current_timestamp_ms()?;
     let document_id = generate_document_id(now);
     let normalized_title = normalize_optional_document_title(title);
@@ -81,48 +81,51 @@ pub fn create_document_from_root(
 pub fn get_document_by_id_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let connection = open_ready_connection(root_dir_path)?;
 
     fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Active)?.ok_or_else(|| {
-        CommandError::not_found(
+        AppError::not_found(
             "文档不存在",
             format!("documentId={document_id} 未命中可用文档记录"),
         )
+        .boxed()
     })
 }
 
 pub fn get_document_by_id_any_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let connection = open_ready_connection(root_dir_path)?;
 
     fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?.ok_or_else(|| {
-        CommandError::not_found(
+        AppError::not_found(
             "文档不存在",
             format!("documentId={document_id} 未命中记录"),
         )
+        .boxed()
     })
 }
 
 pub fn get_trashed_document_by_id_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let connection = open_ready_connection(root_dir_path)?;
 
     fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Deleted)?.ok_or_else(|| {
-        CommandError::not_found(
+        AppError::not_found(
             "文档不存在",
             format!("documentId={document_id} 未命中回收站记录"),
         )
+        .boxed()
     })
 }
 
 pub fn list_documents_from_root(
     root_dir_path: &Path,
-) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Vec<DocumentMetaPayload>> {
     let connection = open_ready_connection(root_dir_path)?;
     list_document_metas(
         &connection,
@@ -148,7 +151,7 @@ pub fn list_documents_from_root(
 
 pub fn list_recent_documents_from_root(
     root_dir_path: &Path,
-) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Vec<DocumentMetaPayload>> {
     let connection = open_ready_connection(root_dir_path)?;
     list_document_metas(
         &connection,
@@ -175,7 +178,7 @@ pub fn list_recent_documents_from_root(
 
 pub fn list_trashed_documents_from_root(
     root_dir_path: &Path,
-) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Vec<DocumentMetaPayload>> {
     let connection = open_ready_connection(root_dir_path)?;
     list_document_metas(
         &connection,
@@ -203,7 +206,7 @@ pub fn rename_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
     title: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let normalized_title = normalize_required_document_title(title)?;
     let now = current_timestamp_ms()?;
     let connection = open_ready_connection(root_dir_path)?;
@@ -218,17 +221,19 @@ pub fn rename_document_from_root(
             params![normalized_title, now, document_id],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "更新文档标题失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     if affected_rows == 0 {
-        return Err(CommandError::not_found(
+        return Err(AppError::not_found(
             "文档不存在或已删除",
             format!("documentId={document_id} 无法重命名"),
-        ));
+        )
+        .boxed());
     }
 
     get_document_by_id_from_root(root_dir_path, document_id)
@@ -238,7 +243,7 @@ pub fn rename_document_from_root(
 pub(super) fn move_document_to_trash_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let existing_document = get_document_by_id_any_from_root(root_dir_path, document_id)?;
 
     if existing_document.is_deleted {
@@ -252,7 +257,7 @@ pub(super) fn move_document_to_trash_from_root(
 pub fn mark_document_trashed_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let connection = open_ready_connection(root_dir_path)?;
     let now = current_timestamp_ms()?;
     let affected_rows = connection
@@ -265,17 +270,19 @@ pub fn mark_document_trashed_from_root(
             params![now, document_id],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "移动文档到回收站失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     if affected_rows == 0 {
-        return Err(CommandError::not_found(
+        return Err(AppError::not_found(
             "文档不存在或已删除",
             format!("documentId={document_id} 无法更新删除状态"),
-        ));
+        )
+        .boxed());
     }
 
     Ok(())
@@ -285,7 +292,7 @@ pub fn mark_document_trashed_from_root(
 pub(super) fn restore_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let existing_document = get_document_by_id_any_from_root(root_dir_path, document_id)?;
 
     if !existing_document.is_deleted {
@@ -299,7 +306,7 @@ pub(super) fn restore_document_from_root(
 pub fn mark_document_restored_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let connection = open_ready_connection(root_dir_path)?;
     let now = current_timestamp_ms()?;
     let affected_rows = connection
@@ -312,17 +319,19 @@ pub fn mark_document_restored_from_root(
             params![now, document_id],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "恢复文档失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     if affected_rows == 0 {
-        return Err(CommandError::not_found(
+        return Err(AppError::not_found(
             "文档不存在或未处于回收站",
             format!("documentId={document_id} 无法恢复"),
-        ));
+        )
+        .boxed());
     }
 
     Ok(())
@@ -332,7 +341,7 @@ pub fn mark_document_restored_from_root(
 pub(super) fn open_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
 
     ensure_document_scene_ready(root_dir_path, &document_meta)?;
@@ -345,15 +354,16 @@ pub(super) fn open_document_from_root(
 pub(super) fn permanently_delete_document_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let document_dir = delete_document_records_from_root(root_dir_path, document_id)?;
 
     if Path::new(&document_dir).exists() {
         fs::remove_dir_all(&document_dir).map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "删除文档目录失败",
                 format!("documentId={document_id}, path={document_dir}, error={error}"),
             )
+            .boxed()
         })?;
     }
 
@@ -363,21 +373,23 @@ pub(super) fn permanently_delete_document_from_root(
 pub fn delete_document_records_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<String, CommandError> {
+) -> AppResult<String> {
     let mut connection = open_ready_connection(root_dir_path)?;
     let existing_document =
         fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Any)?.ok_or_else(|| {
-            CommandError::not_found(
+            AppError::not_found(
                 "文档不存在",
                 format!("documentId={document_id} 无法永久删除"),
             )
+            .boxed()
         })?;
     let layout = document_path_layout(root_dir_path, &existing_document.id);
     let transaction = connection.transaction().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "开启永久删除事务失败",
             format!("documentId={document_id}, error={error}"),
         )
+        .boxed()
     })?;
 
     for sql in [
@@ -392,18 +404,20 @@ pub fn delete_document_records_from_root(
         "DELETE FROM documents WHERE id = ?1;",
     ] {
         transaction.execute(sql, params![document_id]).map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "清理文档元数据失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
     }
 
     transaction.commit().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "提交永久删除事务失败",
             format!("documentId={document_id}, error={error}"),
         )
+        .boxed()
     })?;
 
     Ok(layout.document_dir)
@@ -413,7 +427,7 @@ pub(super) fn fetch_document_meta_by_id(
     connection: &Connection,
     document_id: &str,
     filter: DocumentFilter,
-) -> Result<Option<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Option<DocumentMetaPayload>> {
     let sql = match filter {
         DocumentFilter::Active => {
             "
@@ -475,10 +489,11 @@ pub(super) fn fetch_document_meta_by_id(
         .query_row(sql, params![document_id], map_document_meta_row)
         .optional()
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "读取文档元数据失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })
 }
 
@@ -486,7 +501,7 @@ pub fn update_document_after_scene_save(
     root_dir_path: &Path,
     document_id: &str,
     saved_at: i64,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let connection = open_ready_connection(root_dir_path)?;
     let affected_rows = connection
         .execute(
@@ -498,17 +513,19 @@ pub fn update_document_after_scene_save(
             params![saved_at, DEFAULT_SAVE_STATUS, document_id],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "更新文档保存元数据失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     if affected_rows == 0 {
-        return Err(CommandError::not_found(
+        return Err(AppError::not_found(
             "文档不存在或已删除",
             format!("documentId={document_id} 无法更新保存结果"),
-        ));
+        )
+        .boxed());
     }
 
     Ok(())
@@ -540,33 +557,36 @@ fn list_document_metas(
     connection: &Connection,
     sql: &str,
     operation_label: &str,
-) -> Result<Vec<DocumentMetaPayload>, CommandError> {
+) -> AppResult<Vec<DocumentMetaPayload>> {
     let mut statement = connection.prepare(sql).map_err(|error| {
-        CommandError::db(
+        AppError::db(
             format!("准备{operation_label}查询失败"),
             error.to_string(),
         )
+        .boxed()
     })?;
 
     let rows = statement.query_map([], map_document_meta_row).map_err(|error| {
-        CommandError::db(
+        AppError::db(
             format!("执行{operation_label}查询失败"),
             error.to_string(),
         )
+        .boxed()
     })?;
 
     rows.collect::<Result<Vec<_>, _>>().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             format!("解析{operation_label}结果失败"),
             error.to_string(),
         )
+        .boxed()
     })
 }
 
 fn insert_document_meta(
     root_dir_path: &Path,
     document_meta: &DocumentMetaPayload,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let connection = open_ready_connection(root_dir_path)?;
 
     connection
@@ -600,10 +620,11 @@ fn insert_document_meta(
             ],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "写入文档元数据失败",
                 format!("documentId={}, error={error}", document_meta.id),
             )
+            .boxed()
         })?;
 
     Ok(())
@@ -612,22 +633,24 @@ fn insert_document_meta(
 pub fn record_document_opened_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let mut connection = open_ready_connection(root_dir_path)?;
     let existing_document = fetch_document_meta_by_id(&connection, document_id, DocumentFilter::Active)?
         .ok_or_else(|| {
-            CommandError::not_found(
+            AppError::not_found(
                 "文档不存在",
                 format!("documentId={document_id} 无法记录最近打开"),
             )
+            .boxed()
         })?;
 
     let now = current_timestamp_ms()?;
     let transaction = connection.transaction().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "开启最近打开写入事务失败",
             format!("documentId={document_id}, error={error}"),
         )
+        .boxed()
     })?;
 
     transaction
@@ -640,10 +663,11 @@ pub fn record_document_opened_from_root(
             params![now, existing_document.id],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "更新文档最近打开时间失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     transaction
@@ -658,16 +682,18 @@ pub fn record_document_opened_from_root(
             params![document_id, document_id, now],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "写入最近打开记录失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     transaction.commit().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "提交最近打开事务失败",
             format!("documentId={document_id}, error={error}"),
         )
+        .boxed()
     })
 }

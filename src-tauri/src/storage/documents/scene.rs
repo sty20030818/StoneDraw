@@ -7,7 +7,7 @@ use std::os::windows::ffi::OsStrExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 use crate::storage::directories::{document_path_layout, DocumentPathLayout};
 
 use super::meta::{get_document_by_id_from_root, DocumentMetaPayload};
@@ -69,13 +69,13 @@ pub struct DocumentSceneWriteResult {
 pub fn open_document_scene_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<SceneFilePayload, CommandError> {
+) -> AppResult<SceneFilePayload> {
     let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
     let scene_path = ensure_document_scene_ready(root_dir_path, &document_meta)?;
     let scene_payload = read_scene_file(&scene_path)?;
 
     if scene_payload.document_id != document_id {
-        return Err(CommandError::io(
+        return Err(AppError::io(
             "读取文档 scene 文件失败",
             format!(
                 "path={}, reason=documentId mismatch, expected={}, actual={}",
@@ -83,7 +83,8 @@ pub fn open_document_scene_from_root(
                 document_id,
                 scene_payload.document_id
             ),
-        ));
+        )
+        .boxed());
     }
 
     Ok(scene_payload)
@@ -92,11 +93,11 @@ pub fn open_document_scene_from_root(
 pub fn write_document_scene_from_root(
     root_dir_path: &Path,
     mut scene_payload: SceneFilePayload,
-) -> Result<DocumentSceneWriteResult, CommandError> {
+) -> AppResult<DocumentSceneWriteResult> {
     let document_id = scene_payload.document_id.trim().to_string();
 
     if document_id.is_empty() {
-        return Err(CommandError::invalid_argument("scene.documentId 不能为空"));
+        return Err(AppError::invalid_argument("scene.documentId 不能为空").boxed());
     }
 
     let existing_document = get_document_by_id_from_root(root_dir_path, &document_id)?;
@@ -121,7 +122,7 @@ pub fn write_document_scene_from_root(
 pub(super) fn save_document_scene_from_root(
     root_dir_path: &Path,
     scene_payload: SceneFilePayload,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let write_result = write_document_scene_from_root(root_dir_path, scene_payload)?;
 
     if let Err(error) =
@@ -135,12 +136,13 @@ pub(super) fn save_document_scene_from_root(
         };
 
         return Err(
-            error
+            (*error)
                 .with_object_id(write_result.document_id.clone())
                 .with_details(format!(
                     "documentId={}, scenePath={}, scene 已保存但元数据更新失败{details_suffix}",
                     write_result.document_id, write_result.scene_path
-                )),
+                ))
+                .boxed(),
         );
     }
 
@@ -163,7 +165,7 @@ pub(super) fn scene_relative_path(layout: &DocumentPathLayout) -> String {
 pub fn ensure_document_scene_ready(
     root_dir_path: &Path,
     document_meta: &DocumentMetaPayload,
-) -> Result<PathBuf, CommandError> {
+) -> AppResult<PathBuf> {
     let layout = document_path_layout(root_dir_path, &document_meta.id);
     let scene_path = PathBuf::from(&layout.current_scene_path);
 
@@ -178,13 +180,14 @@ pub fn ensure_document_scene_ready(
     write_scene_file(scene_path.as_path(), &scene_payload).map_err(|error| {
         let details = error.details.as_deref().unwrap_or_default().to_string();
 
-        error
+        (*error)
             .with_object_id(document_meta.id.clone())
             .with_details(format!(
                 "documentId={}, scenePath={}, scene 缺失且自愈初始化失败, cause={details}",
                 document_meta.id,
                 scene_path.display(),
             ))
+            .boxed()
     })?;
 
     Ok(scene_path)
@@ -192,7 +195,7 @@ pub fn ensure_document_scene_ready(
 
 pub(super) fn ensure_document_layout_ready(
     layout: &DocumentPathLayout,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     for path in [
         &layout.document_dir,
         &layout.assets_dir,
@@ -200,10 +203,11 @@ pub(super) fn ensure_document_layout_ready(
         &layout.recovery_dir,
     ] {
         fs::create_dir_all(path).map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "创建文档目录结构失败",
                 format!("path={path}, error={error}"),
             )
+            .boxed()
         })?;
     }
 
@@ -235,42 +239,46 @@ pub(super) fn create_empty_scene_payload(
 pub(super) fn write_scene_file(
     path: &Path,
     scene_payload: &SceneFilePayload,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let bytes = serde_json::to_vec_pretty(scene_payload).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "序列化 scene 文件失败",
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })?;
     let temp_path = create_scene_temp_path(path)?;
-    let write_result = (|| -> Result<(), CommandError> {
+    let write_result = (|| -> AppResult<()> {
         let mut temp_file = OpenOptions::new()
             .write(true)
             .create_new(true)
             .open(&temp_path)
             .map_err(|error| {
-                CommandError::io(
+                AppError::io(
                     "创建临时 scene 文件失败",
                     format!("path={}, error={error}", temp_path.display()),
                 )
+                .boxed()
             })?;
 
         temp_file.write_all(&bytes).map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "写入临时 scene 文件失败",
                 format!("path={}, error={error}", temp_path.display()),
             )
+            .boxed()
         })?;
         temp_file.sync_all().map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "刷盘临时 scene 文件失败",
                 format!("path={}, error={error}", temp_path.display()),
             )
+            .boxed()
         })?;
         drop(temp_file);
 
         replace_file_atomically(&temp_path, path).map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "替换正式 scene 文件失败",
                 format!(
                     "tempPath={}, targetPath={}, error={error}",
@@ -278,6 +286,7 @@ pub(super) fn write_scene_file(
                     path.display()
                 ),
             )
+            .boxed()
         })?;
 
         Ok(())
@@ -290,19 +299,21 @@ pub(super) fn write_scene_file(
     write_result
 }
 
-pub(super) fn read_scene_file(path: &Path) -> Result<SceneFilePayload, CommandError> {
+pub(super) fn read_scene_file(path: &Path) -> AppResult<SceneFilePayload> {
     let raw_content = fs::read_to_string(path).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "读取文档 scene 文件失败",
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })?;
 
     serde_json::from_str::<SceneFilePayload>(&raw_content).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "解析文档 scene 文件失败",
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })
 }
 
@@ -322,18 +333,20 @@ pub(super) fn cleanup_document_directory(document_dir: &str) {
     }
 }
 
-fn create_scene_temp_path(path: &Path) -> Result<PathBuf, CommandError> {
+fn create_scene_temp_path(path: &Path) -> AppResult<PathBuf> {
     let parent = path.parent().ok_or_else(|| {
-        CommandError::io(
+        AppError::io(
             "解析临时 scene 文件目录失败",
             format!("path={} 缺少父目录", path.display()),
         )
+        .boxed()
     })?;
     let file_name = path.file_name().and_then(|value| value.to_str()).ok_or_else(|| {
-        CommandError::io(
+        AppError::io(
             "解析临时 scene 文件名失败",
             format!("path={} 缺少有效文件名", path.display()),
         )
+        .boxed()
     })?;
     let timestamp = current_timestamp_ms()?;
 

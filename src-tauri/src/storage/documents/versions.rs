@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use rusqlite::{params, Connection, Row};
 use serde::{Deserialize, Serialize};
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 use crate::storage::database::open_ready_connection;
 use crate::storage::directories::document_path_layout;
 
@@ -28,7 +28,7 @@ pub struct DocumentVersionPayload {
 pub fn create_document_version_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<DocumentVersionPayload, CommandError> {
+) -> AppResult<DocumentVersionPayload> {
     let document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
     let current_scene = open_document_scene_from_root(root_dir_path, document_id)?;
     let layout = document_path_layout(root_dir_path, document_id);
@@ -50,13 +50,14 @@ pub fn create_document_version_from_root(
     };
 
     fs::create_dir_all(&snapshot_directory).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "创建版本快照目录失败",
             format!(
                 "documentId={document_id}, path={}, error={error}",
                 snapshot_directory.display()
             ),
         )
+        .boxed()
     })?;
     write_scene_file(snapshot_path.as_path(), &current_scene)?;
 
@@ -67,11 +68,12 @@ pub fn create_document_version_from_root(
             Err(cleanup_error) => format!(", cleanupError={cleanup_error}"),
         };
 
-        return Err(error.with_details(format!(
+        return Err((*error).with_details(format!(
             "documentId={}, snapshotPath={}, 创建版本元数据失败{cleanup_suffix}",
             document_meta.id,
             snapshot_path.display()
-        )));
+        ))
+        .boxed());
     }
 
     Ok(version_payload)
@@ -80,7 +82,7 @@ pub fn create_document_version_from_root(
 pub fn list_document_versions_from_root(
     root_dir_path: &Path,
     document_id: &str,
-) -> Result<Vec<DocumentVersionPayload>, CommandError> {
+) -> AppResult<Vec<DocumentVersionPayload>> {
     let _document_meta = get_document_by_id_from_root(root_dir_path, document_id)?;
     let connection = open_ready_connection(root_dir_path)?;
     let mut statement = connection
@@ -101,25 +103,28 @@ pub fn list_document_versions_from_root(
             ",
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "读取文档版本列表失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
     let rows = statement
         .query_map(params![document_id], map_document_version_row)
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "遍历文档版本列表失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })?;
 
     rows.collect::<Result<Vec<_>, _>>().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "组装文档版本列表失败",
             format!("documentId={document_id}, error={error}"),
         )
+        .boxed()
     })
 }
 
@@ -148,7 +153,7 @@ fn version_relative_path(document_id: &str, snapshot_path: &Path) -> String {
 fn read_next_version_number(
     connection: &Connection,
     document_id: &str,
-) -> Result<i64, CommandError> {
+) -> AppResult<i64> {
     connection
         .query_row(
             "
@@ -160,17 +165,18 @@ fn read_next_version_number(
             |row| row.get(0),
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "读取下一个版本号失败",
                 format!("documentId={document_id}, error={error}"),
             )
+            .boxed()
         })
 }
 
 fn insert_document_version(
     root_dir_path: &Path,
     version_payload: &DocumentVersionPayload,
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let connection = open_ready_connection(root_dir_path)?;
     connection
         .execute(
@@ -199,13 +205,14 @@ fn insert_document_version(
             ],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "写入文档版本元数据失败",
                 format!(
                     "documentId={}, versionId={}, error={error}",
                     version_payload.document_id, version_payload.id
                 ),
             )
+            .boxed()
         })?;
 
     Ok(())

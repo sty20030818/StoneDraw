@@ -1,14 +1,15 @@
 use tauri::AppHandle;
 
 use crate::application::documents::{
-    create_document, get_document_by_id, list_documents, list_recent_documents,
-    list_document_versions, list_trashed_documents, move_document_to_trash, open_document,
+    create_document, create_document_version, get_document_by_id, list_document_versions,
+    list_documents, list_recent_documents, list_trashed_documents, move_document_to_trash, open_document,
     open_document_scene, permanently_delete_document, rename_document, restore_document,
-    save_document_scene, create_document_version,
+    save_document_scene,
 };
+use crate::error::{AppError, AppResult};
 use crate::storage::documents::{DocumentMetaPayload, DocumentVersionPayload, SceneFilePayload};
 
-use super::{command_result, CommandError, CommandResult};
+use super::{command_result, map_command_error, CommandResult};
 
 #[tauri::command]
 pub fn documents_create(
@@ -29,7 +30,7 @@ pub fn documents_get_by_id(
     document_id: String,
 ) -> CommandResult<DocumentMetaPayload> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context("documents_get_by_id", "documents-command", "getById")
+        map_command_error("documents_get_by_id", "documents-command", "getById", error)
     })?;
     command_result(
         "documents_get_by_id",
@@ -70,7 +71,7 @@ pub fn documents_open(
     document_id: String,
 ) -> CommandResult<DocumentMetaPayload> {
     let document_id = validate_document_id(document_id)
-        .map_err(|error| error.attach_command_context("documents_open", "documents-command", "open"))?;
+        .map_err(|error| map_command_error("documents_open", "documents-command", "open", error))?;
     command_result(
         "documents_open",
         "documents-command",
@@ -85,7 +86,7 @@ pub fn documents_open_scene(
     document_id: String,
 ) -> CommandResult<SceneFilePayload> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context("documents_open_scene", "documents-command", "openScene")
+        map_command_error("documents_open_scene", "documents-command", "openScene", error)
     })?;
     command_result(
         "documents_open_scene",
@@ -102,15 +103,17 @@ pub fn editor_save_scene(
 ) -> CommandResult<DocumentMetaPayload> {
     let raw_document_id = scene.document_id.clone();
     let document_id = validate_document_id(raw_document_id.clone()).map_err(|error| {
-        error.attach_command_context("editor_save_scene", "documents-command", "saveScene")
+        map_command_error("editor_save_scene", "documents-command", "saveScene", error)
     })?;
 
     if document_id != raw_document_id {
-        return Err(
-            CommandError::invalid_argument("scene.documentId 非法")
+        return Err(map_command_error(
+            "editor_save_scene",
+            "documents-command",
+            "saveScene",
+            AppError::invalid_argument("scene.documentId 非法")
                 .with_object_id(raw_document_id)
-                .attach_command_context("editor_save_scene", "documents-command", "saveScene"),
-        );
+        ));
     }
 
     command_result(
@@ -127,7 +130,7 @@ pub fn versions_create(
     document_id: String,
 ) -> CommandResult<DocumentVersionPayload> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context("versions_create", "documents-command", "createVersion")
+        map_command_error("versions_create", "documents-command", "createVersion", error)
     })?;
     command_result(
         "versions_create",
@@ -143,7 +146,7 @@ pub fn versions_list(
     document_id: String,
 ) -> CommandResult<Vec<DocumentVersionPayload>> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context("versions_list", "documents-command", "listVersions")
+        map_command_error("versions_list", "documents-command", "listVersions", error)
     })?;
     command_result(
         "versions_list",
@@ -160,9 +163,9 @@ pub fn documents_rename(
     title: String,
 ) -> CommandResult<DocumentMetaPayload> {
     let document_id = validate_document_id(document_id)
-        .map_err(|error| error.attach_command_context("documents_rename", "documents-command", "rename"))?;
+        .map_err(|error| map_command_error("documents_rename", "documents-command", "rename", error))?;
     let title = validate_document_title(title)
-        .map_err(|error| error.attach_command_context("documents_rename", "documents-command", "rename"))?;
+        .map_err(|error| map_command_error("documents_rename", "documents-command", "rename", error))?;
     command_result(
         "documents_rename",
         "documents-command",
@@ -177,10 +180,11 @@ pub fn documents_move_to_trash(
     document_id: String,
 ) -> CommandResult<DocumentMetaPayload> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context(
+        map_command_error(
             "documents_move_to_trash",
             "documents-command",
             "moveToTrash",
+            error,
         )
     })?;
     command_result(
@@ -197,7 +201,7 @@ pub fn documents_restore(
     document_id: String,
 ) -> CommandResult<DocumentMetaPayload> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context("documents_restore", "documents-command", "restore")
+        map_command_error("documents_restore", "documents-command", "restore", error)
     })?;
     command_result(
         "documents_restore",
@@ -213,10 +217,11 @@ pub fn documents_permanently_delete(
     document_id: String,
 ) -> CommandResult<()> {
     let document_id = validate_document_id(document_id).map_err(|error| {
-        error.attach_command_context(
+        map_command_error(
             "documents_permanently_delete",
             "documents-command",
             "permanentlyDelete",
+            error,
         )
     })?;
     command_result(
@@ -227,21 +232,21 @@ pub fn documents_permanently_delete(
     )
 }
 
-fn validate_document_id(document_id: String) -> Result<String, CommandError> {
+fn validate_document_id(document_id: String) -> AppResult<String> {
     let normalized = document_id.trim().to_string();
 
     if normalized.is_empty() {
-        return Err(CommandError::invalid_argument("document_id 不能为空"));
+        return Err(AppError::invalid_argument("document_id 不能为空").boxed());
     }
 
     Ok(normalized)
 }
 
-fn validate_document_title(title: String) -> Result<String, CommandError> {
+fn validate_document_title(title: String) -> AppResult<String> {
     let normalized = title.trim().to_string();
 
     if normalized.is_empty() {
-        return Err(CommandError::invalid_argument("title 不能为空"));
+        return Err(AppError::invalid_argument("title 不能为空").boxed());
     }
 
     Ok(normalized)

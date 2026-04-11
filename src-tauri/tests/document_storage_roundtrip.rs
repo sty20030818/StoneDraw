@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::Map;
 use stonedraw_lib::{
-    CommandError, CommandErrorCode,
+    AppResult, CommandErrorCode,
     documents::{
         create_document_from_root, get_document_by_id_from_root,
         get_trashed_document_by_id_from_root, list_documents_from_root,
@@ -28,7 +28,7 @@ fn unique_temp_path(name: &str) -> PathBuf {
 fn save_document_scene_from_root(
     root_directory_path: &Path,
     scene_payload: SceneFilePayload,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let write_result = write_document_scene_from_root(root_directory_path, scene_payload)?;
     update_document_after_scene_save(
         root_directory_path,
@@ -43,7 +43,7 @@ fn save_document_scene_from_root(
 fn open_document_from_root(
     root_directory_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     let _scene_payload = open_document_scene_from_root(root_directory_path, document_id)?;
     record_document_opened_from_root(root_directory_path, document_id)?;
 
@@ -53,7 +53,7 @@ fn open_document_from_root(
 fn move_document_to_trash_from_root(
     root_directory_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     mark_document_trashed_from_root(root_directory_path, document_id)?;
     get_trashed_document_by_id_from_root(root_directory_path, document_id)
 }
@@ -61,7 +61,7 @@ fn move_document_to_trash_from_root(
 fn restore_document_from_root(
     root_directory_path: &Path,
     document_id: &str,
-) -> Result<DocumentMetaPayload, CommandError> {
+) -> AppResult<DocumentMetaPayload> {
     mark_document_restored_from_root(root_directory_path, document_id)?;
     get_document_by_id_from_root(root_directory_path, document_id)
 }

@@ -1,8 +1,10 @@
 mod application;
 mod commands;
+mod error;
 mod storage;
 
-pub use commands::{CommandError, CommandErrorCode};
+pub use commands::CommandError;
+pub use error::{AppError, AppErrorCode as CommandErrorCode, AppResult};
 pub use storage::documents;
 
 use tauri::{WebviewUrl, WebviewWindowBuilder};

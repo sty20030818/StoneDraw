@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::AppHandle;
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 
 use super::directories::{logs_dir_path, resolve_root_dir};
 
@@ -55,7 +55,7 @@ pub struct LogWritePayload {
 pub fn write_log_event(
     app: &AppHandle,
     event: LogEventPayload,
-) -> Result<LogWritePayload, CommandError> {
+) -> AppResult<LogWritePayload> {
     let root_dir = resolve_root_dir(app)?;
     write_log_event_from_root(&root_dir, event)
 }
@@ -63,15 +63,16 @@ pub fn write_log_event(
 fn write_log_event_from_root(
     root_dir_path: &Path,
     event: LogEventPayload,
-) -> Result<LogWritePayload, CommandError> {
+) -> AppResult<LogWritePayload> {
     let logs_dir = logs_dir_path(root_dir_path);
 
     fs::create_dir_all(&logs_dir).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "创建日志目录失败",
             format!("path={}, error={error}", logs_dir.display()),
         )
         .with_context("storage", "logs-storage", "writeEvent")
+        .boxed()
     })?;
 
     let log_path = session_log_path(root_dir_path);
@@ -80,31 +81,35 @@ fn write_log_event_from_root(
         .append(true)
         .open(&log_path)
         .map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 "打开日志文件失败",
                 format!("path={}, error={error}", log_path.display()),
             )
             .with_context("storage", "logs-storage", "writeEvent")
+            .boxed()
         })?;
 
     let payload = serde_json::to_string(&event).map_err(|error| {
-        CommandError::io("序列化日志事件失败", error.to_string())
+        AppError::io("序列化日志事件失败", error.to_string())
             .with_context("storage", "logs-storage", "writeEvent")
+            .boxed()
     })?;
 
     file.write_all(payload.as_bytes()).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "写入日志事件失败",
             format!("path={}, error={error}", log_path.display()),
         )
         .with_context("storage", "logs-storage", "writeEvent")
+        .boxed()
     })?;
     file.write_all(b"\n").map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "写入日志换行失败",
             format!("path={}, error={error}", log_path.display()),
         )
         .with_context("storage", "logs-storage", "writeEvent")
+        .boxed()
     })?;
 
     Ok(LogWritePayload {

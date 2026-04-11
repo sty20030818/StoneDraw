@@ -5,7 +5,7 @@ use rusqlite::{params, Connection};
 use serde::Serialize;
 use tauri::AppHandle;
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 
 use super::directories::{data_dir_path, resolve_root_dir};
 
@@ -58,24 +58,24 @@ const DEFAULT_MIGRATIONS: &[Migration] = &[Migration {
     sql: include_str!("../../migrations/0004_version_metadata.sql"),
 }];
 
-pub fn initialize_database(app: &AppHandle) -> Result<DatabaseHealthPayload, CommandError> {
+pub fn initialize_database(app: &AppHandle) -> AppResult<DatabaseHealthPayload> {
     let root_dir = resolve_root_dir(app)?;
     initialize_database_from_root(&root_dir, DEFAULT_MIGRATIONS)
 }
 
-pub fn read_database_health(app: &AppHandle) -> Result<DatabaseHealthPayload, CommandError> {
+pub fn read_database_health(app: &AppHandle) -> AppResult<DatabaseHealthPayload> {
     let root_dir = resolve_root_dir(app)?;
     read_database_health_from_root(&root_dir, DEFAULT_MIGRATIONS)
 }
 
 pub fn read_database_schema_version(
     app: &AppHandle,
-) -> Result<DatabaseSchemaVersionPayload, CommandError> {
+) -> AppResult<DatabaseSchemaVersionPayload> {
     let root_dir = resolve_root_dir(app)?;
     read_database_schema_version_from_root(&root_dir, DEFAULT_MIGRATIONS)
 }
 
-pub(crate) fn open_ready_connection(root_dir_path: &Path) -> Result<Connection, CommandError> {
+pub(crate) fn open_ready_connection(root_dir_path: &Path) -> AppResult<Connection> {
     ensure_database_ready(root_dir_path)?;
 
     let database_path = database_path(root_dir_path);
@@ -85,14 +85,14 @@ pub(crate) fn open_ready_connection(root_dir_path: &Path) -> Result<Connection, 
     Ok(connection)
 }
 
-pub(crate) fn ensure_database_ready(root_dir_path: &Path) -> Result<(), CommandError> {
+pub(crate) fn ensure_database_ready(root_dir_path: &Path) -> AppResult<()> {
     initialize_database_from_root(root_dir_path, DEFAULT_MIGRATIONS).map(|_| ())
 }
 
 fn initialize_database_from_root(
     root_dir_path: &Path,
     migrations: &[Migration],
-) -> Result<DatabaseHealthPayload, CommandError> {
+) -> AppResult<DatabaseHealthPayload> {
     let database_dir_path = database_dir_path(root_dir_path);
     let database_path = database_path(root_dir_path);
 
@@ -108,14 +108,15 @@ fn initialize_database_from_root(
 fn read_database_health_from_root(
     root_dir_path: &Path,
     migrations: &[Migration],
-) -> Result<DatabaseHealthPayload, CommandError> {
+) -> AppResult<DatabaseHealthPayload> {
     let database_path = database_path(root_dir_path);
 
     if !database_path.exists() {
-        return Err(CommandError::not_initialized(
+        return Err(AppError::not_initialized(
             "本地元数据数据库尚未初始化",
             format!("path={}", database_path.display()),
-        ));
+        )
+        .boxed());
     }
 
     let connection = open_connection(&database_path)?;
@@ -127,14 +128,15 @@ fn read_database_health_from_root(
 fn read_database_schema_version_from_root(
     root_dir_path: &Path,
     migrations: &[Migration],
-) -> Result<DatabaseSchemaVersionPayload, CommandError> {
+) -> AppResult<DatabaseSchemaVersionPayload> {
     let database_path = database_path(root_dir_path);
 
     if !database_path.exists() {
-        return Err(CommandError::not_initialized(
+        return Err(AppError::not_initialized(
             "本地元数据数据库尚未初始化",
             format!("path={}", database_path.display()),
-        ));
+        )
+        .boxed());
     }
 
     let connection = open_connection(&database_path)?;
@@ -156,41 +158,45 @@ fn database_path(root_dir_path: &Path) -> PathBuf {
     database_dir_path(root_dir_path).join(DATABASE_FILE_NAME)
 }
 
-fn ensure_database_directory_ready(path: &Path) -> Result<(), CommandError> {
+fn ensure_database_directory_ready(path: &Path) -> AppResult<()> {
     fs::create_dir_all(path).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "创建 SQLite 数据库目录失败",
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })?;
 
     let metadata = fs::metadata(path).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             "检查 SQLite 数据库目录失败",
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })?;
 
     if !metadata.is_dir() {
-        return Err(CommandError::io(
+        return Err(AppError::io(
             "SQLite 数据库目录不可用",
             format!("path={} 不是目录", path.display()),
-        ));
+        )
+        .boxed());
     }
 
     Ok(())
 }
 
-fn open_connection(path: &Path) -> Result<Connection, CommandError> {
+fn open_connection(path: &Path) -> AppResult<Connection> {
     Connection::open(path).map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "打开 SQLite 数据库失败",
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })
 }
 
-fn ensure_migration_table(connection: &Connection) -> Result<(), CommandError> {
+fn ensure_migration_table(connection: &Connection) -> AppResult<()> {
     connection
         .execute_batch(
             "
@@ -202,17 +208,18 @@ fn ensure_migration_table(connection: &Connection) -> Result<(), CommandError> {
             ",
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "初始化 migration 版本表失败",
                 format!("table={MIGRATION_TABLE_NAME}, error={error}"),
             )
+            .boxed()
         })
 }
 
 fn run_pending_migrations(
     connection: &mut Connection,
     migrations: &[Migration],
-) -> Result<(), CommandError> {
+) -> AppResult<()> {
     let current_version = read_schema_version_from_connection(connection)?;
 
     for migration in migrations
@@ -225,7 +232,7 @@ fn run_pending_migrations(
     Ok(())
 }
 
-fn apply_migration(connection: &mut Connection, migration: &Migration) -> Result<(), CommandError> {
+fn apply_migration(connection: &mut Connection, migration: &Migration) -> AppResult<()> {
     log::info!(
         "开始执行 SQLite migration: version={}, name={}",
         migration.version,
@@ -233,13 +240,14 @@ fn apply_migration(connection: &mut Connection, migration: &Migration) -> Result
     );
 
     let transaction = connection.transaction().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "开启 SQLite migration 事务失败",
             format!(
                 "version={}, name={}, error={error}",
                 migration.version, migration.name
             ),
         )
+        .boxed()
     })?;
 
     transaction.execute_batch(migration.sql).map_err(|error| {
@@ -250,13 +258,14 @@ fn apply_migration(connection: &mut Connection, migration: &Migration) -> Result
             error
         );
 
-        CommandError::db(
+        AppError::db(
             "执行 SQLite migration 失败",
             format!(
                 "version={}, name={}, error={error}",
                 migration.version, migration.name
             ),
         )
+        .boxed()
     })?;
 
     transaction
@@ -268,23 +277,25 @@ fn apply_migration(connection: &mut Connection, migration: &Migration) -> Result
             params![migration.version, migration.name],
         )
         .map_err(|error| {
-            CommandError::db(
+            AppError::db(
                 "记录 SQLite migration 版本失败",
                 format!(
                     "version={}, name={}, error={error}",
                     migration.version, migration.name
                 ),
             )
+            .boxed()
         })?;
 
     transaction.commit().map_err(|error| {
-        CommandError::db(
+        AppError::db(
             "提交 SQLite migration 事务失败",
             format!(
                 "version={}, name={}, error={error}",
                 migration.version, migration.name
             ),
         )
+        .boxed()
     })?;
 
     log::info!(
@@ -300,7 +311,7 @@ fn build_database_health_payload(
     connection: &Connection,
     database_path: &Path,
     migrations: &[Migration],
-) -> Result<DatabaseHealthPayload, CommandError> {
+) -> AppResult<DatabaseHealthPayload> {
     let schema_version = read_schema_version_from_connection(connection)?;
     let target_schema_version = latest_target_schema_version(migrations);
 
@@ -318,14 +329,14 @@ fn build_database_health_payload(
     })
 }
 
-fn read_schema_version_from_connection(connection: &Connection) -> Result<i64, CommandError> {
+fn read_schema_version_from_connection(connection: &Connection) -> AppResult<i64> {
     connection
         .query_row(
             "SELECT COALESCE(MAX(version), 0) FROM schema_migrations;",
             [],
             |row| row.get(0),
         )
-        .map_err(|error| CommandError::db("读取 SQLite schema 版本失败", error.to_string()))
+        .map_err(|error| AppError::db("读取 SQLite schema 版本失败", error.to_string()).boxed())
 }
 
 fn latest_target_schema_version(migrations: &[Migration]) -> i64 {

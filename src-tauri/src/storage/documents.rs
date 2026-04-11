@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 
 #[path = "documents/meta.rs"]
 mod meta;
@@ -74,23 +74,22 @@ fn normalize_optional_document_title(title: Option<&str>) -> String {
         .to_string()
 }
 
-fn normalize_required_document_title(title: &str) -> Result<String, CommandError> {
+fn normalize_required_document_title(title: &str) -> AppResult<String> {
     let normalized = title.trim();
 
     if normalized.is_empty() {
-        return Err(CommandError::invalid_argument("title 不能为空"));
+        return Err(AppError::invalid_argument("title 不能为空").boxed());
     }
 
     Ok(normalized.to_string())
 }
 
-fn current_timestamp_ms() -> Result<i64, CommandError> {
+fn current_timestamp_ms() -> AppResult<i64> {
     let duration = SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error| {
-        CommandError::io("读取系统时间失败", error.to_string())
+        AppError::io("读取系统时间失败", error.to_string())
     })?;
 
-    i64::try_from(duration.as_millis())
-        .map_err(|error| CommandError::io("转换时间戳失败", error.to_string()))
+    i64::try_from(duration.as_millis()).map_err(|error| AppError::io("转换时间戳失败", error.to_string()).boxed())
 }
 
 #[cfg(test)]

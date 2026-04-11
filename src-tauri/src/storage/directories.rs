@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
-use crate::commands::CommandError;
+use crate::error::{AppError, AppResult};
 
 const STONEDRAW_HOME_DIRECTORY_NAME: &str = ".stonedraw";
 const DATA_DIRECTORY_NAME: &str = "data";
@@ -47,21 +47,21 @@ pub struct DocumentPathLayout {
     pub recovery_dir: String,
 }
 
-pub fn prepare_local_directories(app: &AppHandle) -> Result<LocalDirectoriesPayload, CommandError> {
+pub fn prepare_local_directories(app: &AppHandle) -> AppResult<LocalDirectoriesPayload> {
     let root_dir = resolve_root_dir(app)?;
     prepare_local_directories_from_root(&root_dir)
 }
 
-pub(crate) fn resolve_root_dir(app: &AppHandle) -> Result<PathBuf, CommandError> {
+pub(crate) fn resolve_root_dir(app: &AppHandle) -> AppResult<PathBuf> {
     app.path()
         .home_dir()
         .map(|path| path.join(STONEDRAW_HOME_DIRECTORY_NAME))
-        .map_err(|error| CommandError::io("解析 StoneDraw 根目录失败", error.to_string()))
+        .map_err(|error| AppError::io("解析 StoneDraw 根目录失败", error.to_string()).boxed())
 }
 
 fn prepare_local_directories_from_root(
     root_dir_path: &Path,
-) -> Result<LocalDirectoriesPayload, CommandError> {
+) -> AppResult<LocalDirectoriesPayload> {
     let root_dir = ensure_directory_ready(root_dir_path, "StoneDraw 根目录")?;
     let data_dir = ensure_directory_ready(&data_dir_path(root_dir_path), "本地数据目录")?;
     let documents_dir = ensure_directory_ready(&documents_dir_path(root_dir_path), "文档目录")?;
@@ -84,7 +84,7 @@ fn prepare_local_directories_from_root(
 #[cfg(test)]
 fn read_local_directories_from_root(
     root_dir_path: &Path,
-) -> Result<LocalDirectoriesPayload, CommandError> {
+) -> AppResult<LocalDirectoriesPayload> {
     let root_dir = inspect_directory_health(root_dir_path, "StoneDraw 根目录")?;
     let data_dir = inspect_directory_health(&data_dir_path(root_dir_path), "本地数据目录")?;
     let documents_dir = inspect_directory_health(&documents_dir_path(root_dir_path), "文档目录")?;
@@ -148,39 +148,43 @@ pub(crate) fn document_path_layout(root_dir_path: &Path, document_id: &str) -> D
     }
 }
 
-fn ensure_directory_ready(path: &Path, label: &str) -> Result<DirectoryHealth, CommandError> {
+fn ensure_directory_ready(path: &Path, label: &str) -> AppResult<DirectoryHealth> {
     if !path.exists() {
         fs::create_dir_all(path).map_err(|error| {
-            CommandError::io(
+            AppError::io(
                 format!("创建{label}失败"),
                 format!("path={}, error={error}", path.display()),
             )
+            .boxed()
         })?;
     }
 
     inspect_directory_health(path, label)
 }
 
-fn inspect_directory_health(path: &Path, label: &str) -> Result<DirectoryHealth, CommandError> {
+fn inspect_directory_health(path: &Path, label: &str) -> AppResult<DirectoryHealth> {
     let metadata = fs::metadata(path).map_err(|error| {
-        CommandError::io(
+        AppError::io(
             format!("检查{label}状态失败"),
             format!("path={}, error={error}", path.display()),
         )
+        .boxed()
     })?;
 
     if !metadata.is_dir() {
-        return Err(CommandError::io(
+        return Err(AppError::io(
             format!("{label}不可用"),
             format!("path={} 不是目录", path.display()),
-        ));
+        )
+        .boxed());
     }
 
     if metadata.permissions().readonly() {
-        return Err(CommandError::io(
+        return Err(AppError::io(
             format!("{label}不可写"),
             format!("path={} 当前为只读状态", path.display()),
-        ));
+        )
+        .boxed());
     }
 
     Ok(DirectoryHealth {
