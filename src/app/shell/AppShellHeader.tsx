@@ -62,7 +62,8 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 	const chromeSearchInputRef = useRef<HTMLInputElement | null>(null)
 	const leadingGroupRef = useRef<HTMLDivElement | null>(null)
 	const trailingGroupRef = useRef<HTMLDivElement | null>(null)
-	const windowsWindowControlButtonBaseClass = 'grid h-full w-full min-w-0 place-items-center text-muted-foreground transition-colors'
+	const windowsWindowControlButtonBaseClass =
+		'grid h-full w-full min-w-0 place-items-center text-muted-foreground transition-colors'
 	const windowsWindowControlButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-foreground/8 hover:text-foreground`
 	const windowsWindowCloseButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-destructive hover:text-primary-foreground`
 	const headerPaddingClass =
@@ -166,10 +167,7 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 					ref={trailingGroupRef}
 					data-testid='app-shell-header-actions'
 					data-tauri-drag-region
-					className={cn(
-						'app-shell-drag flex h-full min-w-0 items-center gap-2',
-						isMacShell ? 'pr-2' : 'pr-0',
-					)}>
+					className={cn('app-shell-drag flex h-full min-w-0 items-center gap-2', isMacShell ? 'pr-2' : 'pr-0')}>
 					<Button
 						type='button'
 						variant='outline'
@@ -200,7 +198,7 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 							/>
 							<div
 								data-testid='windows-window-controls'
-								className='app-shell-no-drag grid h-full w-[8.625rem] shrink-0 grid-cols-3'>
+								className='app-shell-no-drag grid h-full w-34.5 shrink-0 grid-cols-3'>
 								<button
 									type='button'
 									className={windowsWindowControlButtonClass}
@@ -242,7 +240,7 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 				<div
 					data-testid='app-shell-header-search'
 					data-app-shell-header-search-root='true'
-					className='app-shell-no-drag pointer-events-auto w-full min-w-0 max-w-[40rem]'>
+					className='app-shell-no-drag pointer-events-auto w-full min-w-0 max-w-md'>
 					<form
 						className='flex min-w-0 items-center'
 						onSubmit={(event) => {

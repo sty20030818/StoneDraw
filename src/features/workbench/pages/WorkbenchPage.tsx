@@ -27,13 +27,12 @@ function WorkbenchPage() {
 	const saveStatus = useWorkbenchStore((state) => state.saveStatus)
 	const lastSaveError = useWorkbenchStore((state) => state.lastSaveError)
 	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
-	const { workbenchLoadState, setWorkbenchLoadState } = useWorkbenchDocumentLifecycle({
+	const { workbenchLoadState } = useWorkbenchDocumentLifecycle({
 		documentId,
 		resetShellActions,
 	})
 	const { handleContentChange, handleCreateVersion, handleManualSave } = useWorkbenchPersistenceActions({
 		workbenchLoadState,
-		setWorkbenchLoadState,
 	})
 	const { navigateToWorkspace } = useWorkbenchLeaveGuard({
 		handleManualSave,

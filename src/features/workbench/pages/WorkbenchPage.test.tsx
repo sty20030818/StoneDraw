@@ -298,13 +298,14 @@ describe('WorkbenchPage', () => {
 		expect(useWorkbenchStore.getState().saveStatus).toBe('dirty')
 	})
 
-	test('标题栏保存动作应触发手动保存并回到已保存状态', async () => {
-		renderWorkbenchPage()
-		await screen.findByRole('button', { name: '触发画布变化' })
-		await waitForShellActionsReady()
-		await waitFor(() => {
-			expect(useWorkbenchStore.getState().activeDocumentId).toBe('doc-editor-1')
-		})
+		test('标题栏保存动作应触发手动保存并回到已保存状态', async () => {
+			renderWorkbenchPage()
+			await screen.findByRole('button', { name: '触发画布变化' })
+			await waitForShellActionsReady()
+			await waitFor(() => {
+				expect(useWorkbenchStore.getState().activeDocumentId).toBe('doc-editor-1')
+				expect(useWorkbenchStore.getState().isWorkbenchReady).toBe(true)
+			})
 
 		act(() => {
 			useWorkbenchStore.getState().setSaveStatus('error')
@@ -314,16 +315,17 @@ describe('WorkbenchPage', () => {
 			getShellState().onSave()
 		})
 
-		await waitFor(() => {
-			expect(saveNowMock).toHaveBeenCalledWith(
-				expect.objectContaining({
-					id: 'doc-editor-1',
-					title: '编辑器文档',
-				}),
-			)
-			expect(useWorkbenchStore.getState().saveStatus).toBe('saved')
+			await waitFor(() => {
+				expect(saveNowMock).toHaveBeenCalledWith(
+					expect.objectContaining({
+						id: 'doc-editor-1',
+						title: '编辑器文档',
+					}),
+				)
+				expect(useWorkbenchStore.getState().saveStatus).toBe('saved')
+				expect(useWorkbenchStore.getState().isWorkbenchReady).toBe(true)
+			})
 		})
-	})
 
 	test('创建版本动作应先保存 current 再创建手动版本', async () => {
 		renderWorkbenchPage()
@@ -458,19 +460,20 @@ describe('WorkbenchPage', () => {
 		})
 	})
 
-	test('Ctrl+S 快捷键应触发手动保存', async () => {
-		renderWorkbenchPage()
-		await screen.findByRole('button', { name: '触发画布变化' })
+		test('Ctrl+S 快捷键应触发手动保存', async () => {
+			renderWorkbenchPage()
+			await screen.findByRole('button', { name: '触发画布变化' })
 
 		fireEvent.keyDown(window, {
 			key: 's',
 			ctrlKey: true,
 		})
 
-		await waitFor(() => {
-			expect(saveNowMock).toHaveBeenCalledTimes(1)
+			await waitFor(() => {
+				expect(saveNowMock).toHaveBeenCalledTimes(1)
+				expect(useWorkbenchStore.getState().isWorkbenchReady).toBe(true)
+			})
 		})
-	})
 
 	test('打开文档失败时应展示错误空状态', async () => {
 		openDocumentMock.mockResolvedValueOnce({

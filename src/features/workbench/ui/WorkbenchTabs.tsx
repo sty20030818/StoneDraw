@@ -45,11 +45,14 @@ function WorkbenchTabs({
 				className='min-w-0 flex-1 gap-0'>
 				<div className='scrollbar-hidden overflow-x-auto'>
 					<TabsList className='h-auto gap-1 rounded-none border-0 bg-transparent p-0 text-foreground shadow-none'>
-						{visibleTabs.map((tab) => {
-							const isActive = tab.id === currentTabValue
-							const shouldShowUnsavedMarker = isActive && (activeSaveStatus === 'dirty' || activeSaveStatus === 'error')
+							{visibleTabs.map((tab) => {
+								const isActive = tab.id === currentTabValue
+								const isPendingTab = tab.id === 'pending'
+								const shouldShowLoadingTitle =
+									!isDocumentReady && fallbackDocumentId === tab.id && isActive
+								const shouldShowUnsavedMarker = isActive && (activeSaveStatus === 'dirty' || activeSaveStatus === 'error')
 
-							return (
+								return (
 								<div
 									key={tab.id}
 									className='group relative shrink-0'>
@@ -63,11 +66,17 @@ function WorkbenchTabs({
 											'data-[state=inactive]:text-muted-foreground',
 											tab.id === 'pending' && 'pr-3',
 										)}>
-										<div className='flex min-w-0 items-center gap-2'>
-											<p className='truncate'>
-												{isDocumentReady ? tab.title : fallbackDocumentId ? '正在载入文档...' : '等待文档上下文'}
-											</p>
-											{shouldShowUnsavedMarker ? (
+											<div className='flex min-w-0 items-center gap-2'>
+												<p className='truncate'>
+													{isPendingTab
+														? fallbackDocumentId
+															? '正在载入文档...'
+															: '等待文档上下文'
+														: shouldShowLoadingTitle
+															? '正在载入文档...'
+															: tab.title}
+												</p>
+												{shouldShowUnsavedMarker ? (
 												<span
 													className='size-2 shrink-0 rounded-full bg-amber-500'
 													title='未保存变更'

@@ -24,6 +24,30 @@ describe('Workbench 状态表现', () => {
 		expect(screen.getByTitle('关闭标签')).toBeInTheDocument()
 	})
 
+	test('文档切换加载中时，不应让所有标签都退化成加载文案', () => {
+		render(
+			<WorkbenchTabs
+				tabs={[
+					{ id: 'doc-1', title: '文档一' },
+					{ id: 'doc-2', title: '文档二' },
+				]}
+				activeTabId='doc-2'
+				fallbackDocumentId='doc-2'
+				fallbackDocumentTitle='文档二'
+				isDocumentReady={false}
+				activeSaveStatus='saved'
+				isRightPanelOpen={false}
+				onSelectTab={vi.fn<(documentId: string) => void>()}
+				onCloseTab={vi.fn<(documentId: string) => void>()}
+				onToggleRightPanel={vi.fn<() => void>()}
+			/>,
+		)
+
+		expect(screen.getByText('文档一')).toBeInTheDocument()
+		expect(screen.getByText('正在载入文档...')).toBeInTheDocument()
+		expect(screen.queryAllByText('正在载入文档...')).toHaveLength(1)
+	})
+
 	test('状态栏只显示关键状态，不再显示文档标识', () => {
 		render(
 			<StatusBar

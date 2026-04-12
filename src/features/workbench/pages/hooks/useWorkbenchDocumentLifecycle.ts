@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { documentService, useDocumentStore } from '@/features/documents'
 import { clearEditorApi, normalizeWorkbenchScene } from '@/features/workbench/editor'
@@ -17,6 +17,7 @@ export function useWorkbenchDocumentLifecycle({ documentId, resetShellActions }:
 	const setDocumentTitle = useWorkbenchStore((state) => state.setDocumentTitle)
 	const setWorkbenchReady = useWorkbenchStore((state) => state.setWorkbenchReady)
 	const syncDocumentTab = useWorkbenchStore((state) => state.syncDocumentTab)
+	const initializedDocumentIdRef = useRef<string | null>(null)
 	const [workbenchLoadState, setWorkbenchLoadState] = useState<WorkbenchLoadState>({
 		status: 'loading',
 	})
@@ -74,11 +75,12 @@ export function useWorkbenchDocumentLifecycle({ documentId, resetShellActions }:
 
 		void bootstrapWorkbench()
 
-		return () => {
-			isMounted = false
-			documentPersistenceSession.dispose()
-			clearEditorApi()
-			setWorkbenchReady(false)
+			return () => {
+				isMounted = false
+				initializedDocumentIdRef.current = null
+				documentPersistenceSession.dispose()
+				clearEditorApi()
+				setWorkbenchReady(false)
 			setActiveDocumentId(null)
 			setDocumentTitle('未选择文档')
 			setSelectedDocumentId(null)
@@ -91,15 +93,21 @@ export function useWorkbenchDocumentLifecycle({ documentId, resetShellActions }:
 			return
 		}
 
-		setWorkbenchReady(false)
-		setActiveDocumentId(workbenchLoadState.document.id)
-		setDocumentTitle(workbenchLoadState.document.title)
-		setSelectedDocumentId(workbenchLoadState.document.id)
+		const { document, scene } = workbenchLoadState
+
+		if (initializedDocumentIdRef.current !== document.id) {
+			initializedDocumentIdRef.current = document.id
+			setWorkbenchReady(false)
+			documentPersistenceSession.initialize(scene)
+		}
+
+		setActiveDocumentId(document.id)
+		setDocumentTitle(document.title)
+		setSelectedDocumentId(document.id)
 		syncDocumentTab({
-			id: workbenchLoadState.document.id,
-			title: workbenchLoadState.document.title,
+			id: document.id,
+			title: document.title,
 		})
-		documentPersistenceSession.initialize(workbenchLoadState.scene)
 	}, [
 		setActiveDocumentId,
 		setDocumentTitle,
