@@ -27,7 +27,7 @@ const {
 	disposeMock,
 	setSelectedDocumentIdMock,
 	toastMock,
-	tauriWindowMock,
+	registerBeforeWindowHideHandlerMock,
 } = vi.hoisted(() => ({
 	openDocumentMock: vi.fn<(...args: never[]) => Promise<unknown>>(),
 	initializeMock: vi.fn<(...args: never[]) => void>(),
@@ -38,23 +38,24 @@ const {
 	disposeMock: vi.fn<(...args: never[]) => void>(),
 	setSelectedDocumentIdMock: vi.fn<(...args: never[]) => void>(),
 	toastMock: vi.fn<(message?: unknown, options?: unknown) => unknown>(),
-	tauriWindowMock: (() => {
-		let closeHandler: ((event: { preventDefault: () => void }) => void | Promise<void>) | null = null
+	registerBeforeWindowHideHandlerMock: (() => {
+		let handler: (() => Promise<void> | void) | null = null
 
-		return {
-			window: {
-				onCloseRequested: vi.fn<(handler: NonNullable<typeof closeHandler>) => Promise<() => void>>(async (handler) => {
-					closeHandler = handler
-					return () => {
-						closeHandler = null
-					}
-				}),
-				destroy: vi.fn<() => Promise<void>>(async () => undefined),
+		const mock = vi.fn<(nextHandler: () => Promise<void> | void) => () => void>((nextHandler) => {
+			handler = nextHandler
+
+			return () => {
+				if (handler === nextHandler) {
+					handler = null
+				}
+			}
+		})
+
+		return Object.assign(mock, {
+			getHandler() {
+				return handler
 			},
-			getCloseHandler() {
-				return closeHandler
-			},
-		}
+		})
 	})(),
 }))
 
@@ -112,8 +113,8 @@ vi.mock('@excalidraw/excalidraw', async () => {
 	}
 })
 
-vi.mock('@tauri-apps/api/window', () => ({
-	getCurrentWindow: () => tauriWindowMock.window,
+vi.mock('@/app/shell/window-close-coordinator', () => ({
+	registerBeforeWindowHideHandler: registerBeforeWindowHideHandlerMock,
 }))
 
 vi.mock('sonner', () => ({
@@ -200,8 +201,6 @@ describe('WorkbenchPage', () => {
 		disposeMock.mockReset()
 		setSelectedDocumentIdMock.mockReset()
 		toastMock.mockClear()
-		tauriWindowMock.window.onCloseRequested.mockClear()
-		tauriWindowMock.window.destroy.mockClear()
 
 		openDocumentMock.mockResolvedValue({
 			ok: true,
@@ -257,6 +256,7 @@ describe('WorkbenchPage', () => {
 			useWorkbenchStore.getState().setLastSaveError(null)
 			useWorkbenchStore.getState().setIsFlushing(false)
 		})
+		registerBeforeWindowHideHandlerMock.mockClear()
 	})
 
 	test('加载完成后应初始化 persistence session', async () => {
@@ -383,7 +383,17 @@ describe('WorkbenchPage', () => {
 		})
 	})
 
-	test('窗口关闭前应先 flush，成功后销毁窗口', async () => {
+	test('工作台就绪后应注册关闭前 flush 钩子', async () => {
+		renderWorkbenchPage()
+		await screen.findByRole('button', { name: '触发画布变化' })
+
+		await waitFor(() => {
+			expect(registerBeforeWindowHideHandlerMock).toHaveBeenCalledTimes(1)
+			expect(registerBeforeWindowHideHandlerMock.getHandler()).toBeTypeOf('function')
+		})
+	})
+
+	test('窗口隐藏前应先 flush 当前文档', async () => {
 		renderWorkbenchPage()
 		await screen.findByRole('button', { name: '触发画布变化' })
 
@@ -394,13 +404,11 @@ describe('WorkbenchPage', () => {
 		})
 
 		await waitFor(() => {
-			expect(tauriWindowMock.getCloseHandler()).toBeTypeOf('function')
+			expect(registerBeforeWindowHideHandlerMock.getHandler()).toBeTypeOf('function')
 		})
 
-		const preventDefault = vi.fn<() => void>()
-		await tauriWindowMock.getCloseHandler()?.({ preventDefault })
+		await registerBeforeWindowHideHandlerMock.getHandler()?.()
 
-		expect(preventDefault).toHaveBeenCalled()
 		expect(flushBeforeLeaveMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				id: 'doc-editor-1',
@@ -410,10 +418,9 @@ describe('WorkbenchPage', () => {
 				timeoutMs: 2000,
 			},
 		)
-		expect(tauriWindowMock.window.destroy).toHaveBeenCalled()
 	})
 
-	test('窗口关闭 flush 失败时应直接销毁窗口', async () => {
+	test('窗口隐藏 flush 失败时也应继续完成关闭前收口', async () => {
 		flushBeforeLeaveMock.mockResolvedValue(false)
 
 		renderWorkbenchPage()
@@ -424,16 +431,11 @@ describe('WorkbenchPage', () => {
 		})
 
 		await waitFor(() => {
-			expect(tauriWindowMock.getCloseHandler()).toBeTypeOf('function')
+			expect(registerBeforeWindowHideHandlerMock.getHandler()).toBeTypeOf('function')
 		})
 
-		const preventDefault = vi.fn<() => void>()
-		await tauriWindowMock.getCloseHandler()?.({ preventDefault })
+		await registerBeforeWindowHideHandlerMock.getHandler()?.()
 
-		await waitFor(() => {
-			expect(tauriWindowMock.window.destroy).toHaveBeenCalledTimes(1)
-		})
-		expect(preventDefault).toHaveBeenCalled()
 		expect(flushBeforeLeaveMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				id: 'doc-editor-1',

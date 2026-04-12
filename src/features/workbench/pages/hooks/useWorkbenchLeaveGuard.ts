@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
-import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { registerBeforeWindowHideHandler } from '@/app/shell/window-close-coordinator'
 import { documentPersistenceSession } from '@/features/workbench/services'
 import { APP_ROUTES } from '@/shared/constants/routes'
 import type { SaveStatus } from '@/shared/types'
@@ -52,29 +52,15 @@ export function useWorkbenchLeaveGuard({
 			return
 		}
 
-		let isClosingWindow = false
-		let unlistenCloseRequested: (() => void) | undefined
+		return registerBeforeWindowHideHandler(async () => {
+			if (saveStatus === 'saved' || saveStatus === 'idle') {
+				return
+			}
 
-		void getCurrentWindow()
-			.onCloseRequested(async (event) => {
-				if (isClosingWindow || saveStatus === 'saved' || saveStatus === 'idle') {
-					return
-				}
-
-				event.preventDefault()
-				await tryFlushBeforeLeaving({
-					timeoutMs: 2000,
-				})
-				isClosingWindow = true
-				await getCurrentWindow().destroy()
+			await tryFlushBeforeLeaving({
+				timeoutMs: 2000,
 			})
-			.then((unlisten) => {
-				unlistenCloseRequested = unlisten
-			})
-
-		return () => {
-			unlistenCloseRequested?.()
-		}
+		})
 	}, [saveStatus, tryFlushBeforeLeaving, workbenchLoadState.status])
 
 	useEffect(() => {

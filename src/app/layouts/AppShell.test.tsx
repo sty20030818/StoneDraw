@@ -5,6 +5,10 @@ vi.mock('@/shared/components/AppToaster', () => ({
 	default: () => <div>Toast 容器</div>,
 }))
 
+vi.mock('@/app/shell/AppWindowCloseBridge', () => ({
+	default: () => null,
+}))
+
 describe('AppShell', () => {
 	test('windows 壳层应只保留内容容器', async () => {
 		const { default: AppShell } = await import('./AppShell')
