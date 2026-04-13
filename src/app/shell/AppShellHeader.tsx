@@ -66,6 +66,8 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 		'grid h-full w-full min-w-0 place-items-center text-muted-foreground transition-colors'
 	const windowsWindowControlButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-foreground/8 hover:text-foreground`
 	const windowsWindowCloseButtonClass = `${windowsWindowControlButtonBaseClass} hover:bg-destructive hover:text-primary-foreground`
+	const windowsWindowControlsFrameClass =
+		'app-shell-no-drag grid h-10 w-31 shrink-0 grid-cols-3 overflow-hidden rounded-[10px] border border-border/70 bg-background/75 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-sm'
 	const headerPaddingClass =
 		scene === 'workspace' ? (isMacShell ? 'pl-20 pr-3' : 'pl-4 pr-0') : isMacShell ? 'pl-20 pr-3' : 'pl-4 pr-0'
 
@@ -140,7 +142,10 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 				headerPaddingClass,
 				className,
 			)}>
-			<div className='flex h-full min-w-0 flex-1 items-center justify-between gap-4'>
+			<div
+				data-testid='app-shell-header-chrome'
+				data-tauri-drag-region
+				className='app-shell-drag flex h-full min-w-0 flex-1 items-center justify-between gap-4'>
 				<div
 					ref={leadingGroupRef}
 					data-testid='app-shell-header-leading'
@@ -167,7 +172,7 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 					ref={trailingGroupRef}
 					data-testid='app-shell-header-actions'
 					data-tauri-drag-region
-					className={cn('app-shell-drag flex h-full min-w-0 items-center gap-2', isMacShell ? 'pr-2' : 'pr-0')}>
+					className={cn('app-shell-drag flex h-full min-w-0 items-center gap-2', isMacShell ? 'pr-2' : 'pr-3')}>
 					<Button
 						type='button'
 						variant='outline'
@@ -194,11 +199,12 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 						<>
 							<Separator
 								orientation='vertical'
-								className='mx-1 my-3 bg-border/90'
+								data-tauri-drag-region
+								className='app-shell-drag mx-1 my-4 bg-border/90'
 							/>
 							<div
 								data-testid='windows-window-controls'
-								className='app-shell-no-drag grid h-full w-34.5 shrink-0 grid-cols-3'>
+								className={windowsWindowControlsFrameClass}>
 								<button
 									type='button'
 									className={windowsWindowControlButtonClass}
@@ -233,7 +239,9 @@ function AppShellHeader({ scene, className }: AppShellHeaderProps) {
 			</div>
 
 			<div
-				className='pointer-events-none absolute inset-y-0 left-1/2 flex w-full -translate-x-1/2 items-center justify-center'
+				data-testid='app-shell-header-search-overlay'
+				data-tauri-drag-region
+				className='app-shell-drag pointer-events-none absolute inset-y-0 left-1/2 flex w-full -translate-x-1/2 items-center justify-center'
 				style={{
 					paddingInline: `${centerGuardWidth}px`,
 				}}>

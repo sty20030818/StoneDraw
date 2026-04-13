@@ -58,7 +58,19 @@ describe('AppShellHeader', () => {
 		expect(screen.getByTestId('app-shell-header-root')).toHaveAttribute('data-tauri-drag-region')
 	})
 
-	test('windows 控制区前的分割线应保留纵向拉伸并只做上下留白', async () => {
+	test('windows 控制区应收窄为居中的紧凑按钮组', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: AppShellHeader } = await import('./AppShellHeader')
+
+		render(<AppShellHeader scene='workspace' />)
+
+		const controls = screen.getByTestId('windows-window-controls')
+
+		expect(controls).toHaveClass('h-10', 'w-31', 'rounded-[10px]', 'border')
+		expect(controls).not.toHaveClass('h-full', 'w-34.5')
+	})
+
+	test('windows 控制区前的分割线应保留纵向拉伸并增加上下留白', async () => {
 		detectDesktopShellPlatformMock.mockReturnValue('windows')
 		const { default: AppShellHeader } = await import('./AppShellHeader')
 
@@ -66,7 +78,7 @@ describe('AppShellHeader', () => {
 
 		const separator = screen.getByTestId('windows-window-controls').previousElementSibling
 
-		expect(separator).toHaveClass('my-3')
+		expect(separator).toHaveClass('my-4')
 		expect(separator).not.toHaveClass('h-5', 'self-center')
 	})
 
@@ -80,6 +92,29 @@ describe('AppShellHeader', () => {
 		expect(screen.getByTestId('app-shell-header-search')).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: '导入' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: '新建文档' })).toBeInTheDocument()
+	})
+
+	test('顶栏非交互结构层应显式标记为可拖拽区域', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: AppShellHeader } = await import('./AppShellHeader')
+
+		render(<AppShellHeader scene='workspace' />)
+
+		expect(screen.getByTestId('app-shell-header-chrome')).toHaveAttribute('data-tauri-drag-region')
+		expect(screen.getByTestId('app-shell-header-chrome')).toHaveClass('app-shell-drag')
+		expect(screen.getByTestId('app-shell-header-search-overlay')).toHaveAttribute('data-tauri-drag-region')
+		expect(screen.getByTestId('app-shell-header-search-overlay')).toHaveClass('app-shell-drag')
+	})
+
+	test('搜索框与两个操作按钮应保持不可拖拽', async () => {
+		detectDesktopShellPlatformMock.mockReturnValue('windows')
+		const { default: AppShellHeader } = await import('./AppShellHeader')
+
+		render(<AppShellHeader scene='workspace' />)
+
+		expect(screen.getByTestId('app-shell-header-search')).toHaveClass('app-shell-no-drag')
+		expect(screen.getByRole('button', { name: '导入' })).toHaveClass('app-shell-no-drag')
+		expect(screen.getByRole('button', { name: '新建文档' })).toHaveClass('app-shell-no-drag')
 	})
 
 	test('mac 顶栏应保留搜索工具条并移除右侧 win 控制区', async () => {
